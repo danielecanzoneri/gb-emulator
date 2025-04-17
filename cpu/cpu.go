@@ -179,6 +179,293 @@ func (cpu *CPU) ExecuteInstruction() {
 	// STOP
 	case STOP_OPCODE:
 		cpu.STOP()
+	// LD R8 R8
+	case LD_B_B_OPCODE:
+		cpu.LD_B_B()
+	case LD_B_C_OPCODE:
+		cpu.LD_B_C()
+	case LD_B_D_OPCODE:
+		cpu.LD_B_D()
+	case LD_B_E_OPCODE:
+		cpu.LD_B_E()
+	case LD_B_H_OPCODE:
+		cpu.LD_B_H()
+	case LD_B_L_OPCODE:
+		cpu.LD_B_L()
+	case LD_B_HLMEM_OPCODE:
+		cpu.LD_B_HLMEM()
+	case LD_B_A_OPCODE:
+		cpu.LD_B_A()
+	case LD_C_B_OPCODE:
+		cpu.LD_C_B()
+	case LD_C_C_OPCODE:
+		cpu.LD_C_C()
+	case LD_C_D_OPCODE:
+		cpu.LD_C_D()
+	case LD_C_E_OPCODE:
+		cpu.LD_C_E()
+	case LD_C_H_OPCODE:
+		cpu.LD_C_H()
+	case LD_C_L_OPCODE:
+		cpu.LD_C_L()
+	case LD_C_HLMEM_OPCODE:
+		cpu.LD_C_HLMEM()
+	case LD_C_A_OPCODE:
+		cpu.LD_C_A()
+	case LD_D_B_OPCODE:
+		cpu.LD_D_B()
+	case LD_D_C_OPCODE:
+		cpu.LD_D_C()
+	case LD_D_D_OPCODE:
+		cpu.LD_D_D()
+	case LD_D_E_OPCODE:
+		cpu.LD_D_E()
+	case LD_D_H_OPCODE:
+		cpu.LD_D_H()
+	case LD_D_L_OPCODE:
+		cpu.LD_D_L()
+	case LD_D_HLMEM_OPCODE:
+		cpu.LD_D_HLMEM()
+	case LD_D_A_OPCODE:
+		cpu.LD_D_A()
+	case LD_E_B_OPCODE:
+		cpu.LD_E_B()
+	case LD_E_C_OPCODE:
+		cpu.LD_E_C()
+	case LD_E_D_OPCODE:
+		cpu.LD_E_D()
+	case LD_E_E_OPCODE:
+		cpu.LD_E_E()
+	case LD_E_H_OPCODE:
+		cpu.LD_E_H()
+	case LD_E_L_OPCODE:
+		cpu.LD_E_L()
+	case LD_E_HLMEM_OPCODE:
+		cpu.LD_E_HLMEM()
+	case LD_E_A_OPCODE:
+		cpu.LD_E_A()
+	case LD_H_B_OPCODE:
+		cpu.LD_H_B()
+	case LD_H_C_OPCODE:
+		cpu.LD_H_C()
+	case LD_H_D_OPCODE:
+		cpu.LD_H_D()
+	case LD_H_E_OPCODE:
+		cpu.LD_H_E()
+	case LD_H_H_OPCODE:
+		cpu.LD_H_H()
+	case LD_H_L_OPCODE:
+		cpu.LD_H_L()
+	case LD_H_HLMEM_OPCODE:
+		cpu.LD_H_HLMEM()
+	case LD_H_A_OPCODE:
+		cpu.LD_H_A()
+	case LD_L_B_OPCODE:
+		cpu.LD_L_B()
+	case LD_L_C_OPCODE:
+		cpu.LD_L_C()
+	case LD_L_D_OPCODE:
+		cpu.LD_L_D()
+	case LD_L_E_OPCODE:
+		cpu.LD_L_E()
+	case LD_L_H_OPCODE:
+		cpu.LD_L_H()
+	case LD_L_L_OPCODE:
+		cpu.LD_L_L()
+	case LD_L_HLMEM_OPCODE:
+		cpu.LD_L_HLMEM()
+	case LD_L_A_OPCODE:
+		cpu.LD_L_A()
+	case LD_HLMEM_B_OPCODE:
+		cpu.LD_HLMEM_B()
+	case LD_HLMEM_C_OPCODE:
+		cpu.LD_HLMEM_C()
+	case LD_HLMEM_D_OPCODE:
+		cpu.LD_HLMEM_D()
+	case LD_HLMEM_E_OPCODE:
+		cpu.LD_HLMEM_E()
+	case LD_HLMEM_H_OPCODE:
+		cpu.LD_HLMEM_H()
+	case LD_HLMEM_L_OPCODE:
+		cpu.LD_HLMEM_L()
+	case LD_HLMEM_A_OPCODE:
+		cpu.LD_HLMEM_A()
+	case LD_A_B_OPCODE:
+		cpu.LD_A_B()
+	case LD_A_C_OPCODE:
+		cpu.LD_A_C()
+	case LD_A_D_OPCODE:
+		cpu.LD_A_D()
+	case LD_A_E_OPCODE:
+		cpu.LD_A_E()
+	case LD_A_H_OPCODE:
+		cpu.LD_A_H()
+	case LD_A_L_OPCODE:
+		cpu.LD_A_L()
+	case LD_A_HLMEM_OPCODE:
+		cpu.LD_A_HLMEM()
+	case LD_A_A_OPCODE:
+		cpu.LD_A_A()
+	// ADD A R8
+	case ADD_A_B_OPCODE:
+		cpu.ADD_A_B()
+	case ADD_A_C_OPCODE:
+		cpu.ADD_A_C()
+	case ADD_A_D_OPCODE:
+		cpu.ADD_A_D()
+	case ADD_A_E_OPCODE:
+		cpu.ADD_A_E()
+	case ADD_A_H_OPCODE:
+		cpu.ADD_A_H()
+	case ADD_A_L_OPCODE:
+		cpu.ADD_A_L()
+	case ADD_A_HLMEM_OPCODE:
+		cpu.ADD_A_HLMEM()
+	case ADD_A_A_OPCODE:
+		cpu.ADD_A_A()
+	// ADC A R8
+	case ADC_A_B_OPCODE:
+		cpu.ADC_A_B()
+	case ADC_A_C_OPCODE:
+		cpu.ADC_A_C()
+	case ADC_A_D_OPCODE:
+		cpu.ADC_A_D()
+	case ADC_A_E_OPCODE:
+		cpu.ADC_A_E()
+	case ADC_A_H_OPCODE:
+		cpu.ADC_A_H()
+	case ADC_A_L_OPCODE:
+		cpu.ADC_A_L()
+	case ADC_A_HLMEM_OPCODE:
+		cpu.ADC_A_HLMEM()
+	case ADC_A_A_OPCODE:
+		cpu.ADC_A_A()
+	// SUB A R8
+	case SUB_A_B_OPCODE:
+		cpu.SUB_A_B()
+	case SUB_A_C_OPCODE:
+		cpu.SUB_A_C()
+	case SUB_A_D_OPCODE:
+		cpu.SUB_A_D()
+	case SUB_A_E_OPCODE:
+		cpu.SUB_A_E()
+	case SUB_A_H_OPCODE:
+		cpu.SUB_A_H()
+	case SUB_A_L_OPCODE:
+		cpu.SUB_A_L()
+	case SUB_A_HLMEM_OPCODE:
+		cpu.SUB_A_HLMEM()
+	case SUB_A_A_OPCODE:
+		cpu.SUB_A_A()
+	// SBC A R8
+	case SBC_A_B_OPCODE:
+		cpu.SBC_A_B()
+	case SBC_A_C_OPCODE:
+		cpu.SBC_A_C()
+	case SBC_A_D_OPCODE:
+		cpu.SBC_A_D()
+	case SBC_A_E_OPCODE:
+		cpu.SBC_A_E()
+	case SBC_A_H_OPCODE:
+		cpu.SBC_A_H()
+	case SBC_A_L_OPCODE:
+		cpu.SBC_A_L()
+	case SBC_A_HLMEM_OPCODE:
+		cpu.SBC_A_HLMEM()
+	case SBC_A_A_OPCODE:
+		cpu.SBC_A_A()
+	// AND A R8
+	case AND_A_B_OPCODE:
+		cpu.AND_A_B()
+	case AND_A_C_OPCODE:
+		cpu.AND_A_C()
+	case AND_A_D_OPCODE:
+		cpu.AND_A_D()
+	case AND_A_E_OPCODE:
+		cpu.AND_A_E()
+	case AND_A_H_OPCODE:
+		cpu.AND_A_H()
+	case AND_A_L_OPCODE:
+		cpu.AND_A_L()
+	case AND_A_HLMEM_OPCODE:
+		cpu.AND_A_HLMEM()
+	case AND_A_A_OPCODE:
+		cpu.AND_A_A()
+	// XOR A R8
+	case XOR_A_B_OPCODE:
+		cpu.XOR_A_B()
+	case XOR_A_C_OPCODE:
+		cpu.XOR_A_C()
+	case XOR_A_D_OPCODE:
+		cpu.XOR_A_D()
+	case XOR_A_E_OPCODE:
+		cpu.XOR_A_E()
+	case XOR_A_H_OPCODE:
+		cpu.XOR_A_H()
+	case XOR_A_L_OPCODE:
+		cpu.XOR_A_L()
+	case XOR_A_HLMEM_OPCODE:
+		cpu.XOR_A_HLMEM()
+	case XOR_A_A_OPCODE:
+		cpu.XOR_A_A()
+	// OR A R8
+	case OR_A_B_OPCODE:
+		cpu.OR_A_B()
+	case OR_A_C_OPCODE:
+		cpu.OR_A_C()
+	case OR_A_D_OPCODE:
+		cpu.OR_A_D()
+	case OR_A_E_OPCODE:
+		cpu.OR_A_E()
+	case OR_A_H_OPCODE:
+		cpu.OR_A_H()
+	case OR_A_L_OPCODE:
+		cpu.OR_A_L()
+	case OR_A_HLMEM_OPCODE:
+		cpu.OR_A_HLMEM()
+	case OR_A_A_OPCODE:
+		cpu.OR_A_A()
+	// CP A R8
+	case CP_A_B_OPCODE:
+		cpu.CP_A_B()
+	case CP_A_C_OPCODE:
+		cpu.CP_A_C()
+	case CP_A_D_OPCODE:
+		cpu.CP_A_D()
+	case CP_A_E_OPCODE:
+		cpu.CP_A_E()
+	case CP_A_H_OPCODE:
+		cpu.CP_A_H()
+	case CP_A_L_OPCODE:
+		cpu.CP_A_L()
+	case CP_A_HLMEM_OPCODE:
+		cpu.CP_A_HLMEM()
+	case CP_A_A_OPCODE:
+		cpu.CP_A_A()
+	// ADD A R8
+	case ADD_A_N8_OPCODE:
+		cpu.ADD_A_N8()
+	// ADC A R8
+	case ADC_A_N8_OPCODE:
+		cpu.ADC_A_N8()
+	// SUB A R8
+	case SUB_A_N8_OPCODE:
+		cpu.SUB_A_N8()
+	// SBC A R8
+	case SBC_A_N8_OPCODE:
+		cpu.SBC_A_N8()
+	// AND A R8
+	case AND_A_N8_OPCODE:
+		cpu.AND_A_N8()
+	// XOR A R8
+	case XOR_A_N8_OPCODE:
+		cpu.XOR_A_N8()
+	// OR A R8
+	case OR_A_N8_OPCODE:
+		cpu.OR_A_N8()
+	// CP A R8
+	case CP_A_N8_OPCODE:
+		cpu.CP_A_N8()
 	default:
 		fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 	}

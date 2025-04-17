@@ -1,6 +1,9 @@
 package cpu
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+)
 
 func Test_LD_R16_N16(t *testing.T) {
 	var BYTE1 uint8 = 0xAC
@@ -1022,9 +1025,868 @@ func Test_JR_COND_E8(t *testing.T) {
 	}
 }
 
+func Test_LD_R8_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	firstReg := map[string]struct {
+		opcode uint8
+		read   func() uint8
+	}{
+		"B":     {0x40, func() uint8 { return cpu.B }},
+		"C":     {0x48, func() uint8 { return cpu.C }},
+		"D":     {0x50, func() uint8 { return cpu.D }},
+		"E":     {0x58, func() uint8 { return cpu.E }},
+		"H":     {0x60, func() uint8 { return cpu.H }},
+		"L":     {0x68, func() uint8 { return cpu.L }},
+		"HLMEM": {0x70, func() uint8 { return cpu.Mem.Read(cpu.readHL()) }},
+		"A":     {0x78, func() uint8 { return cpu.A }},
+	}
+	secondReg := map[string]struct {
+		offset uint8
+		set    func(uint8)
+	}{
+		"B":     {0, func(value uint8) { cpu.B = value }},
+		"C":     {1, func(value uint8) { cpu.C = value }},
+		"D":     {2, func(value uint8) { cpu.D = value }},
+		"E":     {3, func(value uint8) { cpu.E = value }},
+		"H":     {4, func(value uint8) { cpu.H = value }},
+		"L":     {5, func(value uint8) { cpu.L = value }},
+		"HLMEM": {6, func(value uint8) { cpu.H = 1; cpu.L = value; cpu.Mem.Write(cpu.readHL(), value) }},
+		"A":     {7, func(value uint8) { cpu.A = value }},
+	}
+
+	for name1, receiver := range firstReg {
+		for name2, loaded := range secondReg {
+			opcode := receiver.opcode + loaded.offset
+			// Skip HALT
+			if opcode == HALT_OPCODE {
+				continue
+			}
+			t.Run(name1+"<-"+name2, func(t *testing.T) {
+				value := uint8(rand.Intn(0x100))
+				loaded.set(value)
+
+				writeTestProgram(cpu, opcode)
+				cpu.ExecuteInstruction()
+				if receiver.read() != value {
+					t.Fatalf("got %02X, expected %02X", receiver.read(), value)
+				}
+			})
+		}
+	}
+}
+
+func Test_HALT(t *testing.T) {
+	t.Fatalf("TODO")
+}
+
+func Test_ADD_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A     uint8
+		R8    uint8
+		exp_z uint8
+		exp_h uint8
+		exp_c uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 0, 1, 0},
+		"C":     {0xF0, 0x11, 0, 0, 1},
+		"D":     {0xFF, 0xFF, 0, 1, 1},
+		"E":     {0xFF, 0x00, 0, 0, 0},
+		"H":     {0x80, 0x08, 0, 0, 0},
+		"L":     {0x57, 0xAD, 0, 1, 1},
+		"HLMEM": {0x34, 0x12, 0, 0, 0},
+		"A":     {0x80, 0x80, 1, 0, 1},
+	}
+
+	testCarries := func(t *testing.T, tst test) {
+		if cpu.readNFlag() != 0 {
+			t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+		}
+		if cpu.readZFlag() != tst.exp_z {
+			t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), tst.exp_z)
+		}
+		if cpu.readHFlag() != tst.exp_h {
+			t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), tst.exp_h)
+		}
+		if cpu.readCFlag() != tst.exp_c {
+			t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), tst.exp_c)
+		}
+	}
+
+	t.Run("B", func(t *testing.T) {
+		tst := tests["B"]
+		cpu.A = tst.A
+		cpu.B = tst.R8
+		writeTestProgram(cpu, ADD_A_B_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("C", func(t *testing.T) {
+		tst := tests["C"]
+		cpu.A = tst.A
+		cpu.C = tst.R8
+		writeTestProgram(cpu, ADD_A_C_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("D", func(t *testing.T) {
+		tst := tests["D"]
+		cpu.A = tst.A
+		cpu.D = tst.R8
+		writeTestProgram(cpu, ADD_A_D_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("E", func(t *testing.T) {
+		tst := tests["E"]
+		cpu.A = tst.A
+		cpu.E = tst.R8
+		writeTestProgram(cpu, ADD_A_E_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("H", func(t *testing.T) {
+		tst := tests["H"]
+		cpu.A = tst.A
+		cpu.H = tst.R8
+		writeTestProgram(cpu, ADD_A_H_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("L", func(t *testing.T) {
+		tst := tests["L"]
+		cpu.A = tst.A
+		cpu.L = tst.R8
+		writeTestProgram(cpu, ADD_A_L_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("A", func(t *testing.T) {
+		tst := tests["A"]
+		cpu.A = tst.A
+		cpu.A = tst.R8
+		writeTestProgram(cpu, ADD_A_A_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("HLMEM", func(t *testing.T) {
+		tst := tests["HLMEM"]
+		cpu.A = tst.A
+		cpu.Mem.Write(cpu.readHL(), tst.R8)
+		writeTestProgram(cpu, ADD_A_HLMEM_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8 {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
+		}
+		testCarries(t, tst)
+	})
+}
+
+func Test_ADC_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A     uint8
+		R8    uint8
+		carry uint8
+		exp_z uint8
+		exp_h uint8
+		exp_c uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 1, 0, 1, 0},
+		"C":     {0xF0, 0x11, 0, 0, 0, 1},
+		"D":     {0xFF, 0xFF, 1, 0, 1, 1},
+		"E":     {0xFF, 0x00, 1, 1, 1, 1},
+		"H":     {0x0F, 0x00, 1, 0, 1, 0},
+		"L":     {0x57, 0xAD, 1, 0, 1, 1},
+		"HLMEM": {0x34, 0x12, 0, 0, 0, 0},
+		"A":     {0x80, 0x80, 0, 1, 0, 1},
+	}
+
+	testCarries := func(t *testing.T, tst test) {
+		if cpu.readNFlag() != 0 {
+			t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+		}
+		if cpu.readZFlag() != tst.exp_z {
+			t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), tst.exp_z)
+		}
+		if cpu.readHFlag() != tst.exp_h {
+			t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), tst.exp_h)
+		}
+		if cpu.readCFlag() != tst.exp_c {
+			t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), tst.exp_c)
+		}
+	}
+
+	t.Run("B", func(t *testing.T) {
+		tst := tests["B"]
+		cpu.A = tst.A
+		cpu.B = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_B_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("C", func(t *testing.T) {
+		tst := tests["C"]
+		cpu.A = tst.A
+		cpu.C = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_C_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("D", func(t *testing.T) {
+		tst := tests["D"]
+		cpu.A = tst.A
+		cpu.D = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_D_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("E", func(t *testing.T) {
+		tst := tests["E"]
+		cpu.A = tst.A
+		cpu.E = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_E_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("H", func(t *testing.T) {
+		tst := tests["H"]
+		cpu.A = tst.A
+		cpu.H = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_H_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("L", func(t *testing.T) {
+		tst := tests["L"]
+		cpu.A = tst.A
+		cpu.L = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_L_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("A", func(t *testing.T) {
+		tst := tests["A"]
+		cpu.A = tst.A
+		cpu.A = tst.R8
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_A_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+
+	t.Run("HLMEM", func(t *testing.T) {
+		tst := tests["HLMEM"]
+		cpu.A = tst.A
+		cpu.Mem.Write(cpu.readHL(), tst.R8)
+		cpu.setCFlag(tst.carry)
+		writeTestProgram(cpu, ADC_A_HLMEM_OPCODE)
+		cpu.ExecuteInstruction()
+		if cpu.A != tst.A+tst.R8+tst.carry {
+			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
+		}
+		testCarries(t, tst)
+	})
+}
+
+func Test_SUB_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		exp_z  uint8
+		exp_h  uint8
+		exp_c  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 1, 0, 0, func(v uint8) { cpu.B = v }, SUB_A_B_OPCODE},
+		"C":     {0x0F, 0x10, 0, 0, 1, func(v uint8) { cpu.C = v }, SUB_A_C_OPCODE},
+		"D":     {0x00, 0x01, 0, 1, 1, func(v uint8) { cpu.D = v }, SUB_A_D_OPCODE},
+		"E":     {0xF0, 0x01, 0, 1, 0, func(v uint8) { cpu.E = v }, SUB_A_E_OPCODE},
+		"H":     {0x80, 0x08, 0, 1, 0, func(v uint8) { cpu.H = v }, SUB_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 0, 1, 1, func(v uint8) { cpu.L = v }, SUB_A_L_OPCODE},
+		"HLMEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, SUB_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 1, 0, 0, func(v uint8) { cpu.A = v }, SUB_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			if cpu.A != test.A-test.R8 {
+				t.Fatalf("got %2X, expected %2X", cpu.A, test.A-test.R8)
+			}
+			if cpu.readNFlag() != 1 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readHFlag() != test.exp_h {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), test.exp_h)
+			}
+			if cpu.readCFlag() != test.exp_c {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), test.exp_c)
+			}
+		})
+	}
+}
+
+func Test_SBC_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		carry  uint8
+		exp_z  uint8
+		exp_h  uint8
+		exp_c  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 0, 1, 0, 0, func(v uint8) { cpu.B = v }, SBC_A_B_OPCODE},
+		"C":     {0x10, 0x0F, 1, 1, 1, 0, func(v uint8) { cpu.C = v }, SBC_A_C_OPCODE},
+		"D":     {0x10, 0x0F, 0, 0, 1, 0, func(v uint8) { cpu.D = v }, SBC_A_D_OPCODE},
+		"E":     {0x00, 0x00, 1, 0, 1, 1, func(v uint8) { cpu.E = v }, SBC_A_E_OPCODE},
+		"H":     {0x80, 0x80, 0, 1, 0, 0, func(v uint8) { cpu.H = v }, SBC_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 1, 0, 1, 1, func(v uint8) { cpu.L = v }, SBC_A_L_OPCODE},
+		"HLMEM": {0x34, 0x14, 1, 0, 1, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, SBC_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 1, 0, 1, 1, func(v uint8) { cpu.A = v }, SBC_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			cpu.setCFlag(test.carry)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			expected := test.A - test.R8 - test.carry
+			if cpu.A != expected {
+				t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+			}
+			if cpu.readNFlag() != 1 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readHFlag() != test.exp_h {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), test.exp_h)
+			}
+			if cpu.readCFlag() != test.exp_c {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), test.exp_c)
+			}
+		})
+	}
+}
+
+func Test_AND_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		exp_z  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 0, func(v uint8) { cpu.B = v }, AND_A_B_OPCODE},
+		"C":     {0x10, 0x0F, 1, func(v uint8) { cpu.C = v }, AND_A_C_OPCODE},
+		"D":     {0x10, 0x1F, 0, func(v uint8) { cpu.D = v }, AND_A_D_OPCODE},
+		"E":     {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, AND_A_E_OPCODE},
+		"H":     {0xAA, 0x55, 1, func(v uint8) { cpu.H = v }, AND_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, AND_A_L_OPCODE},
+		"HLMEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, AND_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 0, func(v uint8) { cpu.A = v }, AND_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			expected := test.A & test.R8
+			if cpu.A != expected {
+				t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readNFlag() != 0 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+			}
+			if cpu.readHFlag() != 1 {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 1)
+			}
+			if cpu.readCFlag() != 0 {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+			}
+		})
+	}
+}
+
+func Test_XOR_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		exp_z  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 1, func(v uint8) { cpu.B = v }, XOR_A_B_OPCODE},
+		"C":     {0x10, 0x0F, 0, func(v uint8) { cpu.C = v }, XOR_A_C_OPCODE},
+		"D":     {0x10, 0x1F, 0, func(v uint8) { cpu.D = v }, XOR_A_D_OPCODE},
+		"E":     {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, XOR_A_E_OPCODE},
+		"H":     {0xAA, 0x55, 0, func(v uint8) { cpu.H = v }, XOR_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, XOR_A_L_OPCODE},
+		"HLMEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, XOR_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 1, func(v uint8) { cpu.A = v }, XOR_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			expected := test.A ^ test.R8
+			if cpu.A != expected {
+				t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readNFlag() != 0 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+			}
+			if cpu.readHFlag() != 0 {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 0)
+			}
+			if cpu.readCFlag() != 0 {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+			}
+		})
+	}
+}
+
+func Test_OR_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		exp_z  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 0, func(v uint8) { cpu.B = v }, OR_A_B_OPCODE},
+		"C":     {0x10, 0x0F, 0, func(v uint8) { cpu.C = v }, OR_A_C_OPCODE},
+		"D":     {0x10, 0x1F, 0, func(v uint8) { cpu.D = v }, OR_A_D_OPCODE},
+		"E":     {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, OR_A_E_OPCODE},
+		"H":     {0xAA, 0x55, 0, func(v uint8) { cpu.H = v }, OR_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, OR_A_L_OPCODE},
+		"HLMEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, OR_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 0, func(v uint8) { cpu.A = v }, OR_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			expected := test.A | test.R8
+			if cpu.A != expected {
+				t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readNFlag() != 0 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+			}
+			if cpu.readHFlag() != 0 {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 0)
+			}
+			if cpu.readCFlag() != 0 {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+			}
+		})
+	}
+}
+
+func Test_CP_A_R8(t *testing.T) {
+	cpu := setup_CPU()
+
+	type test struct {
+		A      uint8
+		R8     uint8
+		exp_z  uint8
+		exp_h  uint8
+		exp_c  uint8
+		setR8  func(uint8)
+		opcode uint8
+	}
+
+	tests := map[string]test{
+		"B":     {0x08, 0x08, 1, 0, 0, func(v uint8) { cpu.B = v }, CP_A_B_OPCODE},
+		"C":     {0x0F, 0x10, 0, 0, 1, func(v uint8) { cpu.C = v }, CP_A_C_OPCODE},
+		"D":     {0x00, 0x01, 0, 1, 1, func(v uint8) { cpu.D = v }, CP_A_D_OPCODE},
+		"E":     {0xF0, 0x01, 0, 1, 0, func(v uint8) { cpu.E = v }, CP_A_E_OPCODE},
+		"H":     {0x80, 0x08, 0, 1, 0, func(v uint8) { cpu.H = v }, CP_A_H_OPCODE},
+		"L":     {0x57, 0xAD, 0, 1, 1, func(v uint8) { cpu.L = v }, CP_A_L_OPCODE},
+		"HLMEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = v; cpu.Mem.Write(cpu.readHL(), v) }, CP_A_HLMEM_OPCODE},
+		"A":     {0x80, 0x80, 1, 0, 0, func(v uint8) { cpu.A = v }, CP_A_A_OPCODE},
+	}
+
+	for r8, test := range tests {
+		t.Run(r8, func(t *testing.T) {
+			cpu.A = test.A
+			test.setR8(test.R8)
+			writeTestProgram(cpu, test.opcode)
+			cpu.ExecuteInstruction()
+			if cpu.A != test.A {
+				t.Fatalf("got %2X, expected %2X", cpu.A, test.A)
+			}
+			if cpu.readNFlag() != 1 {
+				t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+			}
+			if cpu.readZFlag() != test.exp_z {
+				t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), test.exp_z)
+			}
+			if cpu.readHFlag() != test.exp_h {
+				t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), test.exp_h)
+			}
+			if cpu.readCFlag() != test.exp_c {
+				t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), test.exp_c)
+			}
+		})
+	}
+}
+
+func Test_ADD_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x57
+	var n8 uint8 = 0xAD
+	var exp_z uint8 = 0
+	var exp_h uint8 = 1
+	var exp_c uint8 = 1
+
+	cpu.A = A
+	writeTestProgram(cpu, ADD_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	if cpu.A != A+n8 {
+		t.Fatalf("got %2X, expected %2X", cpu.A, A+n8)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readHFlag() != exp_h {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), exp_h)
+	}
+	if cpu.readCFlag() != exp_c {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), exp_c)
+	}
+}
+
+func Test_ADC_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x08
+	var n8 uint8 = 0x08
+	var carry uint8 = 1
+	var exp_z uint8 = 0
+	var exp_h uint8 = 1
+	var exp_c uint8 = 0
+
+	cpu.A = A
+	cpu.setCFlag(carry)
+	writeTestProgram(cpu, ADC_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	if cpu.A != A+n8+carry {
+		t.Fatalf("got %2X, expected %2X", cpu.A, A+n8+carry)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readHFlag() != exp_h {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), exp_h)
+	}
+	if cpu.readCFlag() != exp_c {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), exp_c)
+	}
+}
+
+func Test_SUB_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x80
+	var n8 uint8 = 0x08
+	var exp_z uint8 = 0
+	var exp_h uint8 = 1
+	var exp_c uint8 = 0
+
+	cpu.A = A
+	writeTestProgram(cpu, SUB_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	if cpu.A != A-n8 {
+		t.Fatalf("got %2X, expected %2X", cpu.A, A-n8)
+	}
+	if cpu.readNFlag() != 1 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readHFlag() != exp_h {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), exp_h)
+	}
+	if cpu.readCFlag() != exp_c {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), exp_c)
+	}
+}
+
+func Test_SBC_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x10
+	var n8 uint8 = 0x0F
+	var carry uint8 = 1
+	var exp_z uint8 = 1
+	var exp_h uint8 = 1
+	var exp_c uint8 = 0
+
+	cpu.A = A
+	cpu.setCFlag(carry)
+	writeTestProgram(cpu, SBC_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	if cpu.A != A-n8-carry {
+		t.Fatalf("got %2X, expected %2X", cpu.A, A-n8-carry)
+	}
+	if cpu.readNFlag() != 1 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readHFlag() != exp_h {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), exp_h)
+	}
+	if cpu.readCFlag() != exp_c {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), exp_c)
+	}
+}
+
+func Test_AND_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0xAA
+	var n8 uint8 = 0x55
+	var exp_z uint8 = 1
+
+	cpu.A = A
+	writeTestProgram(cpu, AND_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	expected := A & n8
+	if cpu.A != expected {
+		t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readHFlag() != 1 {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 1)
+	}
+	if cpu.readCFlag() != 0 {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+	}
+}
+
+func Test_XOR_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x80
+	var n8 uint8 = 0x80
+	var exp_z uint8 = 1
+
+	cpu.A = A
+	writeTestProgram(cpu, XOR_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	expected := A ^ n8
+	if cpu.A != expected {
+		t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readHFlag() != 0 {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 0)
+	}
+	if cpu.readCFlag() != 0 {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+	}
+}
+
+func Test_OR_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x80
+	var n8 uint8 = 0x80
+	var exp_z uint8 = 0
+
+	cpu.A = A
+	writeTestProgram(cpu, OR_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	expected := A | n8
+	if cpu.A != expected {
+		t.Fatalf("got %2X, expected %2X", cpu.A, expected)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readHFlag() != 0 {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), 0)
+	}
+	if cpu.readCFlag() != 0 {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), 0)
+	}
+}
+
+func Test_CP_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var A uint8 = 0x10
+	var n8 uint8 = 0x0F
+	var exp_z uint8 = 0
+	var exp_h uint8 = 1
+	var exp_c uint8 = 0
+
+	cpu.A = A
+	writeTestProgram(cpu, CP_A_N8_OPCODE, n8)
+	cpu.ExecuteInstruction()
+	if cpu.A != A {
+		t.Fatalf("got %2X, expected %2X", cpu.A, A)
+	}
+	if cpu.readNFlag() != 1 {
+		t.Errorf("N flag: got %x, expected %x", cpu.readNFlag(), 1)
+	}
+	if cpu.readZFlag() != exp_z {
+		t.Errorf("Z flag: got %x, expected %x", cpu.readZFlag(), exp_z)
+	}
+	if cpu.readHFlag() != exp_h {
+		t.Errorf("H flag: got %x, expected %x", cpu.readHFlag(), exp_h)
+	}
+	if cpu.readCFlag() != exp_c {
+		t.Errorf("C flag: got %x, expected %x", cpu.readCFlag(), exp_c)
+	}
+}
+
 // Mock implementation of Memory interface
 type MockMemory struct {
-	data [0x100]byte
+	data [0x10000]byte
 }
 
 func (m *MockMemory) Read(addr uint16) uint8 {
