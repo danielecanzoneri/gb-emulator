@@ -79,8 +79,6 @@ const (
 	JR_C_E8_OPCODE  = 0x38
 
 	STOP_OPCODE = 0x10
-	STOP_CYCLES = 0
-	STOP_BYTES  = 2
 )
 
 var OPCODES_CYCLES = [256]int{

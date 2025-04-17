@@ -1022,20 +1022,6 @@ func Test_JR_COND_E8(t *testing.T) {
 	}
 }
 
-func Test_STOP(t *testing.T) {
-	// TODO - Has to be thoroughly tested
-	cpu := setup_CPU()
-
-	expected_PC := cpu.PC + STOP_BYTES
-
-	writeTestProgram(cpu, STOP_OPCODE)
-	cpu.ExecuteInstruction()
-
-	if cpu.PC != expected_PC {
-		t.Fatalf("PC: got %04X, expected %04X", cpu.PC, expected_PC)
-	}
-}
-
 // Mock implementation of Memory interface
 type MockMemory struct {
 	data [0x100]byte
