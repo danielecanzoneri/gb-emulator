@@ -576,6 +576,9 @@ func (cpu *CPU) ExecuteInstruction() {
 	// EI
 	case EI_OPCODE:
 		cpu.EI()
+	// PREFIX
+	case PREFIX_OPCODE:
+		cpu.prefixedOpcode()
 	default:
 		fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 	}
@@ -585,6 +588,80 @@ func (cpu *CPU) ExecuteInstruction() {
 	} else {
 		cpu.cycles += OPCODES_CYCLES[opcode]
 	}
+}
+
+func (cpu *CPU) prefixedOpcode() {
+	cpu.branched = false
+
+	opcode := cpu.ReadNextByte()
+	switch opcode & 0b11111000 {
+	case RLC_R8_OPCODE:
+		cpu.RLC_R8(opcode)
+	case RRC_R8_OPCODE:
+		cpu.RRC_R8(opcode)
+	case RL_R8_OPCODE:
+		cpu.RL_R8(opcode)
+	case RR_R8_OPCODE:
+		cpu.RR_R8(opcode)
+	case SLA_R8_OPCODE:
+		cpu.SLA_R8(opcode)
+	case SRA_R8_OPCODE:
+		cpu.SRA_R8(opcode)
+	case SWAP_R8_OPCODE:
+		cpu.SWAP_R8(opcode)
+	case SRL_R8_OPCODE:
+		cpu.SRL_R8(opcode)
+	case BIT_0_R8_OPCODE:
+		cpu.BIT_B3_R8(0, opcode)
+	case BIT_1_R8_OPCODE:
+		cpu.BIT_B3_R8(1, opcode)
+	case BIT_2_R8_OPCODE:
+		cpu.BIT_B3_R8(2, opcode)
+	case BIT_3_R8_OPCODE:
+		cpu.BIT_B3_R8(3, opcode)
+	case BIT_4_R8_OPCODE:
+		cpu.BIT_B3_R8(4, opcode)
+	case BIT_5_R8_OPCODE:
+		cpu.BIT_B3_R8(5, opcode)
+	case BIT_6_R8_OPCODE:
+		cpu.BIT_B3_R8(6, opcode)
+	case BIT_7_R8_OPCODE:
+		cpu.BIT_B3_R8(7, opcode)
+	case RES_0_R8_OPCODE:
+		cpu.RES_B3_R8(0, opcode)
+	case RES_1_R8_OPCODE:
+		cpu.RES_B3_R8(1, opcode)
+	case RES_2_R8_OPCODE:
+		cpu.RES_B3_R8(2, opcode)
+	case RES_3_R8_OPCODE:
+		cpu.RES_B3_R8(3, opcode)
+	case RES_4_R8_OPCODE:
+		cpu.RES_B3_R8(4, opcode)
+	case RES_5_R8_OPCODE:
+		cpu.RES_B3_R8(5, opcode)
+	case RES_6_R8_OPCODE:
+		cpu.RES_B3_R8(6, opcode)
+	case RES_7_R8_OPCODE:
+		cpu.RES_B3_R8(7, opcode)
+	case SET_0_R8_OPCODE:
+		cpu.SET_B3_R8(0, opcode)
+	case SET_1_R8_OPCODE:
+		cpu.SET_B3_R8(1, opcode)
+	case SET_2_R8_OPCODE:
+		cpu.SET_B3_R8(2, opcode)
+	case SET_3_R8_OPCODE:
+		cpu.SET_B3_R8(3, opcode)
+	case SET_4_R8_OPCODE:
+		cpu.SET_B3_R8(4, opcode)
+	case SET_5_R8_OPCODE:
+		cpu.SET_B3_R8(5, opcode)
+	case SET_6_R8_OPCODE:
+		cpu.SET_B3_R8(6, opcode)
+	case SET_7_R8_OPCODE:
+		cpu.SET_B3_R8(7, opcode)
+	}
+
+	cpu.cycles += PREFIX_OPCODES_CYCLES[opcode]
 }
 
 func (cpu *CPU) ReadNextByte() uint8 {

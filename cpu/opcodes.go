@@ -1079,3 +1079,168 @@ func (cpu *CPU) DI() {
 // EI
 func (cpu *CPU) EI() {
 }
+
+func (cpu *CPU) readR8(opcode uint8) uint8 {
+	switch opcode & 0x07 {
+	case 0:
+		return cpu.B
+	case 1:
+		return cpu.C
+	case 2:
+		return cpu.D
+	case 3:
+		return cpu.E
+	case 4:
+		return cpu.H
+	case 5:
+		return cpu.L
+	case 6:
+		return cpu.Mem.Read(cpu.readHL())
+	case 7:
+		return cpu.A
+	}
+	return 0xFF
+}
+func (cpu *CPU) writeR8(opcode uint8, value uint8) {
+	switch opcode & 0x07 {
+	case 0:
+		cpu.B = value
+	case 1:
+		cpu.C = value
+	case 2:
+		cpu.D = value
+	case 3:
+		cpu.E = value
+	case 4:
+		cpu.H = value
+	case 5:
+		cpu.L = value
+	case 6:
+		cpu.Mem.Write(cpu.readHL(), value)
+	case 7:
+		cpu.A = value
+	}
+}
+
+// RLC R8
+func (cpu *CPU) RLC_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 >> 7
+	new_r8 := (r8 << 1) | C_flag
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// RRC R8
+func (cpu *CPU) RRC_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 & 1
+	new_r8 := (r8 >> 1) | (C_flag << 7)
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// RL R8
+func (cpu *CPU) RL_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 >> 7
+	new_r8 := (r8 << 1) | cpu.readCFlag()
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// RR R8
+func (cpu *CPU) RR_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 & 1
+	new_r8 := (r8 >> 1) | (cpu.readCFlag() << 7)
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// SLA R8
+func (cpu *CPU) SLA_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 >> 7
+	new_r8 := r8 << 1
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// SRA R8
+func (cpu *CPU) SRA_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 & 1
+	new_r8 := (r8 >> 1) | (r8 & 0x80)
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// SWAP R8
+func (cpu *CPU) SWAP_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	new_r8 := ((r8 & 0x0F) << 4) | ((r8 & 0xF0) >> 4)
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(0)
+	cpu.writeR8(opcode, new_r8)
+}
+
+// SRL R8
+func (cpu *CPU) SRL_R8(opcode uint8) {
+	r8 := cpu.readR8(opcode)
+	C_flag := r8 & 1
+	new_r8 := r8 >> 1
+
+	cpu.setZFlag(isByteZeroUint8(new_r8))
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
+	cpu.setCFlag(C_flag)
+	cpu.writeR8(opcode, new_r8)
+}
+
+func (cpu *CPU) BIT_B3_R8(bit uint8, opcode uint8) {
+	isSet := readBit(cpu.readR8(opcode), bit)
+
+	cpu.setZFlag(1 - isSet)
+	cpu.setNFlag(0)
+	cpu.setHFlag(1)
+}
+
+func (cpu *CPU) RES_B3_R8(bit uint8, opcode uint8) {
+	b := cpu.readR8(opcode)
+	setBit(&b, bit, 0)
+	cpu.writeR8(opcode, b)
+}
+
+func (cpu *CPU) SET_B3_R8(bit uint8, opcode uint8) {
+	b := cpu.readR8(opcode)
+	setBit(&b, bit, 1)
+	cpu.writeR8(opcode, b)
+}
