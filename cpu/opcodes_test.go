@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"math/rand"
+	"strconv"
 	"testing"
 )
 
@@ -1884,6 +1885,481 @@ func Test_CP_A_N8(t *testing.T) {
 	}
 }
 
+func Test_POP_R16STK(t *testing.T) {
+	cpu := setup_CPU()
+
+	t.Run("BC", func(t *testing.T) {
+		addr := uint16(0x4321)
+		expected_BC := addr
+		expected_SP := cpu.SP
+
+		// Write stack pointer
+		cpu.SP -= 2
+		cpu.Mem.WriteWord(cpu.SP, addr)
+
+		writeTestProgram(cpu, POP_BC_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.readBC() != uint16(expected_BC) {
+			t.Errorf("got PC=%04X, expected %04X", cpu.readBC(), expected_BC)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("DE", func(t *testing.T) {
+		addr := uint16(0x1234)
+		expected_DE := addr
+		expected_SP := cpu.SP
+
+		// Write stack pointer
+		cpu.SP -= 2
+		cpu.Mem.WriteWord(cpu.SP, addr)
+
+		writeTestProgram(cpu, POP_DE_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.readDE() != uint16(expected_DE) {
+			t.Errorf("got PC=%04X, expected %04X", cpu.readDE(), expected_DE)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("HL", func(t *testing.T) {
+		addr := uint16(0x1111)
+		expected_HL := addr
+		expected_SP := cpu.SP
+
+		// Write stack pointer
+		cpu.SP -= 2
+		cpu.Mem.WriteWord(cpu.SP, addr)
+
+		writeTestProgram(cpu, POP_HL_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.readHL() != uint16(expected_HL) {
+			t.Errorf("got PC=%04X, expected %04X", cpu.readHL(), expected_HL)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("AF", func(t *testing.T) {
+		addr := uint16(0x2222)
+		expected_AF := addr
+		expected_SP := cpu.SP
+
+		// Write stack pointer
+		cpu.SP -= 2
+		cpu.Mem.WriteWord(cpu.SP, addr)
+
+		writeTestProgram(cpu, POP_AF_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.readAF() != uint16(expected_AF) {
+			t.Errorf("got PC=%04X, expected %04X", cpu.readAF(), expected_AF)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+
+		// Test registers
+		got, expected := cpu.readZFlag(), readBit(uint8(addr), Z_FLAG_BIT)
+		if got != expected {
+			t.Errorf("Z flag: got %x, expected %x", got, expected)
+		}
+		got, expected = cpu.readNFlag(), readBit(uint8(addr), N_FLAG_BIT)
+		if got != expected {
+			t.Errorf("N flag: got %x, expected %x", got, expected)
+		}
+		got, expected = cpu.readHFlag(), readBit(uint8(addr), H_FLAG_BIT)
+		if got != expected {
+			t.Errorf("H flag: got %x, expected %x", got, expected)
+		}
+		got, expected = cpu.readCFlag(), readBit(uint8(addr), C_FLAG_BIT)
+		if got != expected {
+			t.Errorf("C flag: got %x, expected %x", got, expected)
+		}
+	})
+}
+
+func Test_PUSH_R16STK(t *testing.T) {
+	cpu := setup_CPU()
+
+	t.Run("BC", func(t *testing.T) {
+		addr := uint16(0x4321)
+		expected_SP := cpu.SP - 2
+		cpu.writeBC(addr)
+
+		writeTestProgram(cpu, PUSH_BC_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.Mem.ReadWord(cpu.SP) != addr {
+			t.Errorf("got [SP]=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), addr)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("DE", func(t *testing.T) {
+		addr := uint16(0x1234)
+		expected_SP := cpu.SP - 2
+		cpu.writeDE(addr)
+
+		writeTestProgram(cpu, PUSH_DE_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.Mem.ReadWord(cpu.SP) != addr {
+			t.Errorf("got [SP]=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), addr)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("HL", func(t *testing.T) {
+		addr := uint16(0x1111)
+		expected_SP := cpu.SP - 2
+		cpu.writeHL(addr)
+
+		writeTestProgram(cpu, PUSH_HL_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.Mem.ReadWord(cpu.SP) != addr {
+			t.Errorf("got [SP]=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), addr)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+
+	t.Run("AF", func(t *testing.T) {
+		addr := uint16(0x2222)
+		expected_SP := cpu.SP - 2
+		cpu.writeAF(addr)
+
+		writeTestProgram(cpu, PUSH_AF_OPCODE)
+		cpu.ExecuteInstruction()
+
+		if cpu.Mem.ReadWord(cpu.SP) != addr {
+			t.Errorf("got [SP]=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), addr)
+		}
+		if cpu.SP != uint16(expected_SP) {
+			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		}
+	})
+}
+
+func Test_RET_COND(t *testing.T) {
+	cpu := setup_CPU()
+
+	// Prepare flags for each condition
+	bool_to_int := map[bool]uint8{false: 0, true: 1}
+	conditions := map[string]func(bool){
+		"Z":  func(cc bool) { cpu.setZFlag(bool_to_int[cc]) },
+		"NZ": func(cc bool) { cpu.setZFlag(bool_to_int[!cc]) },
+		"C":  func(cc bool) { cpu.setCFlag(bool_to_int[cc]) },
+		"NC": func(cc bool) { cpu.setCFlag(bool_to_int[!cc]) },
+	}
+	opcodes := map[string]uint8{
+		"Z":  RET_Z_OPCODE,
+		"NZ": RET_NZ_OPCODE,
+		"C":  RET_C_OPCODE,
+		"NC": RET_NC_OPCODE,
+	}
+
+	for cond, set_flag := range conditions {
+		addr := uint16(rand.Intn(0x10000))
+		// Write stack pointer
+		cpu.SP -= 2
+		cpu.Mem.WriteWord(cpu.SP, addr)
+
+		t.Run(cond+"_unmet", func(t *testing.T) {
+			set_flag(false)
+
+			expected_PC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
+			expected_cycles := cpu.cycles + OPCODES_CYCLES[opcodes[cond]]
+			expected_SP := cpu.SP
+
+			writeTestProgram(cpu, opcodes[cond])
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.SP != uint16(expected_SP) {
+				t.Errorf("unmet: got SP=%04X, expected %04X", cpu.SP, expected_SP)
+			}
+			if cpu.cycles != expected_cycles {
+				t.Errorf("unmet: got cycles=%v, expected %v", cpu.cycles, expected_cycles)
+			}
+		})
+
+		t.Run(cond+"_met", func(t *testing.T) {
+			set_flag(true)
+
+			expected_PC := addr
+			expected_cycles := cpu.cycles + OPCODES_CYCLES_BRANCH[opcodes[cond]]
+			expected_SP := cpu.SP + 2
+
+			writeTestProgram(cpu, opcodes[cond])
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.SP != uint16(expected_SP) {
+				t.Errorf("met: got SP=%04X, expected %04X", cpu.SP, expected_SP)
+			}
+			if cpu.cycles != expected_cycles {
+				t.Errorf("met: got cycles=%v, expected %v", cpu.cycles, expected_cycles)
+			}
+		})
+	}
+}
+
+func Test_RET(t *testing.T) {
+	cpu := setup_CPU()
+
+	addr := uint16(0x4321)
+	expected_PC := addr
+	expected_SP := cpu.SP
+
+	// Write stack pointer
+	cpu.SP -= 2
+	cpu.Mem.WriteWord(cpu.SP, addr)
+
+	writeTestProgram(cpu, RET_OPCODE)
+	cpu.ExecuteInstruction()
+
+	if cpu.PC != uint16(expected_PC) {
+		t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+	}
+	if cpu.SP != uint16(expected_SP) {
+		t.Errorf("unmet: got SP=%04X, expected %04X", cpu.SP, expected_SP)
+	}
+}
+
+func Test_RETI(t *testing.T) {
+	t.Fatal("TODO")
+}
+
+func Test_JP_COND_N16(t *testing.T) {
+	cpu := setup_CPU()
+
+	// Prepare flags for each condition
+	bool_to_int := map[bool]uint8{false: 0, true: 1}
+	conditions := map[string]func(bool){
+		"Z":  func(cc bool) { cpu.setZFlag(bool_to_int[cc]) },
+		"NZ": func(cc bool) { cpu.setZFlag(bool_to_int[!cc]) },
+		"C":  func(cc bool) { cpu.setCFlag(bool_to_int[cc]) },
+		"NC": func(cc bool) { cpu.setCFlag(bool_to_int[!cc]) },
+	}
+	opcodes := map[string]uint8{
+		"Z":  JP_Z_N16_OPCODE,
+		"NZ": JP_NZ_N16_OPCODE,
+		"C":  JP_C_N16_OPCODE,
+		"NC": JP_NC_N16_OPCODE,
+	}
+
+	for cond, set_flag := range conditions {
+		addr := uint16(rand.Intn(0x10000))
+
+		t.Run(cond+"_unmet", func(t *testing.T) {
+			set_flag(false)
+
+			expected_PC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
+			expected_cycles := cpu.cycles + OPCODES_CYCLES[opcodes[cond]]
+
+			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.cycles != expected_cycles {
+				t.Errorf("unmet: got cycles=%v, expected %v", cpu.cycles, expected_cycles)
+			}
+		})
+
+		t.Run(cond+"_met", func(t *testing.T) {
+			set_flag(true)
+
+			expected_PC := addr
+			expected_cycles := cpu.cycles + OPCODES_CYCLES_BRANCH[opcodes[cond]]
+
+			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.cycles != expected_cycles {
+				t.Errorf("met: got cycles=%v, expected %v", cpu.cycles, expected_cycles)
+			}
+		})
+	}
+}
+
+func Test_JP_N16(t *testing.T) {
+	cpu := setup_CPU()
+
+	addr := uint16(rand.Intn(0x10000))
+
+	expected_PC := addr
+
+	writeTestProgram(cpu, JP_N16_OPCODE, uint8(addr), uint8(addr>>8))
+	cpu.ExecuteInstruction()
+
+	if cpu.PC != uint16(expected_PC) {
+		t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+	}
+}
+
+func Test_JP_HL(t *testing.T) {
+	cpu := setup_CPU()
+
+	addr := uint16(rand.Intn(0x10000))
+
+	expected_PC := addr
+
+	writeTestProgram(cpu, JP_HL_OPCODE)
+	cpu.writeHL(addr)
+	cpu.ExecuteInstruction()
+
+	if cpu.PC != uint16(expected_PC) {
+		t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+	}
+}
+
+func Test_CALL_COND_N16(t *testing.T) {
+	cpu := setup_CPU()
+
+	// Prepare flags for each condition
+	bool_to_int := map[bool]uint8{false: 0, true: 1}
+	conditions := map[string]func(bool){
+		"Z":  func(cc bool) { cpu.setZFlag(bool_to_int[cc]) },
+		"NZ": func(cc bool) { cpu.setZFlag(bool_to_int[!cc]) },
+		"C":  func(cc bool) { cpu.setCFlag(bool_to_int[cc]) },
+		"NC": func(cc bool) { cpu.setCFlag(bool_to_int[!cc]) },
+	}
+	opcodes := map[string]uint8{
+		"Z":  CALL_Z_N16_OPCODE,
+		"NZ": CALL_NZ_N16_OPCODE,
+		"C":  CALL_C_N16_OPCODE,
+		"NC": CALL_NC_N16_OPCODE,
+	}
+
+	for cond, set_flag := range conditions {
+		addr := uint16(rand.Intn(0x10000))
+
+		t.Run(cond+"_unmet", func(t *testing.T) {
+			set_flag(false)
+
+			expected_PC := cpu.PC + uint16(OPCODES_BYTES[opcodes[cond]])
+			expected_SP := cpu.SP
+			expected_stack := cpu.Mem.ReadWord(cpu.SP)
+
+			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.SP != uint16(expected_SP) {
+				t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+			}
+			if cpu.Mem.ReadWord(cpu.SP) != uint16(expected_stack) {
+				t.Errorf("got stack=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), expected_stack)
+			}
+		})
+
+		t.Run(cond+"_met", func(t *testing.T) {
+			set_flag(true)
+
+			expected_PC := addr
+			expected_SP := cpu.SP - 2
+			expected_stack := cpu.PC + uint16(OPCODES_BYTES[opcodes[cond]])
+
+			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.SP != uint16(expected_SP) {
+				t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+			}
+			if cpu.Mem.ReadWord(cpu.SP) != uint16(expected_stack) {
+				t.Errorf("got stack=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), expected_stack)
+			}
+		})
+	}
+}
+
+func Test_CALL_N16(t *testing.T) {
+	cpu := setup_CPU()
+
+	addr := uint16(rand.Intn(0x10000))
+
+	expected_PC := addr
+	expected_SP := cpu.SP - 2
+	expected_stack := cpu.PC + uint16(OPCODES_BYTES[CALL_N16_OPCODE])
+
+	writeTestProgram(cpu, CALL_N16_OPCODE, uint8(addr), uint8(addr>>8))
+	cpu.ExecuteInstruction()
+
+	if cpu.PC != uint16(expected_PC) {
+		t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+	}
+	if cpu.SP != uint16(expected_SP) {
+		t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+	}
+	if cpu.Mem.ReadWord(cpu.SP) != uint16(expected_stack) {
+		t.Errorf("got stack=%04X, expected %04X", cpu.Mem.ReadWord(cpu.SP), expected_stack)
+	}
+}
+
+func Test_TST_VEC_N16(t *testing.T) {
+	cpu := setup_CPU()
+
+	opcodes := map[string]uint8{
+		"00": RST_00_OPCODE,
+		"08": RST_08_OPCODE,
+		"10": RST_10_OPCODE,
+		"18": RST_18_OPCODE,
+		"20": RST_20_OPCODE,
+		"28": RST_28_OPCODE,
+		"30": RST_30_OPCODE,
+		"38": RST_38_OPCODE,
+	}
+
+	for vec, opcode := range opcodes {
+		addr64, _ := strconv.ParseUint(vec, 16, 8)
+		addr := uint8(addr64)
+
+		t.Run(vec, func(t *testing.T) {
+			expected_PC := addr
+			expected_SP := cpu.SP - 2
+
+			writeTestProgram(cpu, opcode)
+			cpu.ExecuteInstruction()
+
+			if cpu.PC != uint16(expected_PC) {
+				t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+			}
+			if cpu.SP != uint16(expected_SP) {
+				t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+			}
+		})
+	}
+}
+
 // Mock implementation of Memory interface
 type MockMemory struct {
 	data [0x10000]byte
@@ -1904,7 +2380,7 @@ func (m *MockMemory) WriteWord(addr uint16, value uint16) {
 }
 
 func setup_CPU() *CPU {
-	return &CPU{Mem: &MockMemory{}}
+	return &CPU{SP: 0xFFFE, Mem: &MockMemory{}}
 }
 
 func writeTestProgram(cpu *CPU, data ...byte) {

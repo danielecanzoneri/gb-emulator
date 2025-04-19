@@ -466,6 +466,83 @@ func (cpu *CPU) ExecuteInstruction() {
 	// CP A R8
 	case CP_A_N8_OPCODE:
 		cpu.CP_A_N8()
+	// POP R16STK
+	case POP_BC_OPCODE:
+		cpu.POP_BC()
+	case POP_DE_OPCODE:
+		cpu.POP_DE()
+	case POP_HL_OPCODE:
+		cpu.POP_HL()
+	case POP_AF_OPCODE:
+		cpu.POP_AF()
+	// PUSH R16STK
+	case PUSH_BC_OPCODE:
+		cpu.PUSH_BC()
+	case PUSH_DE_OPCODE:
+		cpu.PUSH_DE()
+	case PUSH_HL_OPCODE:
+		cpu.PUSH_HL()
+	case PUSH_AF_OPCODE:
+		cpu.PUSH_AF()
+	// RET COND
+	case RET_NZ_OPCODE:
+		cpu.RET_NZ()
+	case RET_Z_OPCODE:
+		cpu.RET_Z()
+	case RET_NC_OPCODE:
+		cpu.RET_NC()
+	case RET_C_OPCODE:
+		cpu.RET_C()
+	// RET
+	case RET_OPCODE:
+		cpu.RET()
+	// RETI
+	case RETI_OPCODE:
+		cpu.RETI()
+	// JP COND N16
+	case JP_NZ_N16_OPCODE:
+		cpu.JP_NZ_N16()
+	case JP_Z_N16_OPCODE:
+		cpu.JP_Z_N16()
+	case JP_NC_N16_OPCODE:
+		cpu.JP_NC_N16()
+	case JP_C_N16_OPCODE:
+		cpu.JP_C_N16()
+	// JP N16
+	case JP_N16_OPCODE:
+		cpu.JP_N16()
+	// JP HL
+	case JP_HL_OPCODE:
+		cpu.JP_HL()
+	// CALL COND N16
+	case CALL_NZ_N16_OPCODE:
+		cpu.CALL_NZ_N16()
+	case CALL_Z_N16_OPCODE:
+		cpu.CALL_Z_N16()
+	case CALL_NC_N16_OPCODE:
+		cpu.CALL_NC_N16()
+	case CALL_C_N16_OPCODE:
+		cpu.CALL_C_N16()
+	// CALL N16
+	case CALL_N16_OPCODE:
+		cpu.CALL_N16()
+	// RST VEC
+	case RST_00_OPCODE:
+		cpu.RST_00()
+	case RST_08_OPCODE:
+		cpu.RST_08()
+	case RST_10_OPCODE:
+		cpu.RST_10()
+	case RST_18_OPCODE:
+		cpu.RST_18()
+	case RST_20_OPCODE:
+		cpu.RST_20()
+	case RST_28_OPCODE:
+		cpu.RST_28()
+	case RST_30_OPCODE:
+		cpu.RST_30()
+	case RST_38_OPCODE:
+		cpu.RST_38()
 	default:
 		fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 	}

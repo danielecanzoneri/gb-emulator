@@ -832,3 +832,189 @@ func (cpu *CPU) CP_A_N8() {
 	n8 := cpu.ReadNextByte()
 	cpu.CP_A_R8(n8)
 }
+
+// POP R16STK
+func (cpu *CPU) POP_STACK() uint16 {
+	cpu.SP += 2
+	return cpu.Mem.ReadWord(cpu.SP - 2)
+}
+func (cpu *CPU) POP_BC() {
+	cpu.writeBC(cpu.POP_STACK())
+}
+func (cpu *CPU) POP_DE() {
+	cpu.writeDE(cpu.POP_STACK())
+}
+func (cpu *CPU) POP_HL() {
+	cpu.writeHL(cpu.POP_STACK())
+}
+func (cpu *CPU) POP_AF() {
+	cpu.writeAF(cpu.POP_STACK())
+}
+
+// PUSH R16STK
+func (cpu *CPU) PUSH_STACK(v uint16) {
+	cpu.SP -= 2
+	cpu.Mem.WriteWord(cpu.SP, v)
+}
+func (cpu *CPU) PUSH_BC() {
+	cpu.PUSH_STACK(cpu.readBC())
+}
+func (cpu *CPU) PUSH_DE() {
+	cpu.PUSH_STACK(cpu.readDE())
+}
+func (cpu *CPU) PUSH_HL() {
+	cpu.PUSH_STACK(cpu.readHL())
+}
+func (cpu *CPU) PUSH_AF() {
+	cpu.PUSH_STACK(cpu.readAF())
+}
+
+// RET COND
+func (cpu *CPU) RET_NZ() {
+	if cpu.readZFlag() == 0 {
+		cpu.branched = true
+
+		cpu.PC = cpu.POP_STACK()
+	}
+}
+func (cpu *CPU) RET_Z() {
+	if cpu.readZFlag() == 1 {
+		cpu.branched = true
+
+		cpu.PC = cpu.POP_STACK()
+	}
+}
+func (cpu *CPU) RET_NC() {
+	if cpu.readCFlag() == 0 {
+		cpu.branched = true
+
+		cpu.PC = cpu.POP_STACK()
+	}
+}
+func (cpu *CPU) RET_C() {
+	if cpu.readCFlag() == 1 {
+		cpu.branched = true
+
+		cpu.PC = cpu.POP_STACK()
+	}
+}
+
+// RET
+func (cpu *CPU) RET() {
+	cpu.PC = cpu.POP_STACK()
+}
+
+// RETI
+func (cpu *CPU) RETI() {
+}
+
+// JP COND
+func (cpu *CPU) JP_NZ_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readZFlag() == 0 {
+		cpu.branched = true
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) JP_Z_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readZFlag() == 1 {
+		cpu.branched = true
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) JP_NC_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readCFlag() == 0 {
+		cpu.branched = true
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) JP_C_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readCFlag() == 1 {
+		cpu.branched = true
+		cpu.PC = addr
+	}
+}
+
+// JP N16
+func (cpu *CPU) JP_N16() {
+	cpu.PC = cpu.ReadNextWord()
+}
+
+// JP N16
+func (cpu *CPU) JP_HL() {
+	cpu.PC = cpu.readHL()
+}
+
+// CALL COND N16
+func (cpu *CPU) CALL_NZ_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readZFlag() == 0 {
+		cpu.PUSH_STACK(cpu.PC)
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) CALL_Z_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readZFlag() == 1 {
+		cpu.PUSH_STACK(cpu.PC)
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) CALL_NC_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readCFlag() == 0 {
+		cpu.PUSH_STACK(cpu.PC)
+		cpu.PC = addr
+	}
+}
+func (cpu *CPU) CALL_C_N16() {
+	addr := cpu.ReadNextWord()
+	if cpu.readCFlag() == 1 {
+		cpu.PUSH_STACK(cpu.PC)
+		cpu.PC = addr
+	}
+}
+
+// CALL N16
+func (cpu *CPU) CALL_N16() {
+	addr := cpu.ReadNextWord()
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = addr
+}
+
+// RST VEC
+func (cpu *CPU) RST_00() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x00
+}
+func (cpu *CPU) RST_08() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x08
+}
+func (cpu *CPU) RST_10() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x10
+}
+func (cpu *CPU) RST_18() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x18
+}
+func (cpu *CPU) RST_20() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x20
+}
+func (cpu *CPU) RST_28() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x28
+}
+func (cpu *CPU) RST_30() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x30
+}
+func (cpu *CPU) RST_38() {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = 0x38
+}
