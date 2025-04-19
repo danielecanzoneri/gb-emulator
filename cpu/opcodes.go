@@ -1018,3 +1018,64 @@ func (cpu *CPU) RST_38() {
 	cpu.PUSH_STACK(cpu.PC)
 	cpu.PC = 0x38
 }
+
+// LDH_C_A
+func (cpu *CPU) LDH_C_A() {
+	cpu.Mem.Write(0xFF00+uint16(cpu.C), cpu.A)
+}
+func (cpu *CPU) LDH_A_C() {
+	cpu.A = cpu.Mem.Read(0xFF00 + uint16(cpu.C))
+}
+
+// LDH_N8_A
+func (cpu *CPU) LDH_N8_A() {
+	offset := cpu.ReadNextByte()
+	cpu.Mem.Write(0xFF00+uint16(offset), cpu.A)
+}
+func (cpu *CPU) LDH_A_N8() {
+	offset := cpu.ReadNextByte()
+	cpu.A = cpu.Mem.Read(0xFF00 + uint16(offset))
+}
+
+// LDH_N8_A
+func (cpu *CPU) LD_N16_A() {
+	addr := cpu.ReadNextWord()
+	cpu.Mem.Write(addr, cpu.A)
+}
+func (cpu *CPU) LD_A_N16() {
+	addr := cpu.ReadNextWord()
+	cpu.A = cpu.Mem.Read(addr)
+}
+
+// ADD SP E8
+func (cpu *CPU) SUM_SP_E8() uint16 {
+	e8 := cpu.ReadNextByte()
+	_, carry, halfCarry := sumBytesWithCarry(uint8(cpu.SP), e8)
+	cpu.setZFlag(0)
+	cpu.setNFlag(0)
+	cpu.setHFlag(halfCarry)
+	cpu.setCFlag(carry)
+	return uint16(int(cpu.SP) + int(int8(e8)))
+}
+func (cpu *CPU) ADD_SP_E8() {
+	cpu.SP = cpu.SUM_SP_E8()
+}
+
+// LD HL SP+E8
+func (cpu *CPU) LD_HL_SP_E8() {
+	sum := cpu.SUM_SP_E8()
+	cpu.writeHL(sum)
+}
+
+// LD SP HL
+func (cpu *CPU) LD_SP_HL() {
+	cpu.SP = cpu.readHL()
+}
+
+// DI
+func (cpu *CPU) DI() {
+}
+
+// EI
+func (cpu *CPU) EI() {
+}

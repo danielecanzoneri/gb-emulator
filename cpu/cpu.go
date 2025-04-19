@@ -543,6 +543,39 @@ func (cpu *CPU) ExecuteInstruction() {
 		cpu.RST_30()
 	case RST_38_OPCODE:
 		cpu.RST_38()
+	// LDH C A
+	case LDH_C_A_OPCODE:
+		cpu.LDH_C_A()
+	// LDH A C
+	case LDH_A_C_OPCODE:
+		cpu.LDH_A_C()
+	// LDH N _A
+	case LDH_N8_A_OPCODE:
+		cpu.LDH_N8_A()
+	// LDH A N8
+	case LDH_A_N8_OPCODE:
+		cpu.LDH_A_N8()
+	// LD N16 A
+	case LD_N16_A_OPCODE:
+		cpu.LD_N16_A()
+	// LD A N16
+	case LD_A_N16_OPCODE:
+		cpu.LD_A_N16()
+	// ADD SP E8
+	case ADD_SP_E8_OPCODE:
+		cpu.ADD_SP_E8()
+	// LD HL SP+E8
+	case LD_HL_SP_E8_OPCODE:
+		cpu.LD_HL_SP_E8()
+	// LD SP HL
+	case LD_SP_HL_OPCODE:
+		cpu.LD_SP_HL()
+	// DI
+	case DI_OPCODE:
+		cpu.DI()
+	// EI
+	case EI_OPCODE:
+		cpu.EI()
 	default:
 		fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 	}

@@ -2360,6 +2360,187 @@ func Test_TST_VEC_N16(t *testing.T) {
 	}
 }
 
+func Test_LDH_C_A(t *testing.T) {
+	cpu := setup_CPU()
+	var A, C uint8 = 0xD1, 0x12
+
+	cpu.A = A
+	cpu.C = C
+	writeTestProgram(cpu, LDH_C_A_OPCODE)
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.Mem.Read(0xFF00+uint16(cpu.C)), A
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_LDH_A_C(t *testing.T) {
+	cpu := setup_CPU()
+	var value, C uint8 = 0xD1, 0x12
+
+	cpu.Mem.Write(0xFF00+uint16(C), value)
+	cpu.C = C
+	writeTestProgram(cpu, LDH_A_C_OPCODE)
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.A, value
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_LDH_N8_A(t *testing.T) {
+	cpu := setup_CPU()
+	var A, offset uint8 = 0xD1, 0x12
+
+	cpu.A = A
+	writeTestProgram(cpu, LDH_N8_A_OPCODE, offset)
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.Mem.Read(0xFF00+uint16(offset)), A
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_LDH_A_N8(t *testing.T) {
+	cpu := setup_CPU()
+	var value, offset uint8 = 0xD1, 0x12
+
+	cpu.Mem.Write(0xFF00+uint16(offset), value)
+	writeTestProgram(cpu, LDH_A_N8_OPCODE, offset)
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.A, value
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_LD_N16_A(t *testing.T) {
+	cpu := setup_CPU()
+	var A uint8 = 0xD1
+	var addr uint16 = 0xABCD
+
+	cpu.A = A
+	writeTestProgram(cpu, LD_N16_A_OPCODE, uint8(addr), uint8(addr>>8))
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.Mem.Read(addr), A
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_LD_A_N16(t *testing.T) {
+	cpu := setup_CPU()
+	var value uint8 = 0xD1
+	var addr uint16 = 0xDCBA
+
+	cpu.Mem.Write(addr, value)
+	writeTestProgram(cpu, LD_A_N16_OPCODE, uint8(addr), uint8(addr>>8))
+	cpu.ExecuteInstruction()
+
+	got, expected := cpu.A, value
+	if got != expected {
+		t.Fatalf("got %02X, expected %02X", got, expected)
+	}
+}
+
+func Test_ADD_SP_E8(t *testing.T) {
+	cpu := setup_CPU()
+
+	tests := map[string]struct {
+		SP    uint16
+		e8    int8
+		exp_H uint8
+		exp_C uint8
+	}{
+		"neg-with-carry":    {SP: 0xFFFE, e8: -1, exp_H: 1, exp_C: 1},
+		"neg-without-carry": {SP: 0xFF00, e8: -1, exp_H: 0, exp_C: 0},
+		"pos-with-carry":    {SP: 0xF0FF, e8: 0x0F, exp_H: 1, exp_C: 1},
+		"pos-without-carry": {SP: 0xFF00, e8: 0x0F, exp_H: 0, exp_C: 0},
+		"overflow":          {SP: 0xFFFF, e8: 1, exp_H: 1, exp_C: 1},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			cpu.SP = test.SP
+			writeTestProgram(cpu, ADD_SP_E8_OPCODE, uint8(test.e8))
+
+			cpu.ExecuteInstruction()
+			expected_SP := int(test.SP) + int(test.e8)
+			if cpu.SP != uint16(expected_SP) {
+				t.Fatalf("got %04X, expected %04X", cpu.SP, expected_SP)
+			}
+			if cpu.readZFlag() != 0 {
+				t.Fatalf("Z flag: got %x, expected %x", cpu.readZFlag(), 0)
+			}
+			if cpu.readNFlag() != 0 {
+				t.Fatalf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+			}
+			if cpu.readHFlag() != test.exp_H {
+				t.Fatalf("H flag: got %x, expected %x", cpu.readHFlag(), test.exp_H)
+			}
+			if cpu.readCFlag() != test.exp_C {
+				t.Fatalf("C flag: got %x, expected %x", cpu.readCFlag(), test.exp_C)
+			}
+		})
+	}
+}
+
+func Test_LD_HL_SP_E8(t *testing.T) {
+	cpu := setup_CPU()
+
+	var SP uint16 = 0xFFFE
+	var e8 int8 = -1
+	var exp_H, exp_C uint8 = 1, 1
+
+	cpu.SP = SP
+	writeTestProgram(cpu, LD_HL_SP_E8_OPCODE, uint8(e8))
+
+	cpu.ExecuteInstruction()
+	expected_HL := int(SP) + int(e8)
+	if cpu.readHL() != uint16(expected_HL) {
+		t.Fatalf("got %04X, expected %04X", cpu.readHL(), expected_HL)
+	}
+	if cpu.readZFlag() != 0 {
+		t.Fatalf("Z flag: got %x, expected %x", cpu.readZFlag(), 0)
+	}
+	if cpu.readNFlag() != 0 {
+		t.Fatalf("N flag: got %x, expected %x", cpu.readNFlag(), 0)
+	}
+	if cpu.readHFlag() != exp_H {
+		t.Fatalf("H flag: got %x, expected %x", cpu.readHFlag(), exp_H)
+	}
+	if cpu.readCFlag() != exp_C {
+		t.Fatalf("C flag: got %x, expected %x", cpu.readCFlag(), exp_C)
+	}
+}
+
+func Test_LD_SP_HL(t *testing.T) {
+	cpu := setup_CPU()
+
+	var HL uint16 = 0x4321
+
+	cpu.writeHL(HL)
+	writeTestProgram(cpu, LD_SP_HL_OPCODE)
+	cpu.ExecuteInstruction()
+
+	if cpu.SP != HL {
+		t.Fatalf("got %04X, expected %04X", cpu.SP, HL)
+	}
+}
+
+func Test_DI(t *testing.T) {
+	t.Fatal("TODO")
+}
+
+func Test_EI(t *testing.T) {
+	t.Fatal("TODO")
+}
+
 // Mock implementation of Memory interface
 type MockMemory struct {
 	data [0x10000]byte
