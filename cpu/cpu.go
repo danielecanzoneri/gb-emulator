@@ -42,6 +42,8 @@ func (cpu *CPU) ExecuteInstruction() {
 	}
 
 	opcode := cpu.ReadNextByte()
+	cpu.logState(opcode)
+
 	switch opcode {
 	// NOP
 	case NOP_OPCODE:
@@ -670,6 +672,19 @@ func (cpu *CPU) prefixedOpcode() {
 	}
 
 	cpu.cycles += PREFIX_OPCODES_CYCLES[opcode]
+}
+
+func (cpu *CPU) Reset() {
+	cpu.A = 0x01
+	cpu.F = 0xB0
+	cpu.B = 0x00
+	cpu.C = 0x13
+	cpu.D = 0x00
+	cpu.E = 0xD8
+	cpu.H = 0x01
+	cpu.L = 0x4D
+	cpu.SP = 0xFFFE
+	cpu.PC = 0x0100
 }
 
 func (cpu *CPU) ReadNextByte() uint8 {
