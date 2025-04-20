@@ -262,6 +262,7 @@ func Test_DEC_R16(t *testing.T) {
 
 func Test_ADD_HL_R16(t *testing.T) {
 	cpu := setup_CPU()
+	cpu.F = 0xFF // Set flags
 
 	type test_add struct {
 		hl    uint16

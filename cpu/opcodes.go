@@ -89,6 +89,7 @@ func (cpu *CPU) DEC_SP() {
 // ADD_HL_R16
 func (cpu *CPU) ADD_HL_R16(r16 uint16) {
 	sum, carry, half_carry := sumWordsWithCarry(cpu.readHL(), r16)
+	cpu.setNFlag(0)
 	cpu.setHFlag(half_carry)
 	cpu.setCFlag(carry)
 	cpu.writeHL(sum)
