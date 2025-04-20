@@ -631,6 +631,8 @@ func Test_LD_R8_N8(t *testing.T) {
 
 func Test_RLCA(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
 
 	tests := map[string]struct {
 		A     uint8
@@ -669,6 +671,8 @@ func Test_RLCA(t *testing.T) {
 
 func Test_RRCA(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
 
 	tests := map[string]struct {
 		A     uint8
@@ -707,6 +711,8 @@ func Test_RRCA(t *testing.T) {
 
 func Test_RLA(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
 
 	tests := map[string]struct {
 		A     uint8
@@ -749,6 +755,8 @@ func Test_RLA(t *testing.T) {
 
 func Test_RRA(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
 
 	tests := map[string]struct {
 		A     uint8
@@ -2547,6 +2555,9 @@ var R8_name = [8]string{"B", "C", "D", "E", "H", "L", "HLMEM", "A"}
 
 func Test_RLC_R8(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
+
 	r8_name := "B"
 	r8 := R8_offset[r8_name]
 
@@ -2589,6 +2600,9 @@ func Test_RLC_R8(t *testing.T) {
 
 func Test_RRC_R8(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
+
 	r8_name := "C"
 	r8 := R8_offset[r8_name]
 
@@ -2631,6 +2645,9 @@ func Test_RRC_R8(t *testing.T) {
 
 func Test_RL_R8(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
+
 	r8_name := "D"
 	r8 := R8_offset[r8_name]
 
@@ -2677,6 +2694,9 @@ func Test_RL_R8(t *testing.T) {
 
 func Test_RR_R8(t *testing.T) {
 	cpu := setup_CPU()
+	// Test flag reset
+	cpu.F = 0xFF
+
 	r8_name := "E"
 	r8 := R8_offset[r8_name]
 

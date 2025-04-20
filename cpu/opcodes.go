@@ -211,23 +211,35 @@ func (cpu *CPU) LD_A_N8() {
 func (cpu *CPU) RLCA() {
 	C_flag := cpu.A >> 7
 	cpu.A = (cpu.A << 1) | C_flag
+	cpu.setZFlag(0)
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
 	cpu.setCFlag(C_flag)
 }
 func (cpu *CPU) RRCA() {
 	C_flag := cpu.A & 0x01
 	cpu.A = (cpu.A >> 1) | (C_flag << 7)
+	cpu.setZFlag(0)
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
 	cpu.setCFlag(C_flag)
 }
 func (cpu *CPU) RLA() {
 	new_A := (cpu.A << 1) | cpu.readCFlag()
 	C_flag := cpu.A >> 7
 	cpu.A = new_A
+	cpu.setZFlag(0)
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
 	cpu.setCFlag(C_flag)
 }
 func (cpu *CPU) RRA() {
 	new_A := (cpu.A >> 1) | (cpu.readCFlag() << 7)
 	C_flag := cpu.A & 0x01
 	cpu.A = new_A
+	cpu.setZFlag(0)
+	cpu.setNFlag(0)
+	cpu.setHFlag(0)
 	cpu.setCFlag(C_flag)
 }
 
