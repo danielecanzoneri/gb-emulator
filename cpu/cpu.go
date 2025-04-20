@@ -13,6 +13,10 @@ type CPU struct {
 	SP uint16
 	PC uint16
 
+	// Interrupt Master Enable
+	IME        bool
+	_EIDelayed bool // Set to true when EI is executed, but not yet effective
+
 	// Clock cycles
 	cycles int
 
@@ -32,6 +36,8 @@ type Memory interface {
 
 func (cpu *CPU) ExecuteInstruction() {
 	cpu.branched = false
+
+	cpu.handleInterrupts()
 
 	opcode := cpu.ReadNextByte()
 	switch opcode {

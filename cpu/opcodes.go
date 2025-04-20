@@ -919,6 +919,8 @@ func (cpu *CPU) RET() {
 
 // RETI
 func (cpu *CPU) RETI() {
+	cpu.PC = cpu.POP_STACK()
+	cpu.IME = true
 }
 
 // JP COND
@@ -1087,10 +1089,12 @@ func (cpu *CPU) LD_SP_HL() {
 
 // DI
 func (cpu *CPU) DI() {
+	cpu.IME = false
 }
 
 // EI
 func (cpu *CPU) EI() {
+	cpu._EIDelayed = true
 }
 
 func (cpu *CPU) readR8(opcode uint8) uint8 {

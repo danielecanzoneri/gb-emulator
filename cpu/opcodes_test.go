@@ -2148,15 +2148,37 @@ func Test_RET(t *testing.T) {
 	cpu.ExecuteInstruction()
 
 	if cpu.PC != uint16(expected_PC) {
-		t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expected_PC)
+		t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
 	}
 	if cpu.SP != uint16(expected_SP) {
-		t.Errorf("unmet: got SP=%04X, expected %04X", cpu.SP, expected_SP)
+		t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
 	}
 }
 
 func Test_RETI(t *testing.T) {
-	t.Fatal("TODO")
+	cpu := setup_CPU()
+	cpu.IME = false
+
+	addr := uint16(0x4321)
+	expected_PC := addr
+	expected_SP := cpu.SP
+
+	// Write stack pointer
+	cpu.SP -= 2
+	cpu.Mem.WriteWord(cpu.SP, addr)
+
+	writeTestProgram(cpu, RETI_OPCODE)
+	cpu.ExecuteInstruction()
+
+	if cpu.PC != uint16(expected_PC) {
+		t.Errorf("got PC=%04X, expected %04X", cpu.PC, expected_PC)
+	}
+	if cpu.SP != uint16(expected_SP) {
+		t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
+	}
+	if cpu.IME != true {
+		t.Error("Interrupts not enabled")
+	}
 }
 
 func Test_JP_COND_N16(t *testing.T) {
@@ -2544,11 +2566,32 @@ func Test_LD_SP_HL(t *testing.T) {
 }
 
 func Test_DI(t *testing.T) {
-	t.Fatal("TODO")
+	cpu := setup_CPU()
+	cpu.IME = true
+
+	writeTestProgram(cpu, DI_OPCODE)
+
+	cpu.ExecuteInstruction()
+	if cpu.IME == true {
+		t.Fatal("IME was not set to false")
+	}
 }
 
 func Test_EI(t *testing.T) {
-	t.Fatal("TODO")
+	cpu := setup_CPU()
+	cpu.IME = false
+
+	writeTestProgram(cpu, EI_OPCODE, NOP_OPCODE)
+
+	cpu.ExecuteInstruction()
+	if cpu.IME == true {
+		t.Error("EI instruction was not delayed")
+	}
+
+	cpu.ExecuteInstruction()
+	if cpu.IME == false {
+		t.Fatal("IME was not set")
+	}
 }
 
 var R8_offset = map[string]uint8{"B": 0, "C": 1, "D": 2, "E": 3, "H": 4, "L": 5, "HLMEM": 6, "A": 7}
