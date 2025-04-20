@@ -6,16 +6,16 @@ func (cpu *CPU) NOP() {
 
 // LD_R16_N16
 func (cpu *CPU) LD_BC_N16() {
-	cpu.C = cpu.ReadNextByte()
-	cpu.B = cpu.ReadNextByte()
+	cpu.writeC(cpu.ReadNextByte())
+	cpu.writeB(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_DE_N16() {
-	cpu.E = cpu.ReadNextByte()
-	cpu.D = cpu.ReadNextByte()
+	cpu.writeE(cpu.ReadNextByte())
+	cpu.writeD(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_HL_N16() {
 	cpu.L = cpu.ReadNextByte()
-	cpu.H = cpu.ReadNextByte()
+	cpu.writeH(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_SP_N16() {
 	cpu.SP = cpu.ReadNextWord()
@@ -39,17 +39,17 @@ func (cpu *CPU) LD_HLDMEM_A() {
 
 // LD_A_R16MEM
 func (cpu *CPU) LD_A_BCMEM() {
-	cpu.A = cpu.Mem.Read(cpu.readBC())
+	cpu.writeA(cpu.Mem.Read(cpu.readBC()))
 }
 func (cpu *CPU) LD_A_DEMEM() {
-	cpu.A = cpu.Mem.Read(cpu.readDE())
+	cpu.writeA(cpu.Mem.Read(cpu.readDE()))
 }
 func (cpu *CPU) LD_A_HLIMEM() {
-	cpu.A = cpu.Mem.Read(cpu.readHL())
+	cpu.writeA(cpu.Mem.Read(cpu.readHL()))
 	cpu.writeHL(cpu.readHL() + 1)
 }
 func (cpu *CPU) LD_A_HLDMEM() {
-	cpu.A = cpu.Mem.Read(cpu.readHL())
+	cpu.writeA(cpu.Mem.Read(cpu.readHL()))
 	cpu.writeHL(cpu.readHL() - 1)
 }
 
@@ -118,19 +118,19 @@ func (cpu *CPU) INC_R8(r8 uint8) uint8 {
 	return sum
 }
 func (cpu *CPU) INC_B() {
-	cpu.B = cpu.INC_R8(cpu.B)
+	cpu.writeB(cpu.INC_R8(cpu.B))
 }
 func (cpu *CPU) INC_C() {
-	cpu.C = cpu.INC_R8(cpu.C)
+	cpu.writeC(cpu.INC_R8(cpu.C))
 }
 func (cpu *CPU) INC_D() {
-	cpu.D = cpu.INC_R8(cpu.D)
+	cpu.writeD(cpu.INC_R8(cpu.D))
 }
 func (cpu *CPU) INC_E() {
-	cpu.E = cpu.INC_R8(cpu.E)
+	cpu.writeE(cpu.INC_R8(cpu.E))
 }
 func (cpu *CPU) INC_H() {
-	cpu.H = cpu.INC_R8(cpu.H)
+	cpu.writeH(cpu.INC_R8(cpu.H))
 }
 func (cpu *CPU) INC_L() {
 	cpu.L = cpu.INC_R8(cpu.L)
@@ -142,7 +142,7 @@ func (cpu *CPU) INC_HLMEM() {
 	cpu.Mem.Write(addr, inc)
 }
 func (cpu *CPU) INC_A() {
-	cpu.A = cpu.INC_R8(cpu.A)
+	cpu.writeA(cpu.INC_R8(cpu.A))
 }
 
 // DEC_R8
@@ -155,19 +155,19 @@ func (cpu *CPU) DEC_R8(r8 uint8) uint8 {
 	return sub
 }
 func (cpu *CPU) DEC_B() {
-	cpu.B = cpu.DEC_R8(cpu.B)
+	cpu.writeB(cpu.DEC_R8(cpu.B))
 }
 func (cpu *CPU) DEC_C() {
-	cpu.C = cpu.DEC_R8(cpu.C)
+	cpu.writeC(cpu.DEC_R8(cpu.C))
 }
 func (cpu *CPU) DEC_D() {
-	cpu.D = cpu.DEC_R8(cpu.D)
+	cpu.writeD(cpu.DEC_R8(cpu.D))
 }
 func (cpu *CPU) DEC_E() {
-	cpu.E = cpu.DEC_R8(cpu.E)
+	cpu.writeE(cpu.DEC_R8(cpu.E))
 }
 func (cpu *CPU) DEC_H() {
-	cpu.H = cpu.DEC_R8(cpu.H)
+	cpu.writeH(cpu.DEC_R8(cpu.H))
 }
 func (cpu *CPU) DEC_L() {
 	cpu.L = cpu.DEC_R8(cpu.L)
@@ -179,24 +179,24 @@ func (cpu *CPU) DEC_HLMEM() {
 	cpu.Mem.Write(addr, dec)
 }
 func (cpu *CPU) DEC_A() {
-	cpu.A = cpu.DEC_R8(cpu.A)
+	cpu.writeA(cpu.DEC_R8(cpu.A))
 }
 
 // LD_R8_N8
 func (cpu *CPU) LD_B_N8() {
-	cpu.B = cpu.ReadNextByte()
+	cpu.writeB(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_C_N8() {
-	cpu.C = cpu.ReadNextByte()
+	cpu.writeC(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_D_N8() {
-	cpu.D = cpu.ReadNextByte()
+	cpu.writeD(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_E_N8() {
-	cpu.E = cpu.ReadNextByte()
+	cpu.writeE(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_H_N8() {
-	cpu.H = cpu.ReadNextByte()
+	cpu.writeH(cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_L_N8() {
 	cpu.L = cpu.ReadNextByte()
@@ -206,13 +206,13 @@ func (cpu *CPU) LD_HLMEM_N8() {
 	cpu.Mem.Write(addr, cpu.ReadNextByte())
 }
 func (cpu *CPU) LD_A_N8() {
-	cpu.A = cpu.ReadNextByte()
+	cpu.writeA(cpu.ReadNextByte())
 }
 
 // 8-bit logic
 func (cpu *CPU) RLCA() {
 	C_flag := cpu.A >> 7
-	cpu.A = (cpu.A << 1) | C_flag
+	cpu.writeA((cpu.A << 1) | C_flag)
 	cpu.setZFlag(0)
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -220,7 +220,7 @@ func (cpu *CPU) RLCA() {
 }
 func (cpu *CPU) RRCA() {
 	C_flag := cpu.A & 0x01
-	cpu.A = (cpu.A >> 1) | (C_flag << 7)
+	cpu.writeA((cpu.A >> 1) | (C_flag << 7))
 	cpu.setZFlag(0)
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -229,7 +229,7 @@ func (cpu *CPU) RRCA() {
 func (cpu *CPU) RLA() {
 	new_A := (cpu.A << 1) | cpu.readCFlag()
 	C_flag := cpu.A >> 7
-	cpu.A = new_A
+	cpu.writeA(new_A)
 	cpu.setZFlag(0)
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -238,7 +238,7 @@ func (cpu *CPU) RLA() {
 func (cpu *CPU) RRA() {
 	new_A := (cpu.A >> 1) | (cpu.readCFlag() << 7)
 	C_flag := cpu.A & 0x01
-	cpu.A = new_A
+	cpu.writeA(new_A)
 	cpu.setZFlag(0)
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -273,7 +273,7 @@ func (cpu *CPU) DAA() {
 	cpu.setZFlag(isByteZeroUint8(cpu.A))
 }
 func (cpu *CPU) CPL() {
-	cpu.A = ^cpu.A
+	cpu.writeA(^cpu.A)
 	cpu.setNFlag(1)
 	cpu.setHFlag(1)
 }
@@ -333,121 +333,121 @@ func (cpu *CPU) STOP() {
 func (cpu *CPU) LD_B_B() {
 }
 func (cpu *CPU) LD_B_C() {
-	cpu.B = cpu.C
+	cpu.writeB(cpu.C)
 }
 func (cpu *CPU) LD_B_D() {
-	cpu.B = cpu.D
+	cpu.writeB(cpu.D)
 }
 func (cpu *CPU) LD_B_E() {
-	cpu.B = cpu.E
+	cpu.writeB(cpu.E)
 }
 func (cpu *CPU) LD_B_H() {
-	cpu.B = cpu.H
+	cpu.writeB(cpu.H)
 }
 func (cpu *CPU) LD_B_L() {
-	cpu.B = cpu.L
+	cpu.writeB(cpu.L)
 }
 func (cpu *CPU) LD_B_HLMEM() {
-	cpu.B = cpu.Mem.Read(cpu.readHL())
+	cpu.writeB(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_B_A() {
-	cpu.B = cpu.A
+	cpu.writeB(cpu.A)
 }
 
 func (cpu *CPU) LD_C_B() {
-	cpu.C = cpu.B
+	cpu.writeC(cpu.B)
 }
 func (cpu *CPU) LD_C_C() {
 }
 func (cpu *CPU) LD_C_D() {
-	cpu.C = cpu.D
+	cpu.writeC(cpu.D)
 }
 func (cpu *CPU) LD_C_E() {
-	cpu.C = cpu.E
+	cpu.writeC(cpu.E)
 }
 func (cpu *CPU) LD_C_H() {
-	cpu.C = cpu.H
+	cpu.writeC(cpu.H)
 }
 func (cpu *CPU) LD_C_L() {
-	cpu.C = cpu.L
+	cpu.writeC(cpu.L)
 }
 func (cpu *CPU) LD_C_HLMEM() {
-	cpu.C = cpu.Mem.Read(cpu.readHL())
+	cpu.writeC(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_C_A() {
-	cpu.C = cpu.A
+	cpu.writeC(cpu.A)
 }
 
 func (cpu *CPU) LD_D_B() {
-	cpu.D = cpu.B
+	cpu.writeD(cpu.B)
 }
 func (cpu *CPU) LD_D_C() {
-	cpu.D = cpu.C
+	cpu.writeD(cpu.C)
 }
 func (cpu *CPU) LD_D_D() {
 }
 func (cpu *CPU) LD_D_E() {
-	cpu.D = cpu.E
+	cpu.writeD(cpu.E)
 }
 func (cpu *CPU) LD_D_H() {
-	cpu.D = cpu.H
+	cpu.writeD(cpu.H)
 }
 func (cpu *CPU) LD_D_L() {
-	cpu.D = cpu.L
+	cpu.writeD(cpu.L)
 }
 func (cpu *CPU) LD_D_HLMEM() {
-	cpu.D = cpu.Mem.Read(cpu.readHL())
+	cpu.writeD(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_D_A() {
-	cpu.D = cpu.A
+	cpu.writeD(cpu.A)
 }
 
 func (cpu *CPU) LD_E_B() {
-	cpu.E = cpu.B
+	cpu.writeE(cpu.B)
 }
 func (cpu *CPU) LD_E_C() {
-	cpu.E = cpu.C
+	cpu.writeE(cpu.C)
 }
 func (cpu *CPU) LD_E_D() {
-	cpu.E = cpu.D
+	cpu.writeE(cpu.D)
 }
 func (cpu *CPU) LD_E_E() {
 }
 func (cpu *CPU) LD_E_H() {
-	cpu.E = cpu.H
+	cpu.writeE(cpu.H)
 }
 func (cpu *CPU) LD_E_L() {
-	cpu.E = cpu.L
+	cpu.writeE(cpu.L)
 }
 func (cpu *CPU) LD_E_HLMEM() {
-	cpu.E = cpu.Mem.Read(cpu.readHL())
+	cpu.writeE(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_E_A() {
-	cpu.E = cpu.A
+	cpu.writeE(cpu.A)
 }
 
 func (cpu *CPU) LD_H_B() {
-	cpu.H = cpu.B
+	cpu.writeH(cpu.B)
 }
 func (cpu *CPU) LD_H_C() {
-	cpu.H = cpu.C
+	cpu.writeH(cpu.C)
 }
 func (cpu *CPU) LD_H_D() {
-	cpu.H = cpu.D
+	cpu.writeH(cpu.D)
 }
 func (cpu *CPU) LD_H_E() {
-	cpu.H = cpu.E
+	cpu.writeH(cpu.E)
 }
 func (cpu *CPU) LD_H_H() {
 }
 func (cpu *CPU) LD_H_L() {
-	cpu.H = cpu.L
+	cpu.writeH(cpu.L)
 }
 func (cpu *CPU) LD_H_HLMEM() {
-	cpu.H = cpu.Mem.Read(cpu.readHL())
+	cpu.writeH(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_H_A() {
-	cpu.H = cpu.A
+	cpu.writeH(cpu.A)
 }
 
 func (cpu *CPU) LD_L_B() {
@@ -497,25 +497,25 @@ func (cpu *CPU) LD_HLMEM_A() {
 }
 
 func (cpu *CPU) LD_A_B() {
-	cpu.A = cpu.B
+	cpu.writeA(cpu.B)
 }
 func (cpu *CPU) LD_A_C() {
-	cpu.A = cpu.C
+	cpu.writeA(cpu.C)
 }
 func (cpu *CPU) LD_A_D() {
-	cpu.A = cpu.D
+	cpu.writeA(cpu.D)
 }
 func (cpu *CPU) LD_A_E() {
-	cpu.A = cpu.E
+	cpu.writeA(cpu.E)
 }
 func (cpu *CPU) LD_A_H() {
-	cpu.A = cpu.H
+	cpu.writeA(cpu.H)
 }
 func (cpu *CPU) LD_A_L() {
-	cpu.A = cpu.L
+	cpu.writeA(cpu.L)
 }
 func (cpu *CPU) LD_A_HLMEM() {
-	cpu.A = cpu.Mem.Read(cpu.readHL())
+	cpu.writeA(cpu.Mem.Read(cpu.readHL()))
 }
 func (cpu *CPU) LD_A_A() {
 }
@@ -532,7 +532,7 @@ func (cpu *CPU) ADD_A_R8(r8 uint8) {
 	cpu.setNFlag(0)
 	cpu.setHFlag(halfCarry)
 	cpu.setCFlag(carry)
-	cpu.A = sum
+	cpu.writeA(sum)
 }
 func (cpu *CPU) ADD_A_B() {
 	cpu.ADD_A_R8(cpu.B)
@@ -568,7 +568,7 @@ func (cpu *CPU) ADC_A_R8(r8 uint8) {
 	cpu.setNFlag(0)
 	cpu.setHFlag(halfCarry1 | halfCarry2)
 	cpu.setCFlag(carry1 | carry2)
-	cpu.A = sum
+	cpu.writeA(sum)
 }
 func (cpu *CPU) ADC_A_B() {
 	cpu.ADC_A_R8(cpu.B)
@@ -603,7 +603,7 @@ func (cpu *CPU) SUB_A_R8(r8 uint8) {
 	cpu.setNFlag(1)
 	cpu.setHFlag(halfCarry)
 	cpu.setCFlag(carry)
-	cpu.A = sub
+	cpu.writeA(sub)
 }
 func (cpu *CPU) SUB_A_B() {
 	cpu.SUB_A_R8(cpu.B)
@@ -639,7 +639,7 @@ func (cpu *CPU) SBC_A_R8(r8 uint8) {
 	cpu.setNFlag(1)
 	cpu.setHFlag(halfCarry1 | halfCarry2)
 	cpu.setCFlag(carry1 | carry2)
-	cpu.A = sub
+	cpu.writeA(sub)
 }
 func (cpu *CPU) SBC_A_B() {
 	cpu.SBC_A_R8(cpu.B)
@@ -668,7 +668,7 @@ func (cpu *CPU) SBC_A_A() {
 
 // AND A R8
 func (cpu *CPU) AND_A_R8(r8 uint8) {
-	cpu.A = cpu.A & r8
+	cpu.writeA(cpu.A & r8)
 	cpu.setZFlag(isByteZeroUint8(cpu.A))
 	cpu.setNFlag(0)
 	cpu.setHFlag(1)
@@ -701,7 +701,7 @@ func (cpu *CPU) AND_A_A() {
 
 // XOR A R8
 func (cpu *CPU) XOR_A_R8(r8 uint8) {
-	cpu.A = cpu.A ^ r8
+	cpu.writeA(cpu.A ^ r8)
 	cpu.setZFlag(isByteZeroUint8(cpu.A))
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -734,7 +734,7 @@ func (cpu *CPU) XOR_A_A() {
 
 // OR A R8
 func (cpu *CPU) OR_A_R8(r8 uint8) {
-	cpu.A = cpu.A | r8
+	cpu.writeA(cpu.A | r8)
 	cpu.setZFlag(isByteZeroUint8(cpu.A))
 	cpu.setNFlag(0)
 	cpu.setHFlag(0)
@@ -1040,7 +1040,7 @@ func (cpu *CPU) LDH_C_A() {
 	cpu.Mem.Write(0xFF00+uint16(cpu.C), cpu.A)
 }
 func (cpu *CPU) LDH_A_C() {
-	cpu.A = cpu.Mem.Read(0xFF00 + uint16(cpu.C))
+	cpu.writeA(cpu.Mem.Read(0xFF00 + uint16(cpu.C)))
 }
 
 // LDH_N8_A
@@ -1050,7 +1050,7 @@ func (cpu *CPU) LDH_N8_A() {
 }
 func (cpu *CPU) LDH_A_N8() {
 	offset := cpu.ReadNextByte()
-	cpu.A = cpu.Mem.Read(0xFF00 + uint16(offset))
+	cpu.writeA(cpu.Mem.Read(0xFF00 + uint16(offset)))
 }
 
 // LDH_N8_A
@@ -1060,7 +1060,7 @@ func (cpu *CPU) LD_N16_A() {
 }
 func (cpu *CPU) LD_A_N16() {
 	addr := cpu.ReadNextWord()
-	cpu.A = cpu.Mem.Read(addr)
+	cpu.writeA(cpu.Mem.Read(addr))
 }
 
 // ADD SP E8
@@ -1122,21 +1122,21 @@ func (cpu *CPU) readR8(opcode uint8) uint8 {
 func (cpu *CPU) writeR8(opcode uint8, value uint8) {
 	switch opcode & 0x07 {
 	case 0:
-		cpu.B = value
+		cpu.writeB(value)
 	case 1:
-		cpu.C = value
+		cpu.writeC(value)
 	case 2:
-		cpu.D = value
+		cpu.writeD(value)
 	case 3:
-		cpu.E = value
+		cpu.writeE(value)
 	case 4:
-		cpu.H = value
+		cpu.writeH(value)
 	case 5:
-		cpu.L = value
+		cpu.writeL(value)
 	case 6:
 		cpu.Mem.Write(cpu.readHL(), value)
 	case 7:
-		cpu.A = value
+		cpu.writeA(value)
 	}
 }
 
