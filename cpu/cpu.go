@@ -37,7 +37,9 @@ type Memory interface {
 func (cpu *CPU) ExecuteInstruction() {
 	cpu.branched = false
 
-	cpu.handleInterrupts()
+	if cpu.handleInterrupts() {
+		return
+	}
 
 	opcode := cpu.ReadNextByte()
 	switch opcode {
