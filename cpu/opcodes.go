@@ -55,7 +55,8 @@ func (cpu *CPU) LD_A_HLDMEM() {
 
 // LD_N16_SP
 func (cpu *CPU) LD_N16_SP() {
-	cpu.WriteNextWord(cpu.SP)
+	addr := cpu.ReadNextWord()
+	cpu.Mem.WriteWord(addr, cpu.SP)
 }
 
 // INC_R16

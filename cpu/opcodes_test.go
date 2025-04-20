@@ -160,13 +160,14 @@ func Test_LD_A_R16MEM(t *testing.T) {
 func Test_LD_N16_SP(t *testing.T) {
 	cpu := setup_CPU()
 	cpu.SP = 0xFD53
+	var addr uint16 = 0x1234
 
-	writeTestProgram(cpu, LD_N16_SP_OPCODE)
+	writeTestProgram(cpu, LD_N16_SP_OPCODE, 0x34, 0x12)
 	cpu.ExecuteInstruction()
 
-	read := cpu.Mem.ReadWord(cpu.PC - 2)
+	read := cpu.Mem.ReadWord(addr)
 	if read != cpu.SP {
-		t.Fatalf("CPU - LD_N16_SP failed: [N16] got %04X, expected %04X", read, cpu.SP)
+		t.Fatalf("[N16] got %04X, expected %04X", read, cpu.SP)
 	}
 }
 
