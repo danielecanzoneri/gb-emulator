@@ -34,6 +34,11 @@ type Memory interface {
 	WriteWord(addr uint16, value uint16)
 }
 
+func New(mem Memory) *CPU {
+	cpu := &CPU{SP: 0xFFFE, Mem: mem}
+	return cpu
+}
+
 func (cpu *CPU) ExecuteInstruction() {
 	cpu.branched = false
 

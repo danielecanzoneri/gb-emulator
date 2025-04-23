@@ -3,7 +3,7 @@ package cpu
 import "testing"
 
 func TestInterruptHandlers(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	for mask, handler := range INT_HANDLERS {
 		var PC, SP uint16 = 0x1234, 0xFFFE

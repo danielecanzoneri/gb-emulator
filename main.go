@@ -30,9 +30,7 @@ func main() {
 	cpu.Debug = *debugMode
 
 	mem := &memory.Memory{}
-	gb := cpu.CPU{
-		Mem: mem,
-	}
+	gb := cpu.New(mem)
 
 	// Load the ROM
 	romData, err := rom.LoadROM(*romPath)

@@ -10,7 +10,7 @@ import (
 func Test_LD_R16_N16(t *testing.T) {
 	var BYTE1 uint8 = 0xAC
 	var BYTE2 uint8 = 0x12
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	t.Run("BC", func(t *testing.T) {
 		writeTestProgram(cpu, LD_BC_N16_OPCODE, BYTE1, BYTE2)
@@ -47,7 +47,7 @@ func Test_LD_R16_N16(t *testing.T) {
 }
 
 func Test_LD_R16MEM_A(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.A = 0xFD
 
 	var addr_BC uint16 = 0x10
@@ -99,7 +99,7 @@ func Test_LD_R16MEM_A(t *testing.T) {
 }
 
 func Test_LD_A_R16MEM(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var addr_BC uint16 = 0x10
 	var byte_BC uint8 = 0x01
@@ -158,7 +158,7 @@ func Test_LD_A_R16MEM(t *testing.T) {
 }
 
 func Test_LD_N16_SP(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.SP = 0xFD53
 	var addr uint16 = 0x1234
 
@@ -172,7 +172,7 @@ func Test_LD_N16_SP(t *testing.T) {
 }
 
 func Test_INC_R16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var BC uint16 = 0x1234
 	cpu.writeBC(BC)
@@ -217,7 +217,7 @@ func Test_INC_R16(t *testing.T) {
 }
 
 func Test_DEC_R16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var BC uint16 = 0x1234
 	cpu.writeBC(BC)
@@ -262,7 +262,7 @@ func Test_DEC_R16(t *testing.T) {
 }
 
 func Test_ADD_HL_R16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.F = 0xFF // Set flags
 
 	type test_add struct {
@@ -283,7 +283,6 @@ func Test_ADD_HL_R16(t *testing.T) {
 		cpu.writeHL(test.hl)
 		cpu.ExecuteInstruction()
 
-		t.Log(cpu)
 		if cpu.readHL() != test.sum {
 			t.Fatalf("wrong sum: got %04X, expected %04X", cpu.readHL(), test.sum)
 		}
@@ -324,7 +323,7 @@ func Test_ADD_HL_R16(t *testing.T) {
 }
 
 func Test_INC_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var B uint8 = 0x01
 	var zflag_B, hflag_B uint8 = 0, 0
@@ -442,7 +441,7 @@ func Test_INC_R8(t *testing.T) {
 }
 
 func Test_DEC_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var B uint8 = 0x01
 	var zflag_B, hflag_B uint8 = 1, 0
@@ -560,7 +559,7 @@ func Test_DEC_R8(t *testing.T) {
 }
 
 func Test_LD_R8_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var value uint8 = 0xD1
 
@@ -632,7 +631,7 @@ func Test_LD_R8_N8(t *testing.T) {
 }
 
 func Test_RLCA(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -672,7 +671,7 @@ func Test_RLCA(t *testing.T) {
 }
 
 func Test_RRCA(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -712,7 +711,7 @@ func Test_RRCA(t *testing.T) {
 }
 
 func Test_RLA(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -756,7 +755,7 @@ func Test_RLA(t *testing.T) {
 }
 
 func Test_RRA(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -800,7 +799,7 @@ func Test_RRA(t *testing.T) {
 }
 
 func Test_DAA(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := map[string]struct {
 		n1     uint8
@@ -870,7 +869,7 @@ func Test_DAA(t *testing.T) {
 }
 
 func Test_CPL(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var value uint8 = 0b10010111
 
 	cpu.A = value
@@ -890,7 +889,7 @@ func Test_CPL(t *testing.T) {
 }
 
 func Test_SCF(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	// Test cpu.F = 0xFF, 0x00
 	tests := map[string]struct {
@@ -920,7 +919,7 @@ func Test_SCF(t *testing.T) {
 }
 
 func Test_CCF(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	// Test cpu.F = 0xFF, 0x00
 	tests := map[string]struct {
@@ -951,7 +950,7 @@ func Test_CCF(t *testing.T) {
 }
 
 func Test_JR_E8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := map[string]struct {
 		e8 int8
@@ -976,7 +975,7 @@ func Test_JR_E8(t *testing.T) {
 }
 
 func Test_JR_COND_E8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := map[string]struct {
 		e8 int8
@@ -1038,7 +1037,7 @@ func Test_JR_COND_E8(t *testing.T) {
 }
 
 func Test_LD_R8_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	firstReg := map[string]struct {
 		opcode uint8
@@ -1093,7 +1092,7 @@ func Test_HALT(t *testing.T) {
 }
 
 func Test_ADD_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A     uint8
@@ -1227,7 +1226,7 @@ func Test_ADD_A_R8(t *testing.T) {
 }
 
 func Test_ADC_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A     uint8
@@ -1370,7 +1369,7 @@ func Test_ADC_A_R8(t *testing.T) {
 }
 
 func Test_SUB_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1419,7 +1418,7 @@ func Test_SUB_A_R8(t *testing.T) {
 }
 
 func Test_SBC_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1471,7 +1470,7 @@ func Test_SBC_A_R8(t *testing.T) {
 }
 
 func Test_AND_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1519,7 +1518,7 @@ func Test_AND_A_R8(t *testing.T) {
 }
 
 func Test_XOR_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1567,7 +1566,7 @@ func Test_XOR_A_R8(t *testing.T) {
 }
 
 func Test_OR_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1615,7 +1614,7 @@ func Test_OR_A_R8(t *testing.T) {
 }
 
 func Test_CP_A_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	type test struct {
 		A      uint8
@@ -1664,7 +1663,7 @@ func Test_CP_A_R8(t *testing.T) {
 }
 
 func Test_ADD_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x57
 	var n8 uint8 = 0xAD
@@ -1693,7 +1692,7 @@ func Test_ADD_A_N8(t *testing.T) {
 }
 
 func Test_ADC_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x08
 	var n8 uint8 = 0x08
@@ -1724,7 +1723,7 @@ func Test_ADC_A_N8(t *testing.T) {
 }
 
 func Test_SUB_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x80
 	var n8 uint8 = 0x08
@@ -1753,7 +1752,7 @@ func Test_SUB_A_N8(t *testing.T) {
 }
 
 func Test_SBC_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x10
 	var n8 uint8 = 0x0F
@@ -1784,7 +1783,7 @@ func Test_SBC_A_N8(t *testing.T) {
 }
 
 func Test_AND_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0xAA
 	var n8 uint8 = 0x55
@@ -1812,7 +1811,7 @@ func Test_AND_A_N8(t *testing.T) {
 }
 
 func Test_XOR_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x80
 	var n8 uint8 = 0x80
@@ -1840,7 +1839,7 @@ func Test_XOR_A_N8(t *testing.T) {
 }
 
 func Test_OR_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x80
 	var n8 uint8 = 0x80
@@ -1868,7 +1867,7 @@ func Test_OR_A_N8(t *testing.T) {
 }
 
 func Test_CP_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var A uint8 = 0x10
 	var n8 uint8 = 0x0F
@@ -1897,7 +1896,7 @@ func Test_CP_A_N8(t *testing.T) {
 }
 
 func Test_POP_R16STK(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	t.Run("BC", func(t *testing.T) {
 		addr := uint16(0x4321)
@@ -1912,7 +1911,7 @@ func Test_POP_R16STK(t *testing.T) {
 		cpu.ExecuteInstruction()
 
 		if cpu.readBC() != uint16(expected_BC) {
-			t.Errorf("got PC=%04X, expected %04X", cpu.readBC(), expected_BC)
+			t.Errorf("got BC=%04X, expected %04X", cpu.readBC(), expected_BC)
 		}
 		if cpu.SP != uint16(expected_SP) {
 			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
@@ -1932,7 +1931,7 @@ func Test_POP_R16STK(t *testing.T) {
 		cpu.ExecuteInstruction()
 
 		if cpu.readDE() != uint16(expected_DE) {
-			t.Errorf("got PC=%04X, expected %04X", cpu.readDE(), expected_DE)
+			t.Errorf("got DE=%04X, expected %04X", cpu.readDE(), expected_DE)
 		}
 		if cpu.SP != uint16(expected_SP) {
 			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
@@ -1952,7 +1951,7 @@ func Test_POP_R16STK(t *testing.T) {
 		cpu.ExecuteInstruction()
 
 		if cpu.readHL() != uint16(expected_HL) {
-			t.Errorf("got PC=%04X, expected %04X", cpu.readHL(), expected_HL)
+			t.Errorf("got HL=%04X, expected %04X", cpu.readHL(), expected_HL)
 		}
 		if cpu.SP != uint16(expected_SP) {
 			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
@@ -1960,7 +1959,7 @@ func Test_POP_R16STK(t *testing.T) {
 	})
 
 	t.Run("AF", func(t *testing.T) {
-		addr := uint16(0x2222)
+		addr := uint16(0x56F0)
 		expected_AF := addr
 		expected_SP := cpu.SP
 
@@ -1972,7 +1971,7 @@ func Test_POP_R16STK(t *testing.T) {
 		cpu.ExecuteInstruction()
 
 		if cpu.readAF() != uint16(expected_AF) {
-			t.Errorf("got PC=%04X, expected %04X", cpu.readAF(), expected_AF)
+			t.Errorf("got AF=%04X, expected %04X", cpu.readAF(), expected_AF)
 		}
 		if cpu.SP != uint16(expected_SP) {
 			t.Errorf("got SP=%04X, expected %04X", cpu.SP, expected_SP)
@@ -1999,7 +1998,7 @@ func Test_POP_R16STK(t *testing.T) {
 }
 
 func Test_PUSH_R16STK(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	t.Run("BC", func(t *testing.T) {
 		addr := uint16(0x4321)
@@ -2050,7 +2049,7 @@ func Test_PUSH_R16STK(t *testing.T) {
 	})
 
 	t.Run("AF", func(t *testing.T) {
-		addr := uint16(0x2222)
+		addr := uint16(0x2220)
 		expected_SP := cpu.SP - 2
 		cpu.writeAF(addr)
 
@@ -2067,7 +2066,7 @@ func Test_PUSH_R16STK(t *testing.T) {
 }
 
 func Test_RET_COND(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	// Prepare flags for each condition
 	bool_to_int := map[bool]uint8{false: 0, true: 1}
@@ -2135,7 +2134,7 @@ func Test_RET_COND(t *testing.T) {
 }
 
 func Test_RET(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	addr := uint16(0x4321)
 	expected_PC := addr
@@ -2157,7 +2156,7 @@ func Test_RET(t *testing.T) {
 }
 
 func Test_RETI(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.IME = false
 
 	addr := uint16(0x4321)
@@ -2183,7 +2182,7 @@ func Test_RETI(t *testing.T) {
 }
 
 func Test_JP_COND_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	// Prepare flags for each condition
 	bool_to_int := map[bool]uint8{false: 0, true: 1}
@@ -2240,7 +2239,7 @@ func Test_JP_COND_N16(t *testing.T) {
 }
 
 func Test_JP_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	addr := uint16(rand.Intn(0x10000))
 
@@ -2255,7 +2254,7 @@ func Test_JP_N16(t *testing.T) {
 }
 
 func Test_JP_HL(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	addr := uint16(rand.Intn(0x10000))
 
@@ -2271,7 +2270,7 @@ func Test_JP_HL(t *testing.T) {
 }
 
 func Test_CALL_COND_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	// Prepare flags for each condition
 	bool_to_int := map[bool]uint8{false: 0, true: 1}
@@ -2336,7 +2335,7 @@ func Test_CALL_COND_N16(t *testing.T) {
 }
 
 func Test_CALL_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	addr := uint16(rand.Intn(0x10000))
 
@@ -2359,7 +2358,7 @@ func Test_CALL_N16(t *testing.T) {
 }
 
 func Test_TST_VEC_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	opcodes := map[string]uint8{
 		"00": RST_00_OPCODE,
@@ -2394,7 +2393,7 @@ func Test_TST_VEC_N16(t *testing.T) {
 }
 
 func Test_LDH_C_A(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var A, C uint8 = 0xD1, 0x12
 
 	cpu.A = A
@@ -2409,7 +2408,7 @@ func Test_LDH_C_A(t *testing.T) {
 }
 
 func Test_LDH_A_C(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var value, C uint8 = 0xD1, 0x12
 
 	cpu.Mem.Write(0xFF00+uint16(C), value)
@@ -2424,7 +2423,7 @@ func Test_LDH_A_C(t *testing.T) {
 }
 
 func Test_LDH_N8_A(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var A, offset uint8 = 0xD1, 0x12
 
 	cpu.A = A
@@ -2438,7 +2437,7 @@ func Test_LDH_N8_A(t *testing.T) {
 }
 
 func Test_LDH_A_N8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var value, offset uint8 = 0xD1, 0x12
 
 	cpu.Mem.Write(0xFF00+uint16(offset), value)
@@ -2452,7 +2451,7 @@ func Test_LDH_A_N8(t *testing.T) {
 }
 
 func Test_LD_N16_A(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var A uint8 = 0xD1
 	var addr uint16 = 0xABCD
 
@@ -2467,7 +2466,7 @@ func Test_LD_N16_A(t *testing.T) {
 }
 
 func Test_LD_A_N16(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	var value uint8 = 0xD1
 	var addr uint16 = 0xDCBA
 
@@ -2482,7 +2481,7 @@ func Test_LD_A_N16(t *testing.T) {
 }
 
 func Test_ADD_SP_E8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := map[string]struct {
 		SP    uint16
@@ -2524,7 +2523,7 @@ func Test_ADD_SP_E8(t *testing.T) {
 }
 
 func Test_LD_HL_SP_E8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var SP uint16 = 0xFFFE
 	var e8 int8 = -1
@@ -2553,7 +2552,7 @@ func Test_LD_HL_SP_E8(t *testing.T) {
 }
 
 func Test_LD_SP_HL(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	var HL uint16 = 0x4321
 
@@ -2567,7 +2566,7 @@ func Test_LD_SP_HL(t *testing.T) {
 }
 
 func Test_DI(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.IME = true
 
 	writeTestProgram(cpu, DI_OPCODE)
@@ -2579,7 +2578,7 @@ func Test_DI(t *testing.T) {
 }
 
 func Test_EI(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	cpu.IME = false
 
 	writeTestProgram(cpu, EI_OPCODE, NOP_OPCODE)
@@ -2599,7 +2598,7 @@ var R8_offset = map[string]uint8{"B": 0, "C": 1, "D": 2, "E": 3, "H": 4, "L": 5,
 var R8_name = [8]string{"B", "C", "D", "E", "H", "L", "HLMEM", "A"}
 
 func Test_RLC_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -2644,7 +2643,7 @@ func Test_RLC_R8(t *testing.T) {
 }
 
 func Test_RRC_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -2689,7 +2688,7 @@ func Test_RRC_R8(t *testing.T) {
 }
 
 func Test_RL_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -2738,7 +2737,7 @@ func Test_RL_R8(t *testing.T) {
 }
 
 func Test_RR_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	// Test flag reset
 	cpu.F = 0xFF
 
@@ -2787,7 +2786,7 @@ func Test_RR_R8(t *testing.T) {
 }
 
 func Test_SLA_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	r8_name := "H"
 	r8 := R8_offset[r8_name]
 
@@ -2829,7 +2828,7 @@ func Test_SLA_R8(t *testing.T) {
 }
 
 func Test_SRA_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	r8_name := "L"
 	r8 := R8_offset[r8_name]
 
@@ -2871,7 +2870,7 @@ func Test_SRA_R8(t *testing.T) {
 }
 
 func Test_SWAP_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	r8_name := "HLMEM"
 	r8 := R8_offset[r8_name]
 
@@ -2892,7 +2891,6 @@ func Test_SWAP_R8(t *testing.T) {
 			writeTestProgram(cpu, PREFIX_OPCODE, SWAP_R8_OPCODE+r8)
 			cpu.ExecuteInstruction()
 
-			t.Log(cpu)
 			if cpu.readR8(r8) != test.exp_R8 {
 				t.Fatalf("got %2X, expected %2X", cpu.readR8(r8), test.exp_R8)
 			}
@@ -2914,7 +2912,7 @@ func Test_SWAP_R8(t *testing.T) {
 }
 
 func Test_SRL_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 	r8_name := "A"
 	r8 := R8_offset[r8_name]
 
@@ -2956,7 +2954,7 @@ func Test_SRL_R8(t *testing.T) {
 }
 
 func Test_BIT_B3_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := [8]struct {
 		opcode uint8
@@ -2993,7 +2991,7 @@ func Test_BIT_B3_R8(t *testing.T) {
 }
 
 func Test_RES_B3_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := [8]struct {
 		opcode uint8
@@ -3023,7 +3021,7 @@ func Test_RES_B3_R8(t *testing.T) {
 }
 
 func Test_SET_B3_R8(t *testing.T) {
-	cpu := setup_CPU()
+	cpu := mockCPU()
 
 	tests := [8]struct {
 		opcode uint8
@@ -3049,34 +3047,5 @@ func Test_SET_B3_R8(t *testing.T) {
 				t.Fatalf("got %08b, expected %08b", cpu.readR8(test.opcode), test.exp_R8)
 			}
 		})
-	}
-}
-
-// Mock implementation of Memory interface
-type MockMemory struct {
-	data [0x10000]byte
-}
-
-func (m *MockMemory) Read(addr uint16) uint8 {
-	return m.data[addr]
-}
-func (m *MockMemory) Write(addr uint16, value uint8) {
-	m.data[addr] = value
-}
-func (m *MockMemory) ReadWord(addr uint16) uint16 {
-	return uint16(m.data[addr]) | (uint16(m.data[addr+1]) << 8)
-}
-func (m *MockMemory) WriteWord(addr uint16, value uint16) {
-	m.data[addr] = uint8(value)
-	m.data[addr+1] = uint8(value >> 8)
-}
-
-func setup_CPU() *CPU {
-	return &CPU{SP: 0xFFFE, Mem: &MockMemory{}}
-}
-
-func writeTestProgram(cpu *CPU, data ...byte) {
-	for i, b := range data {
-		cpu.Mem.Write(uint16(i)+cpu.PC, b)
 	}
 }
