@@ -22,6 +22,7 @@ type CPU struct {
 
 	// Clock cycles
 	cycles uint
+	timer  *Timer
 
 	// Memory
 	Mem Memory
@@ -39,6 +40,8 @@ type Memory interface {
 
 func New(mem Memory) *CPU {
 	cpu := &CPU{SP: 0xFFFE, Mem: mem}
+	timer := &Timer{cpu: cpu}
+	cpu.timer = timer
 	return cpu
 }
 
@@ -614,6 +617,7 @@ func (cpu *CPU) ExecuteInstruction() {
 	}
 
 	cpu.cycles += cycles
+	cpu.timer.Update(cycles)
 }
 
 func (cpu *CPU) prefixedOpcode() {
@@ -689,6 +693,7 @@ func (cpu *CPU) prefixedOpcode() {
 
 	cycles := PREFIX_OPCODES_CYCLES[opcode]
 	cpu.cycles += cycles
+	cpu.timer.Update(cycles)
 }
 
 func (cpu *CPU) Reset() {

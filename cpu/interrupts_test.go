@@ -46,3 +46,27 @@ func TestInterruptHandlers(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestInterrupt(t *testing.T) {
+	cpu := mockCPU()
+
+	// Test requesting an interrupt
+	cpu.requestInterrupt(VBLANK_INT_MASK)
+
+	// Check if the interrupt flag is set
+	if cpu.Mem.Read(IF_ADDR)&VBLANK_INT_MASK == 0 {
+		t.Errorf("VBLANK interrupt not requested")
+	}
+
+	// Test requesting another interrupt
+	cpu.requestInterrupt(TIMER_INT_MASK)
+
+	// Check if the interrupt flag is set
+	if cpu.Mem.Read(IF_ADDR)&TIMER_INT_MASK == 0 {
+		t.Errorf("TIMER interrupt not requested")
+	}
+}
+
+func TestHALTBug(t *testing.T) {
+	t.Error("TODO")
+}

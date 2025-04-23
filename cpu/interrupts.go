@@ -57,6 +57,12 @@ func (cpu *CPU) handleInterrupts() bool {
 	return false
 }
 
+func (cpu *CPU) requestInterrupt(interruptMask uint8) {
+	IF := cpu.Mem.Read(IF_ADDR)
+	IF |= interruptMask
+	cpu.Mem.Write(IF_ADDR, IF)
+}
+
 func (cpu *CPU) serveInterrupt(interruptMask uint8) {
 	IF := cpu.Mem.Read(IF_ADDR)
 	IF &= ^interruptMask
