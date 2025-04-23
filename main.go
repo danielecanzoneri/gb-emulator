@@ -3,11 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
-	"github.com/danielecanzoneri/gb-emulator/cpu"
-	"github.com/danielecanzoneri/gb-emulator/memory"
-	"github.com/danielecanzoneri/gb-emulator/rom"
+	gameboy "github.com/danielecanzoneri/gb-emulator/internal"
+	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
+	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
 )
 
 // Define a flag for the ROM file path
@@ -29,34 +27,18 @@ func main() {
 	// Enable debug mode if specified
 	cpu.Debug = *debugMode
 
-	mem := &memory.Memory{}
-	gb := cpu.New(mem)
-
-	// Load the ROM
-	romData, err := rom.LoadROM(*romPath)
-	if err != nil {
-		fmt.Printf("Error loading the rom: %v\n", err)
-		return
-	}
-
-	// Load ROM into memory
-	for i, b := range romData {
-		mem.Write(uint16(i), b)
-	}
-
-	// Gameboy doctor file
-	file, err := os.OpenFile("dump.txt", os.O_CREATE|os.O_WRONLY, 0777)
-	if err != nil {
-		panic(err)
-	}
-	cpu.DebugFile = file
-	defer file.Close()
+	gb := gameboy.Init()
 
 	// Initialize cpu
 	gb.Reset()
 
-	// Simplified loop
-	for {
-		gb.ExecuteInstruction()
+	// Load the ROM
+	romData, err := cartridge.LoadROM(*romPath)
+	if err != nil {
+		fmt.Printf("Error loading the cartridge: %v\n", err)
+		return
 	}
+	gb.Load(romData)
+
+	gb.Run()
 }

@@ -5,12 +5,12 @@ import "testing"
 func TestInterruptHandlers(t *testing.T) {
 	cpu := mockCPU()
 
-	for mask, handler := range INT_HANDLERS {
+	for mask, handler := range interruptsHandler {
 		var PC, SP uint16 = 0x1234, 0xFFFE
 
 		// Enable interrupts
-		cpu.Mem.Write(IE_ADDR, mask)
-		cpu.Mem.Write(IF_ADDR, mask)
+		cpu.MMU.Write(ieAddr, mask)
+		cpu.MMU.Write(ifAddr, mask)
 		cpu.PC = PC
 		cpu.SP = SP
 
@@ -31,7 +31,7 @@ func TestInterruptHandlers(t *testing.T) {
 				t.Errorf("PC: got %04X, expected %04X", cpu.PC, handler)
 			}
 
-			retAddr := uint16(cpu.Mem.Read(SP-2)) | uint16(cpu.Mem.Read(SP-1))<<8
+			retAddr := uint16(cpu.MMU.Read(SP-2)) | uint16(cpu.MMU.Read(SP-1))<<8
 			if retAddr != PC {
 				t.Errorf("wrong return address: got %04X, expected %04X", retAddr, PC)
 			}
@@ -40,7 +40,7 @@ func TestInterruptHandlers(t *testing.T) {
 				t.Errorf("IME not disabled")
 			}
 
-			if cpu.Mem.Read(IF_ADDR)&mask > 0 {
+			if cpu.MMU.Read(ifAddr)&mask > 0 {
 				t.Errorf("interrupt flag not reset")
 			}
 		})
@@ -51,18 +51,18 @@ func TestRequestInterrupt(t *testing.T) {
 	cpu := mockCPU()
 
 	// Test requesting an interrupt
-	cpu.requestInterrupt(VBLANK_INT_MASK)
+	cpu.requestInterrupt(vblankMask)
 
 	// Check if the interrupt flag is set
-	if cpu.Mem.Read(IF_ADDR)&VBLANK_INT_MASK == 0 {
+	if cpu.MMU.Read(ifAddr)&vblankMask == 0 {
 		t.Errorf("VBLANK interrupt not requested")
 	}
 
 	// Test requesting another interrupt
-	cpu.requestInterrupt(TIMER_INT_MASK)
+	cpu.requestInterrupt(timerMask)
 
 	// Check if the interrupt flag is set
-	if cpu.Mem.Read(IF_ADDR)&TIMER_INT_MASK == 0 {
+	if cpu.MMU.Read(ifAddr)&timerMask == 0 {
 		t.Errorf("TIMER interrupt not requested")
 	}
 }

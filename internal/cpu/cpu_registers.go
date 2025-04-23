@@ -1,10 +1,14 @@
 package cpu
 
+import (
+	"github.com/danielecanzoneri/gb-emulator/internal/util"
+)
+
 const (
-	Z_FLAG_BIT = 7
-	N_FLAG_BIT = 6
-	H_FLAG_BIT = 5
-	C_FLAG_BIT = 4
+	ZFlagBit = 7
+	NFlagBit = 6
+	HFlagBit = 5
+	CFlagBit = 4
 )
 
 func (cpu *CPU) writeA(v uint8) {
@@ -33,61 +37,61 @@ func (cpu *CPU) writeF(v uint8) {
 }
 
 func (cpu *CPU) readAF() uint16 {
-	return combineBytes(cpu.A, cpu.F)
+	return util.CombineBytes(cpu.A, cpu.F)
 }
 func (cpu *CPU) readBC() uint16 {
-	return combineBytes(cpu.B, cpu.C)
+	return util.CombineBytes(cpu.B, cpu.C)
 }
 func (cpu *CPU) readDE() uint16 {
-	return combineBytes(cpu.D, cpu.E)
+	return util.CombineBytes(cpu.D, cpu.E)
 }
 func (cpu *CPU) readHL() uint16 {
-	return combineBytes(cpu.H, cpu.L)
+	return util.CombineBytes(cpu.H, cpu.L)
 }
 
 func (cpu *CPU) writeAF(word uint16) {
-	h, l := splitWord(word)
+	h, l := util.SplitWord(word)
 	cpu.writeA(h)
 	cpu.writeF(l)
 }
 func (cpu *CPU) writeBC(word uint16) {
-	h, l := splitWord(word)
+	h, l := util.SplitWord(word)
 	cpu.writeB(h)
 	cpu.writeC(l)
 }
 func (cpu *CPU) writeDE(word uint16) {
-	h, l := splitWord(word)
+	h, l := util.SplitWord(word)
 	cpu.writeD(h)
 	cpu.writeE(l)
 }
 func (cpu *CPU) writeHL(word uint16) {
-	h, l := splitWord(word)
+	h, l := util.SplitWord(word)
 	cpu.writeH(h)
 	cpu.writeL(l)
 }
 
 func (cpu *CPU) readZFlag() uint8 {
-	return readBit(cpu.F, Z_FLAG_BIT)
+	return util.ReadBit(cpu.F, ZFlagBit)
 }
 func (cpu *CPU) readNFlag() uint8 {
-	return readBit(cpu.F, N_FLAG_BIT)
+	return util.ReadBit(cpu.F, NFlagBit)
 }
 func (cpu *CPU) readHFlag() uint8 {
-	return readBit(cpu.F, H_FLAG_BIT)
+	return util.ReadBit(cpu.F, HFlagBit)
 }
 func (cpu *CPU) readCFlag() uint8 {
-	return readBit(cpu.F, C_FLAG_BIT)
+	return util.ReadBit(cpu.F, CFlagBit)
 }
 
 func (cpu *CPU) setZFlag(value uint8) {
-	setBit(&cpu.F, Z_FLAG_BIT, value)
+	util.SetBit(&cpu.F, ZFlagBit, value)
 }
 func (cpu *CPU) setNFlag(value uint8) {
-	setBit(&cpu.F, N_FLAG_BIT, value)
+	util.SetBit(&cpu.F, NFlagBit, value)
 }
 func (cpu *CPU) setHFlag(value uint8) {
-	setBit(&cpu.F, H_FLAG_BIT, value)
+	util.SetBit(&cpu.F, HFlagBit, value)
 }
 func (cpu *CPU) setCFlag(value uint8) {
-	setBit(&cpu.F, C_FLAG_BIT, value)
+	util.SetBit(&cpu.F, CFlagBit, value)
 }

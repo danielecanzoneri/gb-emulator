@@ -1,6 +1,10 @@
 package cpu
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/internal/memory"
+	"github.com/danielecanzoneri/gb-emulator/internal/timer"
+)
 
 type CPU struct {
 	// 8-bit registers
@@ -22,27 +26,13 @@ type CPU struct {
 
 	// Clock cycles
 	cycles uint
-	timer  *Timer
 
-	// Memory
-	Mem Memory
+	// Other components
+	Timer *timer.Timer
+	MMU   *memory.MMU
 
 	// Flag set by opcode handler to compute correct number of cycles
 	branched bool
-}
-
-type Memory interface {
-	Read(addr uint16) uint8
-	Write(addr uint16, value uint8)
-	ReadWord(addr uint16) uint16
-	WriteWord(addr uint16, value uint16)
-}
-
-func New(mem Memory) *CPU {
-	cpu := &CPU{SP: 0xFFFE, Mem: mem}
-	timer := &Timer{cpu: cpu}
-	cpu.timer = timer
-	return cpu
 }
 
 func (cpu *CPU) ExecuteInstruction() {
@@ -52,7 +42,7 @@ func (cpu *CPU) ExecuteInstruction() {
 		return
 	}
 
-	var cycles uint = 4 // Default halted
+	var cycles uint = 1 // Default halted
 	if !cpu.halted {
 		opcode := cpu.ReadNextByte()
 		cpu.logState(opcode)
@@ -617,7 +607,7 @@ func (cpu *CPU) ExecuteInstruction() {
 	}
 
 	cpu.cycles += cycles
-	cpu.timer.Update(cycles)
+	cpu.Timer.Step(cycles)
 }
 
 func (cpu *CPU) prefixedOpcode() {
@@ -693,39 +683,26 @@ func (cpu *CPU) prefixedOpcode() {
 
 	cycles := PREFIX_OPCODES_CYCLES[opcode]
 	cpu.cycles += cycles
-	cpu.timer.Update(cycles)
-}
-
-func (cpu *CPU) Reset() {
-	cpu.A = 0x01
-	cpu.F = 0xB0
-	cpu.B = 0x00
-	cpu.C = 0x13
-	cpu.D = 0x00
-	cpu.E = 0xD8
-	cpu.H = 0x01
-	cpu.L = 0x4D
-	cpu.SP = 0xFFFE
-	cpu.PC = 0x0100
+	cpu.Timer.Step(cycles)
 }
 
 func (cpu *CPU) ReadNextByte() uint8 {
-	b := cpu.Mem.Read(cpu.PC)
+	b := cpu.MMU.Read(cpu.PC)
 	cpu.PC++
 	return b
 }
 func (cpu *CPU) WriteNextByte(b uint8) {
-	cpu.Mem.Write(cpu.PC, b)
+	cpu.MMU.Write(cpu.PC, b)
 	cpu.PC++
 }
 
 func (cpu *CPU) ReadNextWord() uint16 {
-	w := cpu.Mem.ReadWord(cpu.PC)
+	w := cpu.MMU.ReadWord(cpu.PC)
 	cpu.PC += 2
 	return w
 }
 func (cpu *CPU) WriteNextWord(w uint16) {
-	cpu.Mem.WriteWord(cpu.PC, w)
+	cpu.MMU.WriteWord(cpu.PC, w)
 	cpu.PC += 2
 }
 

@@ -3,7 +3,7 @@ package memory
 import "testing"
 
 func TestMemoryReadWrite(t *testing.T) {
-	mem := &Memory{}
+	mem := &MMU{}
 
 	// Test writing and reading a byte
 	addr := uint16(0x1234)

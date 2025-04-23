@@ -1,4 +1,4 @@
-package rom
+package cartridge
 
 import (
 	"errors"
