@@ -33,13 +33,15 @@ var INT_HANDLERS = map[uint8]uint16{
 func (cpu *CPU) handleInterrupts() bool {
 	defer cpu.handleIME()
 
-	if !cpu.IME {
-		return false
-	}
-
 	// Check for pending interrupts
 	triggered := cpu.Mem.Read(IE_ADDR) & cpu.Mem.Read(IF_ADDR)
-	if triggered == 0 {
+
+	// Awake if halted
+	if cpu.halted && triggered > 0 {
+		cpu.halted = false
+	}
+
+	if !cpu.IME || triggered == 0 {
 		return false
 	}
 

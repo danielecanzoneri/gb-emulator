@@ -522,6 +522,7 @@ func (cpu *CPU) LD_A_A() {
 
 // HALT
 func (cpu *CPU) HALT() {
+	cpu.halted = true
 }
 
 // ADD A R8

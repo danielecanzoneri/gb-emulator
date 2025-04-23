@@ -1088,7 +1088,72 @@ func Test_LD_R8_R8(t *testing.T) {
 }
 
 func Test_HALT(t *testing.T) {
-	t.Fatalf("TODO")
+	cpu := mockCPU()
+
+	t.Run("halted", func(t *testing.T) {
+		PC := cpu.PC
+
+		cpu.IME = true
+		cpu.halted = false
+		cpu.Mem.Write(IF_ADDR, 0)
+		cpu.Mem.Write(IE_ADDR, 0)
+		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE, NOP_OPCODE)
+		cpu.ExecuteInstruction()
+		cpu.ExecuteInstruction()
+		cpu.ExecuteInstruction()
+
+		if cpu.PC != PC+1 {
+			t.Errorf("CPU was not halted, got PC=%02X, expected %02X", cpu.PC, PC+1)
+		}
+	})
+
+	t.Run("IME set", func(t *testing.T) {
+		PC := cpu.PC
+
+		cpu.IME = true
+		cpu.halted = false
+		cpu.Mem.Write(IF_ADDR, 0)
+		cpu.Mem.Write(IE_ADDR, 0)
+		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE)
+		cpu.ExecuteInstruction()
+		cpu.ExecuteInstruction()
+
+		if cpu.PC != PC+1 {
+			t.Errorf("CPU was not halted, got PC=%02X, expected %02X", cpu.PC, PC+1)
+		}
+
+		cpu.Mem.Write(IF_ADDR, TIMER_INT_MASK)
+		cpu.Mem.Write(IE_ADDR, TIMER_INT_MASK)
+		cpu.ExecuteInstruction()
+
+		if cpu.PC != TIMER_INT_HANDLER {
+			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, TIMER_INT_HANDLER)
+		}
+	})
+
+	t.Run("IME not set", func(t *testing.T) {
+		PC := cpu.PC
+
+		cpu.IME = false
+		cpu.halted = false
+		cpu.Mem.Write(IF_ADDR, 0)
+		cpu.Mem.Write(IE_ADDR, 0)
+		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE)
+		cpu.ExecuteInstruction()
+		cpu.ExecuteInstruction()
+
+		if cpu.PC != PC+1 {
+			t.Errorf("CPU was not halted, got PC=%02X, expected %02X", cpu.PC, PC+1)
+		}
+
+		cpu.Mem.Write(IF_ADDR, TIMER_INT_MASK)
+		cpu.Mem.Write(IE_ADDR, TIMER_INT_MASK)
+		cpu.ExecuteInstruction()
+
+		if cpu.PC != PC+2 {
+			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, PC+2)
+		}
+	})
 }
 
 func Test_ADD_A_R8(t *testing.T) {
