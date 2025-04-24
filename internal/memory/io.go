@@ -8,23 +8,62 @@ const (
 )
 
 const (
-	divAddr  = 0xFF04
-	timaAddr = 0xFF05
-	tmaAddr  = 0xFF06
-	tacAddr  = 0xFF07
+	DIVAddr  = 0xFF04
+	TIMAAddr = 0xFF05
+	TMAAddr  = 0xFF06
+	TACAddr  = 0xFF07
+
+	LCDCAddr = 0xFF40
+	STATAddr = 0xFF41
+	SCYAddr  = 0xFF42
+	SCXAddr  = 0xFF43
+	LYAddr   = 0xFF44
+	LYCAddr  = 0xFF45
+	DMAAddr  = 0xFF46
+	BGPAddr  = 0xFF47
+	OBP0Addr = 0xFF48
+	OBP1Addr = 0xFF49
+	WYAddr   = 0xFF4A
+	WXAddr   = 0xFF4B
 )
 
-func (mmu *MMU) WriteIO(addr uint16, v uint8) {
+func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	switch addr {
 	// Timer I/O
-	case divAddr:
+	case DIVAddr:
 		fallthrough
-	case timaAddr:
+	case TIMAAddr:
 		fallthrough
-	case tmaAddr:
+	case TMAAddr:
 		fallthrough
-	case tacAddr:
+	case TACAddr:
 		mmu.Timer.Write(addr, v)
+
+	// PPU I/O
+	case LCDCAddr:
+		fallthrough
+	case STATAddr:
+		fallthrough
+	case SCYAddr:
+		fallthrough
+	case SCXAddr:
+		fallthrough
+	case LYAddr:
+		fallthrough
+	case LYCAddr:
+		fallthrough
+	case DMAAddr:
+		fallthrough
+	case BGPAddr:
+		fallthrough
+	case OBP0Addr:
+		fallthrough
+	case OBP1Addr:
+		fallthrough
+	case WYAddr:
+		fallthrough
+	case WXAddr:
+		mmu.PPU.Write(addr, v)
 
 	default:
 		mmu.data[addr] = v
@@ -40,17 +79,43 @@ func (mmu *MMU) WriteIO(addr uint16, v uint8) {
 	}
 }
 
-func (mmu *MMU) ReadIO(addr uint16) uint8 {
+func (mmu *MMU) readIO(addr uint16) uint8 {
 	switch addr {
 	// Timer I/O
-	case divAddr:
+	case DIVAddr:
 		fallthrough
-	case timaAddr:
+	case TIMAAddr:
 		fallthrough
-	case tmaAddr:
+	case TMAAddr:
 		fallthrough
-	case tacAddr:
+	case TACAddr:
 		return mmu.Timer.Read(addr)
+
+	// PPU I/O
+	case LCDCAddr:
+		fallthrough
+	case STATAddr:
+		fallthrough
+	case SCYAddr:
+		fallthrough
+	case SCXAddr:
+		fallthrough
+	case LYAddr:
+		fallthrough
+	case LYCAddr:
+		fallthrough
+	case DMAAddr:
+		fallthrough
+	case BGPAddr:
+		fallthrough
+	case OBP0Addr:
+		fallthrough
+	case OBP1Addr:
+		fallthrough
+	case WYAddr:
+		fallthrough
+	case WXAddr:
+		return mmu.PPU.Read(addr)
 
 	default:
 		return mmu.data[addr]

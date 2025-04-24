@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 )
 
@@ -10,12 +11,13 @@ type MMU struct {
 	data [Size]uint8
 
 	Timer *timer.Timer
+	PPU   *ppu.PPU
 }
 
 func (mmu *MMU) Read(addr uint16) uint8 {
 	switch {
 	case ioRegisters <= addr && addr < hRAM:
-		return mmu.ReadIO(addr)
+		return mmu.readIO(addr)
 	default:
 		return mmu.data[addr]
 	}
@@ -24,7 +26,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 func (mmu *MMU) Write(addr uint16, value uint8) {
 	switch {
 	case ioRegisters <= addr && addr < hRAM:
-		mmu.WriteIO(addr, value)
+		mmu.writeIO(addr, value)
 	default:
 		mmu.data[addr] = value
 	}
