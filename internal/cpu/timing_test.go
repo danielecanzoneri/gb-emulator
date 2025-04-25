@@ -15,10 +15,10 @@ func TestOpcodesTiming(t *testing.T) {
 
 		cpu := mockCPU()
 		writeTestProgram(cpu, uint8(opcode))
-		cpu.ExecuteInstruction()
+		cycles := cpu.ExecuteInstruction()
 
-		if cpu.cycles != OPCODES_CYCLES[opcode] {
-			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, cpu.cycles, OPCODES_CYCLES[opcode])
+		if cycles != OPCODES_CYCLES[opcode] {
+			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, cycles, OPCODES_CYCLES[opcode])
 		}
 	}
 }
@@ -27,11 +27,11 @@ func TestPrefixedOpcodesTiming(t *testing.T) {
 	for opcode := range 0x100 {
 		cpu := mockCPU()
 		writeTestProgram(cpu, PREFIX_OPCODE, uint8(opcode))
-		cpu.ExecuteInstruction()
+		cycles := cpu.ExecuteInstruction()
 
 		expectedCycles := OPCODES_CYCLES[PREFIX_OPCODE] + PREFIX_OPCODES_CYCLES[opcode]
-		if cpu.cycles != expectedCycles {
-			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, cpu.cycles, expectedCycles)
+		if cycles != expectedCycles {
+			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, cycles, expectedCycles)
 		}
 	}
 }
@@ -54,22 +54,20 @@ func TestOpcodesWithBranchingTiming(t *testing.T) {
 
 			// No branch
 			setCondition(false)
-			cpu.cycles = 0
 			writeTestProgram(cpu, op)
 
-			cpu.ExecuteInstruction()
-			if cpu.cycles != OPCODES_CYCLES[op] {
-				t.Errorf("opcode %02X no branch: got %d cycles, expected %d", op, cpu.cycles, OPCODES_CYCLES[op])
+			cycles := cpu.ExecuteInstruction()
+			if cycles != OPCODES_CYCLES[op] {
+				t.Errorf("opcode %02X no branch: got %d cycles, expected %d", op, cycles, OPCODES_CYCLES[op])
 			}
 
 			// Branch
 			setCondition(true)
-			cpu.cycles = 0
 			writeTestProgram(cpu, op)
 
-			cpu.ExecuteInstruction()
-			if cpu.cycles != OPCODES_CYCLES_BRANCH[op] {
-				t.Errorf("opcode %02X branch: got %d cycles, expected %d", op, cpu.cycles, OPCODES_CYCLES_BRANCH[op])
+			cycles = cpu.ExecuteInstruction()
+			if cycles != OPCODES_CYCLES_BRANCH[op] {
+				t.Errorf("opcode %02X branch: got %d cycles, expected %d", op, cycles, OPCODES_CYCLES_BRANCH[op])
 			}
 		}
 	}

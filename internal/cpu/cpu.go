@@ -24,9 +24,6 @@ type CPU struct {
 	// Halt flag
 	halted bool
 
-	// Clock cycles
-	cycles uint
-
 	// Other components
 	Timer *timer.Timer
 	MMU   *memory.MMU
@@ -35,15 +32,18 @@ type CPU struct {
 	branched bool
 }
 
-func (cpu *CPU) ExecuteInstruction() {
+func (cpu *CPU) ExecuteInstruction() uint {
 	cpu.branched = false
 
-	if cpu.handleInterrupts() {
-		return
+	interruptedCycles := cpu.handleInterrupts()
+	if interruptedCycles > 0 {
+		return interruptedCycles
 	}
 
 	var cycles uint = 1 // Default halted
 	if !cpu.halted {
+		cycles = 0
+
 		opcode := cpu.ReadNextByte()
 		cpu.logState(opcode)
 
@@ -594,23 +594,22 @@ func (cpu *CPU) ExecuteInstruction() {
 			cpu.EI()
 		// PREFIX
 		case PREFIX_OPCODE:
-			cpu.prefixedOpcode()
+			cycles += cpu.prefixedOpcode()
 		default:
 			fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 		}
 
 		if cpu.branched {
-			cycles = OPCODES_CYCLES_BRANCH[opcode]
+			cycles += OPCODES_CYCLES_BRANCH[opcode]
 		} else {
-			cycles = OPCODES_CYCLES[opcode]
+			cycles += OPCODES_CYCLES[opcode]
 		}
 	}
 
-	cpu.cycles += cycles
-	cpu.Timer.Step(cycles)
+	return cycles
 }
 
-func (cpu *CPU) prefixedOpcode() {
+func (cpu *CPU) prefixedOpcode() uint {
 	cpu.branched = false
 
 	opcode := cpu.ReadNextByte()
@@ -681,9 +680,7 @@ func (cpu *CPU) prefixedOpcode() {
 		cpu.SET_B3_R8(7, opcode)
 	}
 
-	cycles := PREFIX_OPCODES_CYCLES[opcode]
-	cpu.cycles += cycles
-	cpu.Timer.Step(cycles)
+	return PREFIX_OPCODES_CYCLES[opcode]
 }
 
 func (cpu *CPU) ReadNextByte() uint8 {

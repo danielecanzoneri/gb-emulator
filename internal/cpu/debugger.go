@@ -31,9 +31,9 @@ func (cpu *CPU) logState(opcode uint8) {
 			)
 		}
 		fmt.Printf(
-			"A:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X | F:%02X | SP:%04X | cycles:%d\n",
+			"A:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X | F:%02X | SP:%04X\n",
 			cpu.A, cpu.B, cpu.C, cpu.D, cpu.E, cpu.H, cpu.L,
-			cpu.F, cpu.SP, cpu.cycles*4,
+			cpu.F, cpu.SP,
 		)
 
 		// Get user input
@@ -48,7 +48,7 @@ func (cpu *CPU) logState(opcode uint8) {
 			if len(input) == 0 {
 				break
 			} else if input[0] == 'x' {
-				// Read address
+				// read address
 				addr, err := parseAddr(input[2:])
 
 				if err != nil {

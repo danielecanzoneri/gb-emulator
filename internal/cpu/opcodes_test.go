@@ -1005,32 +1005,32 @@ func Test_JR_COND_E8(t *testing.T) {
 			t.Run(cond+"/"+name, func(t *testing.T) {
 				// Condition not met
 				expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-				expectedCycles := cpu.cycles + OPCODES_CYCLES[opcodes[cond]]
+				expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 				setFlag(false)
 
 				writeTestProgram(cpu, opcodes[cond], uint8(test.e8))
-				cpu.ExecuteInstruction()
+				cycles := cpu.ExecuteInstruction()
 
 				if cpu.PC != uint16(expectedPC) {
 					t.Errorf("condition not met: got %04X, expected %04X", cpu.PC, expectedPC)
 				}
-				if cpu.cycles != expectedCycles {
-					t.Errorf("condition not met: got %v cycles, expected %v", cpu.cycles, expectedCycles)
+				if cycles != expectedCycles {
+					t.Errorf("condition not met: got %v cycles, expected %v", cycles, expectedCycles)
 				}
 
 				// Condition met
 				expectedPC = int(cpu.PC) + OPCODES_BYTES[opcodes[cond]] + int(test.e8)
-				expectedCycles = cpu.cycles + OPCODES_CYCLES_BRANCH[opcodes[cond]]
+				expectedCycles = OPCODES_CYCLES_BRANCH[opcodes[cond]]
 				setFlag(true)
 
 				writeTestProgram(cpu, opcodes[cond], uint8(test.e8))
-				cpu.ExecuteInstruction()
+				cycles = cpu.ExecuteInstruction()
 
 				if cpu.PC != uint16(expectedPC) {
 					t.Errorf("condition met: got %04X, expected %04X", cpu.PC, expectedPC)
 				}
-				if cpu.cycles != expectedCycles {
-					t.Errorf("condition not met: got %v cycles, expected %v", cpu.cycles, expectedCycles)
+				if cycles != expectedCycles {
+					t.Errorf("condition not met: got %v cycles, expected %v", cycles, expectedCycles)
 				}
 			})
 		}
@@ -1969,7 +1969,7 @@ func Test_POP_R16STK(t *testing.T) {
 		expectedBC := addr
 		expectedSP := cpu.SP
 
-		// Write stack pointer
+		// write stack pointer
 		cpu.SP -= 2
 		cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -1989,7 +1989,7 @@ func Test_POP_R16STK(t *testing.T) {
 		expectedDE := addr
 		expectedSP := cpu.SP
 
-		// Write stack pointer
+		// write stack pointer
 		cpu.SP -= 2
 		cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2009,7 +2009,7 @@ func Test_POP_R16STK(t *testing.T) {
 		expectedHL := addr
 		expectedSP := cpu.SP
 
-		// Write stack pointer
+		// write stack pointer
 		cpu.SP -= 2
 		cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2029,7 +2029,7 @@ func Test_POP_R16STK(t *testing.T) {
 		expectedAF := addr
 		expectedSP := cpu.SP
 
-		// Write stack pointer
+		// write stack pointer
 		cpu.SP -= 2
 		cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2150,8 +2150,8 @@ func Test_RET_COND(t *testing.T) {
 	}
 
 	for cond, setFlag := range conditions {
-		addr := uint16(rand.Intn(0x10000))
-		// Write stack pointer
+		var addr uint16 = 0x1000
+		// write stack pointer
 		cpu.SP -= 2
 		cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2159,11 +2159,11 @@ func Test_RET_COND(t *testing.T) {
 			setFlag(false)
 
 			expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-			expectedCycles := cpu.cycles + OPCODES_CYCLES[opcodes[cond]]
+			expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 			expectedSP := cpu.SP
 
 			writeTestProgram(cpu, opcodes[cond])
-			cpu.ExecuteInstruction()
+			cycles := cpu.ExecuteInstruction()
 
 			if cpu.PC != uint16(expectedPC) {
 				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expectedPC)
@@ -2171,8 +2171,8 @@ func Test_RET_COND(t *testing.T) {
 			if cpu.SP != expectedSP {
 				t.Errorf("unmet: got SP=%04X, expected %04X", cpu.SP, expectedSP)
 			}
-			if cpu.cycles != expectedCycles {
-				t.Errorf("unmet: got cycles=%v, expected %v", cpu.cycles, expectedCycles)
+			if cycles != expectedCycles {
+				t.Errorf("unmet: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 
@@ -2180,11 +2180,11 @@ func Test_RET_COND(t *testing.T) {
 			setFlag(true)
 
 			expectedPC := addr
-			expectedCycles := cpu.cycles + OPCODES_CYCLES_BRANCH[opcodes[cond]]
+			expectedCycles := OPCODES_CYCLES_BRANCH[opcodes[cond]]
 			expectedSP := cpu.SP + 2
 
 			writeTestProgram(cpu, opcodes[cond])
-			cpu.ExecuteInstruction()
+			cycles := cpu.ExecuteInstruction()
 
 			if cpu.PC != expectedPC {
 				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expectedPC)
@@ -2192,8 +2192,8 @@ func Test_RET_COND(t *testing.T) {
 			if cpu.SP != expectedSP {
 				t.Errorf("met: got SP=%04X, expected %04X", cpu.SP, expectedSP)
 			}
-			if cpu.cycles != expectedCycles {
-				t.Errorf("met: got cycles=%v, expected %v", cpu.cycles, expectedCycles)
+			if cycles != expectedCycles {
+				t.Errorf("met: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 	}
@@ -2206,7 +2206,7 @@ func Test_RET(t *testing.T) {
 	expectedPC := addr
 	expectedSP := cpu.SP
 
-	// Write stack pointer
+	// write stack pointer
 	cpu.SP -= 2
 	cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2229,7 +2229,7 @@ func Test_RETI(t *testing.T) {
 	expectedPC := addr
 	expectedSP := cpu.SP
 
-	// Write stack pointer
+	// write stack pointer
 	cpu.SP -= 2
 	cpu.MMU.WriteWord(cpu.SP, addr)
 
@@ -2266,39 +2266,41 @@ func Test_JP_COND_N16(t *testing.T) {
 	}
 
 	for cond, setFlag := range conditions {
-		addr := uint16(rand.Intn(0x10000))
+		var addr uint16 = 0x1000
 
 		t.Run(cond+"_unmet", func(t *testing.T) {
 			setFlag(false)
+			addr += 2
 
 			expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-			expectedCycles := cpu.cycles + OPCODES_CYCLES[opcodes[cond]]
+			expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 
 			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
-			cpu.ExecuteInstruction()
+			cycles := cpu.ExecuteInstruction()
 
 			if cpu.PC != uint16(expectedPC) {
 				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expectedPC)
 			}
-			if cpu.cycles != expectedCycles {
-				t.Errorf("unmet: got cycles=%v, expected %v", cpu.cycles, expectedCycles)
+			if cycles != expectedCycles {
+				t.Errorf("unmet: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 
 		t.Run(cond+"_met", func(t *testing.T) {
 			setFlag(true)
+			addr += 2
 
 			expectedPC := addr
-			expectedCycles := cpu.cycles + OPCODES_CYCLES_BRANCH[opcodes[cond]]
+			expectedCycles := OPCODES_CYCLES_BRANCH[opcodes[cond]]
 
 			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
-			cpu.ExecuteInstruction()
+			cycles := cpu.ExecuteInstruction()
 
 			if cpu.PC != expectedPC {
 				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expectedPC)
 			}
-			if cpu.cycles != expectedCycles {
-				t.Errorf("met: got cycles=%v, expected %v", cpu.cycles, expectedCycles)
+			if cycles != expectedCycles {
+				t.Errorf("met: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 	}
@@ -2307,7 +2309,7 @@ func Test_JP_COND_N16(t *testing.T) {
 func Test_JP_N16(t *testing.T) {
 	cpu := mockCPU()
 
-	addr := uint16(rand.Intn(0x10000))
+	var addr uint16 = 0x4321
 	expectedPC := addr
 
 	writeTestProgram(cpu, JP_N16_OPCODE, uint8(addr), uint8(addr>>8))
@@ -2321,7 +2323,7 @@ func Test_JP_N16(t *testing.T) {
 func Test_JP_HL(t *testing.T) {
 	cpu := mockCPU()
 
-	addr := uint16(rand.Intn(0x10000))
+	var addr uint16 = 0x1234
 	expectedPC := addr
 
 	writeTestProgram(cpu, JP_HL_OPCODE)
@@ -2352,10 +2354,11 @@ func Test_CALL_COND_N16(t *testing.T) {
 	}
 
 	for cond, setFlag := range conditions {
-		addr := uint16(rand.Intn(0x10000))
+		var addr uint16 = 0x1111
 
 		t.Run(cond+"_unmet", func(t *testing.T) {
 			setFlag(false)
+			addr += 2
 
 			expectedPC := cpu.PC + uint16(OPCODES_BYTES[opcodes[cond]])
 			expectedSP := cpu.SP
@@ -2377,6 +2380,7 @@ func Test_CALL_COND_N16(t *testing.T) {
 
 		t.Run(cond+"_met", func(t *testing.T) {
 			setFlag(true)
+			addr += 2
 
 			expectedPC := addr
 			expectedSP := cpu.SP - 2
@@ -2401,7 +2405,7 @@ func Test_CALL_COND_N16(t *testing.T) {
 func Test_CALL_N16(t *testing.T) {
 	cpu := mockCPU()
 
-	addr := uint16(rand.Intn(0x10000))
+	var addr uint16 = 0x1111
 
 	expectedPC := addr
 	expectedSP := cpu.SP - 2

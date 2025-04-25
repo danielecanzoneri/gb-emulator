@@ -36,7 +36,7 @@ var RequestTimerInterruptFunc = func(cpu *CPU) func() {
 	}
 }
 
-func (cpu *CPU) handleInterrupts() bool {
+func (cpu *CPU) handleInterrupts() uint {
 	defer cpu.handleIME()
 
 	// Check for pending interrupts
@@ -48,7 +48,7 @@ func (cpu *CPU) handleInterrupts() bool {
 	}
 
 	if !cpu.IME || triggered == 0 {
-		return false
+		return 0
 	}
 
 	// Serve interrupts with priority
@@ -56,11 +56,10 @@ func (cpu *CPU) handleInterrupts() bool {
 		mask := uint8(1 << i)
 		if triggered&mask > 0 {
 			cpu.serveInterrupt(mask)
-			cpu.cycles += handlerCycles
-			return true
+			return handlerCycles
 		}
 	}
-	return false
+	return 0
 }
 
 func (cpu *CPU) requestInterrupt(interruptMask uint8) {
