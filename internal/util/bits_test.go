@@ -1,6 +1,9 @@
 package util
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+)
 
 func TestCombineBytes(t *testing.T) {
 	var high, low uint8 = 0x12, 0x34
@@ -202,6 +205,27 @@ func TestByteToBCD(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if ByteToBCD(test.n) != test.expected {
 				t.Fatalf("got %02X, expected %02X", ByteToBCD(test.n), test.expected)
+			}
+		})
+	}
+}
+
+func TestSpreadBits(t *testing.T) {
+	tests := []struct {
+		b        uint8
+		expected uint16
+	}{
+		{b: 0b11111111, expected: 0b0101010101010101},
+		{b: 0b11110000, expected: 0b0101010100000000},
+		{b: 0b11001010, expected: 0b0101000001000100},
+		{b: 0b00001001, expected: 0b0000000001000001},
+	}
+
+	for i, test := range tests {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got, expected := SpreadBits(test.b), test.expected
+			if got != expected {
+				t.Fatalf("got %016b, expected %016b", got, expected)
 			}
 		})
 	}

@@ -54,3 +54,11 @@ func ByteToBCD(n uint8) uint8 {
 	highNibble := n / 10
 	return highNibble<<4 | lowNibble
 }
+
+func SpreadBits(b uint8) uint16 {
+	x := uint16(b)
+	x = (x | (x << 4)) & 0x0F0F
+	x = (x | (x << 2)) & 0x3333
+	x = (x | (x << 1)) & 0x5555
+	return x
+}

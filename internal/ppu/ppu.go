@@ -6,28 +6,38 @@ type PPU struct {
 	Mode uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
 	Dots uint  // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
 
-	LCDC uint8
-	STAT uint8
-	SCY  uint8
-	SCX  uint8
-	LY   uint8
-	LYC  uint8
-	DMA  uint8
-	BGP  uint8
-	OBP0 uint8
-	OBP1 uint8
+	// vRAM and OAM data
+	vRAM vRAM
+	OAM  OAM
+
+	// objects on current line
+	objsLY  [objsLimit]*Object
+	numObjs int
+
+	// frameBuffer contains data to be displayed
+	framebuffer [frameHeight][frameWidth]uint8
+
+	LCDC uint8 // LCD control
+	STAT uint8 // STAT interrupt
+	SCY  uint8 // y - background scrolling
+	SCX  uint8 // x - background scrolling
+	LY   uint8 // line counter
+	LYC  uint8 // line counter check
+	BGP  Palette
+	OBP0 Palette
+	OBP1 Palette
 	WY   uint8
 	WX   uint8
 
 	// LCD control
-	active               bool  // Bit 7
-	windowTileMapArea    uint8 // Bit 6 (0 = 9800–9BFF; 1 = 9C00–9FFF)
-	windowEnabled        bool  // Bit 5
-	bgWindowTileDataArea uint8 // Bit 4 (8800–97FF; 1 = 8000–8FFF)
-	bgTileMapArea        uint8 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
-	objSize              uint8 // Bit 2 (0 = 8x8; 1 = 8x16)
-	objEnabled           bool  // Bit 1
-	bgWindowEnabled      bool  // Bit 0
+	active               bool   // Bit 7
+	windowTileMapAddr    uint16 // Bit 6 (0 = 9800–9BFF; 1 = 9C00–9FFF)
+	windowEnabled        bool   // Bit 5
+	bgWindowTileDataArea uint8  // Bit 4 (0 = 8800–97FF; 1 = 8000–8FFF)
+	bgTileMapAddr        uint16 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
+	obj8x16Size          bool   // Bit 2 (false = 8x8; true = 8x16)
+	objEnabled           bool   // Bit 1
+	bgWindowEnabled      bool   // Bit 0
 
 	// Shared STAT interrupt line (STAT interrupt is triggered after low -> high transition)
 	STATInterruptState bool
@@ -50,16 +60,18 @@ func (ppu *PPU) Step(cycles uint) {
 	switch ppu.Mode {
 	case oamScan:
 		if ppu.Dots >= 80 {
-			ppu.Dots -= 80
 			ppu.setMode(drawing)
 		}
-	case drawing: // TODO
+	case drawing:
+		if ppu.Dots >= 172+80 {
+			// TODO - Correctly compute Mode 3 length
+			ppu.setMode(hBlank)
+		}
 	case hBlank:
 		if ppu.Dots >= 456 {
 			ppu.Dots -= 456
 			ppu.newLine()
 			if ppu.LY == 144 { // Enter VBlank period
-				ppu.RequestVBlankInterrupt()
 				ppu.setMode(vBlank)
 			} else {
 				ppu.setMode(oamScan)
@@ -79,9 +91,19 @@ func (ppu *PPU) Step(cycles uint) {
 }
 
 func (ppu *PPU) setMode(mode uint8) {
-	ppu.checkSTATInterruptState()
 	ppu.Mode = mode
 	ppu.STAT = (ppu.STAT & 0xFC) | mode
+
+	ppu.checkSTATInterruptState()
+
+	switch mode {
+	case oamScan:
+		ppu.selectObjects()
+	case drawing:
+		ppu.drawLine()
+	case vBlank:
+		ppu.RequestVBlankInterrupt()
+	}
 }
 
 func (ppu *PPU) newLine() {

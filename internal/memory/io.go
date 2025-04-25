@@ -3,8 +3,13 @@ package memory
 import "fmt"
 
 const (
-	ioRegisters = 0xFF00
-	hRAM        = 0xFF80
+	vRAM           = 0x8000
+	eRAM           = 0xA000
+	echoRAM        = 0xE000
+	OAM            = 0xFE00
+	reservedMemory = 0xFEA0
+	ioRegisters    = 0xFF00
+	hRAM           = 0xFF80
 )
 
 const (
@@ -52,8 +57,6 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		fallthrough
 	case LYCAddr:
 		fallthrough
-	case DMAAddr:
-		fallthrough
 	case BGPAddr:
 		fallthrough
 	case OBP0Addr:
@@ -65,8 +68,12 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	case WXAddr:
 		mmu.PPU.Write(addr, v)
 
+	// DMA transfer
+	case DMAAddr:
+		mmu.DMA(v)
+
 	default:
-		mmu.data[addr] = v
+		mmu.Data[addr] = v
 	}
 
 	// Debug on serial port
@@ -104,8 +111,6 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		fallthrough
 	case LYCAddr:
 		fallthrough
-	case DMAAddr:
-		fallthrough
 	case BGPAddr:
 		fallthrough
 	case OBP0Addr:
@@ -118,6 +123,6 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		return mmu.PPU.Read(addr)
 
 	default:
-		return mmu.data[addr]
+		return mmu.Data[addr]
 	}
 }

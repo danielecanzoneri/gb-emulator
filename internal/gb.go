@@ -3,6 +3,7 @@ package gameboy
 import (
 	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
+	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 )
 
@@ -10,6 +11,7 @@ type GameBoy struct {
 	CPU    *cpu.CPU
 	Timer  *timer.Timer
 	Memory *memory.MMU
+	PPU    *ppu.PPU
 
 	cycles int
 }
@@ -48,6 +50,8 @@ func (gb *GameBoy) Load(romData []byte) {
 func (gb *GameBoy) Run() {
 	// Simplified loop
 	for {
-		gb.CPU.ExecuteInstruction()
+		cycles := gb.CPU.ExecuteInstruction()
+		gb.Timer.Step(cycles)
+		gb.PPU.Step(cycles)
 	}
 }
