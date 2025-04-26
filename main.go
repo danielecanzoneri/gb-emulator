@@ -29,9 +29,6 @@ func main() {
 
 	gb := gameboy.Init()
 
-	// Initialize cpu
-	gb.Reset()
-
 	// Load the ROM
 	romData, err := cartridge.LoadROM(*romPath)
 	if err != nil {
@@ -39,6 +36,9 @@ func main() {
 		return
 	}
 	gb.Load(romData)
+
+	// Initialize cpu
+	gb.Reset()
 
 	gb.Run()
 }

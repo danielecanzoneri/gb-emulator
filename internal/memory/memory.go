@@ -23,7 +23,8 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 	case OAM <= addr && addr < reservedMemory:
 		return mmu.PPU.ReadOAM(addr)
 	case reservedMemory <= addr && addr < ioRegisters:
-		panic("Can't read reserved memory")
+		return 0
+		// panic("Can't read reserved memory: " + strconv.FormatUint(uint64(addr), 16))
 	case ioRegisters <= addr && addr < hRAM:
 		return mmu.readIO(addr)
 	default:
@@ -41,7 +42,7 @@ func (mmu *MMU) Write(addr uint16, value uint8) {
 	case OAM <= addr && addr < reservedMemory:
 		mmu.PPU.WriteOAM(addr, value)
 	case reservedMemory <= addr && addr < ioRegisters:
-		panic("Can't write reserved memory")
+	// 	panic("Can't write reserved memory: " + strconv.FormatUint(uint64(addr), 16))
 	case ioRegisters <= addr && addr < hRAM:
 		mmu.writeIO(addr, value)
 	default:

@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/internal/util"
 	"strconv"
 )
@@ -28,13 +29,18 @@ const (
 func (ppu *PPU) Write(addr uint16, v uint8) {
 	switch addr {
 	case LCDCAddr:
-		//
-		if ppu.active && ppu.Mode != vBlank && util.ReadBit(ppu.LCDC, 7) > 0 {
-			panic("Cannot disable LCD outside of VBlank period")
-		}
+		//if ppu.active && ppu.Mode != vBlank && util.ReadBit(ppu.LCDC, 7) > 0 {
+		//	panic("Cannot disable LCD outside VBlank period")
+		//}
 		ppu.LCDC = v
 		// Update LCD control
 		ppu.active = util.ReadBit(v, 7) > 0
+		if !ppu.active {
+			// Reset to HBlank
+			ppu.LY = 0
+			ppu.Dots = 0
+			ppu.setMode(hBlank)
+		}
 		if util.ReadBit(v, 6) == 0 {
 			ppu.windowTileMapAddr = 0x9800
 		} else {
@@ -51,7 +57,8 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.objEnabled = util.ReadBit(v, 1) > 0
 		ppu.bgWindowEnabled = util.ReadBit(v, 0) > 0
 	case LYAddr:
-		panic("cannot write LY address")
+		fmt.Println("WARNING: should not write LY")
+		ppu.LY = v
 	case LYCAddr:
 		ppu.LYC = v
 	case STATAddr:
@@ -63,8 +70,16 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.OBP0 = Palette(v)
 	case OBP1Addr:
 		ppu.OBP1 = Palette(v)
+	case SCYAddr:
+		ppu.SCY = v
+	case SCXAddr:
+		ppu.SCX = v
+	case WYAddr:
+		ppu.WY = v
+	case WXAddr:
+		ppu.WX = v
 	default:
-		panic("PPU: unknown addr " + strconv.Itoa(int(addr)))
+		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
 }
 
@@ -84,8 +99,16 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		return uint8(ppu.OBP0)
 	case OBP1Addr:
 		return uint8(ppu.OBP1)
+	case SCYAddr:
+		return ppu.SCY
+	case SCXAddr:
+		return ppu.SCX
+	case WYAddr:
+		return ppu.WY
+	case WXAddr:
+		return ppu.WX
 	default:
-		panic("PPU: unknown addr " + strconv.Itoa(int(addr)))
+		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
 }
 

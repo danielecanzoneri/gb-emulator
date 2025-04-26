@@ -123,3 +123,98 @@ func writeObjectsOAM(o *OAM, objs []Object) {
 		o.data[objSize*i+1] = obj.x
 	}
 }
+
+func TestObjectParsing8x8(t *testing.T) {
+	ppu := &PPU{}
+	ppu.OBP0 = 0
+	ppu.OBP1 = 0xFF
+	ppu.obj8x16Size = false
+
+	var objAddr uint8 = 0x41
+	var objData = [4]uint8{
+		16,   // y
+		7,    // x
+		0xE1, // tileAddr
+		0xFF, // Flags
+	}
+
+	// Write obj data in OAM
+	copy(ppu.OAM.data[objAddr:objAddr+4], objData[:])
+
+	// Write tile data at obj addr
+	copy(ppu.vRAM.data[16*int(objData[2]):16*(int(objData[2])+1)], TestTileData[:])
+
+	obj := ppu.parseObject(objAddr)
+	if obj.y != objData[0] {
+		t.Errorf("y: expected %d, got %d", objData[0], obj.y)
+	}
+	if obj.x != objData[1] {
+		t.Errorf("x: expected %d, got %d", objData[1], obj.x)
+	}
+	if !obj.bgPriority {
+		t.Errorf("bgPriority: expected %t, got %t", true, obj.bgPriority)
+	}
+	if !obj.yFlip {
+		t.Errorf("yFlip: expected %t, got %t", true, obj.yFlip)
+	}
+	if !obj.xFlip {
+		t.Errorf("xFlip: expected %t, got %t", true, obj.xFlip)
+	}
+	if obj.palette != ppu.OBP1 {
+		t.Error("palette: expected OBP1, got OBP0")
+	}
+	if obj.tile1.data != TestExpectedTile {
+		t.Errorf("tile1: expected %v, got %v", TestExpectedTile, obj.tile1.data)
+	}
+	if obj.tile2 != nil {
+		t.Errorf("tile2: expected nil")
+	}
+}
+
+func TestObjectParsing8x16(t *testing.T) {
+	ppu := &PPU{}
+	ppu.OBP0 = 0
+	ppu.OBP1 = 0xFF
+	ppu.obj8x16Size = true
+
+	var objAddr uint8 = 0x41
+	var objData = [4]uint8{
+		16,   // y
+		7,    // x
+		0xE1, // tileAddr
+		0xFF, // Flags
+	}
+
+	// Write obj data in OAM
+	copy(ppu.OAM.data[objAddr:objAddr+4], objData[:])
+
+	// Write 2 tile data at 0xE0 and 0xE1
+	copy(ppu.vRAM.data[16*0xE0:16*0xE1], TestTileData[:])
+	copy(ppu.vRAM.data[16*0xE1:16*0xE2], TestTileData[:])
+
+	obj := ppu.parseObject(objAddr)
+	if obj.y != objData[0] {
+		t.Errorf("y: expected %d, got %d", objData[0], obj.y)
+	}
+	if obj.x != objData[1] {
+		t.Errorf("x: expected %d, got %d", objData[1], obj.x)
+	}
+	if !obj.bgPriority {
+		t.Errorf("bgPriority: expected %t, got %t", true, obj.bgPriority)
+	}
+	if !obj.yFlip {
+		t.Errorf("yFlip: expected %t, got %t", true, obj.yFlip)
+	}
+	if !obj.xFlip {
+		t.Errorf("xFlip: expected %t, got %t", true, obj.xFlip)
+	}
+	if obj.palette != ppu.OBP1 {
+		t.Error("palette: expected OBP1, got OBP0")
+	}
+	if obj.tile1.data != TestExpectedTile {
+		t.Errorf("tile1: expected %v, got %v", TestExpectedTile, obj.tile1.data)
+	}
+	if obj.tile2.data != TestExpectedTile {
+		t.Errorf("tile2: expected %v, got %v", TestExpectedTile, obj.tile2.data)
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"github.com/danielecanzoneri/gb-emulator/internal/util"
 	"slices"
+	"strconv"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	objsLimit = 10
 
 	yOffset = 16
-	xOffset = 8
+	xOffset = 7
 )
 
 type Object struct {
@@ -29,10 +30,31 @@ type Object struct {
 }
 
 func (obj Object) getRow(row uint8) [8]uint8 {
-	if row < 8 {
-		return obj.tile1.getRowPixels(row)
+	if (obj.tile2 == nil && row >= 8) || (obj.tile2 != nil && row >= 16) {
+		panic("Invalid row: " + strconv.Itoa(int(row)))
 	}
-	return obj.tile1.getRowPixels(row - 8)
+
+	if obj.yFlip {
+		if obj.tile2 == nil { // height = 8
+			row = 7 - row
+		} else { // height = 16
+			row = 15 - row
+		}
+	}
+	var pixels [8]uint8
+	if row < 8 {
+		pixels = obj.tile1.getRowPixels(row)
+	} else {
+		pixels = obj.tile1.getRowPixels(row - 8)
+	}
+
+	if obj.xFlip {
+		pixels[0], pixels[7] = pixels[7], pixels[0]
+		pixels[1], pixels[6] = pixels[6], pixels[1]
+		pixels[2], pixels[5] = pixels[5], pixels[2]
+		pixels[3], pixels[4] = pixels[4], pixels[3]
+	}
+	return pixels
 }
 
 type Palette uint8

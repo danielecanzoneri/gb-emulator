@@ -30,11 +30,23 @@ var interruptsHandler = map[uint8]uint16{
 	joypadMask: joypadHandler,
 }
 
-var RequestTimerInterruptFunc = func(cpu *CPU) func() {
-	return func() {
-		cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|timerMask)
+var (
+	RequestTimerInterruptFunc = func(cpu *CPU) func() {
+		return func() {
+			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|timerMask)
+		}
 	}
-}
+	RequestVBlankInterruptFunc = func(cpu *CPU) func() {
+		return func() {
+			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|vblankMask)
+		}
+	}
+	RequestSTATInterruptFunc = func(cpu *CPU) func() {
+		return func() {
+			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|statMask)
+		}
+	}
+)
 
 func (cpu *CPU) handleInterrupts() uint {
 	defer cpu.handleIME()

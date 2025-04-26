@@ -1,6 +1,8 @@
 package ppu
 
-import "github.com/danielecanzoneri/gb-emulator/internal/util"
+import (
+	"github.com/danielecanzoneri/gb-emulator/internal/util"
+)
 
 type PPU struct {
 	Mode uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
@@ -15,7 +17,7 @@ type PPU struct {
 	numObjs int
 
 	// frameBuffer contains data to be displayed
-	framebuffer [frameHeight][frameWidth]uint8
+	Framebuffer [FrameHeight][FrameWidth]uint8
 
 	LCDC uint8 // LCD control
 	STAT uint8 // STAT interrupt
@@ -28,6 +30,9 @@ type PPU struct {
 	OBP1 Palette
 	WY   uint8
 	WX   uint8
+
+	// Window Y counter
+	wyCounter uint8
 
 	// LCD control
 	active               bool   // Bit 7
@@ -45,16 +50,23 @@ type PPU struct {
 	// Callbacks to request interrupt
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
+
+	// FrameComplete signal when frame is ready to be rendered
+	FrameComplete bool
 }
 
 const (
 	oamScan = 2
 	drawing = 3
-	hBlank  = 1
-	vBlank  = 0
+	hBlank  = 0
+	vBlank  = 1
 )
 
 func (ppu *PPU) Step(cycles uint) {
+	if !ppu.active {
+		return
+	}
+
 	ppu.Dots += cycles * 4 // M-cycles -> T-states
 
 	switch ppu.Mode {
@@ -99,9 +111,11 @@ func (ppu *PPU) setMode(mode uint8) {
 	switch mode {
 	case oamScan:
 		ppu.selectObjects()
-	case drawing:
+	case hBlank:
 		ppu.drawLine()
 	case vBlank:
+		ppu.wyCounter = 0
+		ppu.FrameComplete = true
 		ppu.RequestVBlankInterrupt()
 	}
 }

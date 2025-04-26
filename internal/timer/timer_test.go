@@ -26,7 +26,7 @@ func TestTimer_UpdateTIMA_NoOverflow(t *testing.T) {
 	interruptRequestFunc := func() {
 		interruptSet = true
 	}
-	timer.SetInterruptRequestFunc(interruptRequestFunc)
+	timer.RequestInterrupt = interruptRequestFunc
 
 	var TIMA, TMA uint8 = 0xFE, 0x10
 	timer.TIMA = TIMA
@@ -57,7 +57,7 @@ func TestTimer_UpdateTIMA_Overflow(t *testing.T) {
 	interruptRequestFunc := func() {
 		interruptSet = true
 	}
-	timer.SetInterruptRequestFunc(interruptRequestFunc)
+	timer.RequestInterrupt = interruptRequestFunc
 
 	var TIMA, TMA uint8 = 0xFF, 0x10
 	timer.TIMA = TIMA
@@ -91,7 +91,7 @@ func TestTimer_WriteTIMAWhenOverflow(t *testing.T) {
 	interruptRequestFunc := func() {
 		interruptSet = true
 	}
-	timer.SetInterruptRequestFunc(interruptRequestFunc)
+	timer.RequestInterrupt = interruptRequestFunc
 
 	var TIMA, TMA uint8 = 0xFF, 0x10
 	timer.TIMA = TIMA
@@ -120,7 +120,7 @@ func TestTimer_WriteTIMAAfterOverflow(t *testing.T) {
 	interruptRequestFunc := func() {
 		interruptSet = true
 	}
-	timer.SetInterruptRequestFunc(interruptRequestFunc)
+	timer.RequestInterrupt = interruptRequestFunc
 
 	var TIMA, TMA uint8 = 0xFF, 0x10
 	timer.TIMA = TIMA
@@ -149,7 +149,7 @@ func TestTimer_WriteTMAAfterOverflow(t *testing.T) {
 	interruptRequestFunc := func() {
 		interruptSet = true
 	}
-	timer.SetInterruptRequestFunc(interruptRequestFunc)
+	timer.RequestInterrupt = interruptRequestFunc
 
 	var TIMA, TMA uint8 = 0xFF, 0x10
 	timer.TIMA = TIMA
