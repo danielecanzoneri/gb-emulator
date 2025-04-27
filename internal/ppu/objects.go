@@ -45,7 +45,7 @@ func (obj Object) getRow(row uint8) [8]uint8 {
 	if row < 8 {
 		pixels = obj.tile1.getRowPixels(row)
 	} else {
-		pixels = obj.tile1.getRowPixels(row - 8)
+		pixels = obj.tile2.getRowPixels(row - 8)
 	}
 
 	if obj.xFlip {
