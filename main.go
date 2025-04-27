@@ -30,12 +30,12 @@ func main() {
 	gb := gameboy.Init()
 
 	// Load the ROM
-	romData, err := cartridge.LoadROM(*romPath)
+	rom, err := cartridge.LoadROM(*romPath)
 	if err != nil {
 		fmt.Printf("Error loading the cartridge: %v\n", err)
 		return
 	}
-	gb.Load(romData)
+	gb.Load(rom)
 
 	// Initialize cpu
 	gb.Reset()

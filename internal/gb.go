@@ -1,6 +1,7 @@
 package gameboy
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
@@ -58,11 +59,10 @@ func (gb *GameBoy) Reset() {
 	gb.PPU.Mode = 2
 }
 
-func (gb *GameBoy) Load(romData []byte) {
+func (gb *GameBoy) Load(rom *cartridge.Rom) {
 	// Load ROM into memory
-	for i, b := range romData {
-		gb.Memory.Write(uint16(i), b)
-	}
+	gb.Memory.CartridgeData = rom.Data
+	gb.Memory.SetMBC(rom.Header)
 }
 
 func (gb *GameBoy) Run() {

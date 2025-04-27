@@ -1,17 +1,5 @@
 package memory
 
-import "fmt"
-
-const (
-	vRAM           = 0x8000
-	eRAM           = 0xA000
-	echoRAM        = 0xE000
-	OAM            = 0xFE00
-	reservedMemory = 0xFEA0
-	ioRegisters    = 0xFF00
-	hRAM           = 0xFF80
-)
-
 const (
 	DIVAddr  = 0xFF04
 	TIMAAddr = 0xFF05
@@ -74,15 +62,6 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 
 	default:
 		mmu.Data[addr] = v
-	}
-
-	// Debug on serial port
-	if addr == 0xFF01 {
-		if v == 0 {
-			fmt.Println()
-		} else {
-			fmt.Printf("%c", v)
-		}
 	}
 }
 
