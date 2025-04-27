@@ -9,12 +9,18 @@ func (ppu *PPU) drawLine() {
 	// Array that contains current line objects pixels
 	var frameLine = [FrameWidth]uint8{}
 
+	// Flag that is set to true when x+7 >= wx and used to increment window Y counter
+	windowsRendered := false
+
 	if ppu.bgWindowEnabled {
-		yWindow := ppu.LY - ppu.WY
+		yWindow := ppu.wyCounter
+
 		yBackground := ppu.SCY + ppu.LY
 		for x := 0; x < FrameWidth; x++ {
 			// TODO - avoid if inside for
 			if ppu.windowEnabled && ppu.LY >= ppu.WY && uint8(x)+7 >= ppu.WX {
+				windowsRendered = true
+
 				// We're drawing the window
 				xWindow := uint8(x) + 7 - ppu.WX
 				tileAddr := ppu.windowTileMapAddr + getTileMapOffset(xWindow, yWindow)
@@ -37,6 +43,10 @@ func (ppu *PPU) drawLine() {
 		}
 	}
 
+	if windowsRendered {
+		ppu.wyCounter++
+	}
+
 	if ppu.objEnabled {
 		var pixelLine = [FrameWidth]uint8{}
 		var pixelBGPriority = [FrameWidth]bool{} // Pixel priority for BG/Window over obj
@@ -44,6 +54,7 @@ func (ppu *PPU) drawLine() {
 		// Draw objects with priority
 		for i := range ppu.numObjs {
 			obj := ppu.objsLY[i]
+
 			// Object row to draw is: LY + 16 - y
 			rowPixels := obj.getRow(ppu.LY + yOffset - obj.y)
 
