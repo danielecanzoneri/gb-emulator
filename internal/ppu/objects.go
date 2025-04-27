@@ -13,7 +13,7 @@ const (
 	objsLimit = 10
 
 	yOffset = 16
-	xOffset = 7
+	xOffset = 8
 )
 
 type Object struct {
