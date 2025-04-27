@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	Scale = 2
+	Scale = 1
 )
 
 var (
 	colors = [4]color.Color{
 		color.Gray{Y: 0xFF}, // White
-		color.Gray{Y: 0xB0}, // Light gray
-		color.Gray{Y: 0x60}, // Dark gray
+		color.Gray{Y: 0xAA}, // Light gray
+		color.Gray{Y: 0x55}, // Dark gray
 		color.Gray{Y: 0},    // Black
 	}
 	pixels [4]*ebiten.Image
