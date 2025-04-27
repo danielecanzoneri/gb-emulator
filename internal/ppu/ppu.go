@@ -110,6 +110,7 @@ func (ppu *PPU) setMode(mode uint8) {
 
 	switch mode {
 	case oamScan:
+	case drawing:
 		ppu.selectObjects()
 	case hBlank:
 		ppu.drawLine()
