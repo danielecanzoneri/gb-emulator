@@ -27,6 +27,9 @@ func (mmu *MMU) SetMBC(header *cartridge.Header) {
 	mmu.mbc.currentRAMBank = 0
 	mmu.mbc.useRAMRegisterAsHighROMRegister = header.ROMBanks > 32
 
+	if mmu.mbc.RAMBanks == 0 {
+		mmu.mbc.RAMBanks = 1
+	}
 	mmu.mbc.RAMEnabled = false
 	mmu.mbc.mode = 0
 

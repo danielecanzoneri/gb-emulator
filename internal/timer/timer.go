@@ -1,5 +1,7 @@
 package timer
 
+import "fmt"
+
 const (
 	divFreq = 64
 )
@@ -22,6 +24,13 @@ type Timer struct {
 
 	// Callback to request interrupt
 	RequestInterrupt func()
+}
+
+func (t *Timer) String() string {
+	return fmt.Sprintf(
+		"DIV:%02X, TIMA:%02X, TMA:%02X, TAC:%02X, DIV counter:%d, TIMA counter:%d",
+		t.DIV, t.TIMA, t.TMA, t.TAC, t.divCounter, t.timaCounter,
+	)
 }
 
 func (t *Timer) Step(cycles uint) {

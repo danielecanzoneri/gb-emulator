@@ -21,7 +21,7 @@ type GameBoy struct {
 
 func Init() *GameBoy {
 	t := &timer.Timer{}
-	p := &ppu.PPU{}
+	p := &ppu.PPU{STAT: 0x81, LY: 0x90, Mode: 1}
 	m := &memory.MMU{Timer: t, PPU: p}
 	c := &cpu.CPU{Timer: t, MMU: m}
 
@@ -46,17 +46,16 @@ func (gb *GameBoy) Reset() {
 	gb.CPU.SP = 0xFFFE
 	gb.CPU.PC = 0x0100
 
-	gb.Timer.DIV = 0x18
+	// gb.Timer.DIV = 0x1E
 	gb.Timer.TAC = 0xF8
 
 	gb.Memory.Write(0xFF0F, 0xE1) // IF
 
 	gb.PPU.Write(0xFF40, 0x91) // LCDC
+	gb.PPU.Write(0xFF41, 0x81)
 	gb.PPU.Write(0xFF47, 0xFC) // BGP
-	gb.PPU.Write(0xFF48, 0xFF) // OBP0
-	gb.PPU.Write(0xFF49, 0xFF) // OBP1
-
-	gb.PPU.Mode = 2
+	gb.PPU.Write(0xFF48, 0x00) // OBP0
+	gb.PPU.Write(0xFF49, 0x00) // OBP1
 }
 
 func (gb *GameBoy) Load(rom *cartridge.Rom) {

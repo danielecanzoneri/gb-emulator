@@ -35,6 +35,7 @@ func (cpu *CPU) logState(opcode uint8) {
 			cpu.A, cpu.B, cpu.C, cpu.D, cpu.E, cpu.H, cpu.L,
 			cpu.F, cpu.SP,
 		)
+		fmt.Println("Timer:", cpu.Timer)
 
 		// Get user input
 		scanner := bufio.NewScanner(os.Stdin)
