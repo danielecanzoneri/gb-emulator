@@ -21,6 +21,7 @@ func (t *Timer) Write(addr uint16, v uint8) {
 	case divAddr:
 		t.DIV = 0
 		t.divCounter = 0
+		t.timaCounter = 0 // Timer and Divider register use the same internal counter
 	case timaAddr:
 		t.TIMA = v
 		t.timaCounter = 0
