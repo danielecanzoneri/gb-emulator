@@ -19,6 +19,9 @@ type MMU struct {
 	PPU   *ppu.PPU
 }
 
+func (mmu *MMU) Cycle() {
+}
+
 func (mmu *MMU) Read(addr uint16) uint8 {
 	switch {
 	// MBC addresses

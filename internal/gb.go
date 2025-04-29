@@ -19,11 +19,16 @@ type GameBoy struct {
 	cycles uint
 }
 
+func (gb *GameBoy) Cycle() {
+	gb.cycles++
+}
+
 func Init() *GameBoy {
 	t := &timer.Timer{}
 	p := &ppu.PPU{STAT: 0x81, LY: 0x90, Mode: 1}
 	m := &memory.MMU{Timer: t, PPU: p}
 	c := &cpu.CPU{Timer: t, MMU: m}
+	c.AddCyclable(t, p, m)
 
 	// Set interrupt request for timer
 	t.RequestInterrupt = cpu.RequestTimerInterruptFunc(c)
@@ -31,7 +36,10 @@ func Init() *GameBoy {
 	p.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(c)
 	p.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(c)
 
-	return &GameBoy{CPU: c, Timer: t, PPU: p, Memory: m}
+	gb := &GameBoy{CPU: c, Timer: t, PPU: p, Memory: m}
+	c.AddCyclable(gb)
+
+	return gb
 }
 
 func (gb *GameBoy) Reset() {

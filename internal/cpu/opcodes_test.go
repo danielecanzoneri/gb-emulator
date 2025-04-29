@@ -51,14 +51,14 @@ func Test_LD_R16MEM_A(t *testing.T) {
 	cpu := mockCPU()
 	cpu.A = 0xFD
 
-	var addrBC uint16 = 0x10
-	var addrDE uint16 = 0x20
-	var addrHLI uint16 = 0x30
-	var addrHLD uint16 = 0x40
+	var addrBC uint16 = 0xA010
+	var addrDE uint16 = 0xA020
+	var addrHLI uint16 = 0xA030
+	var addrHLD uint16 = 0xA040
 
 	t.Run("BC", func(t *testing.T) {
 		cpu.writeBC(addrBC)
-		writeTestProgram(cpu, LD_BCMEM_A_OPCODE)
+		writeTestProgram(cpu, LD_BCmem_A_OPCODE)
 		cpu.ExecuteInstruction()
 		if cpu.MMU.Read(addrBC) != cpu.A {
 			t.Fatalf("got %X, expected %X", cpu.MMU.Read(addrBC), cpu.A)
@@ -67,7 +67,7 @@ func Test_LD_R16MEM_A(t *testing.T) {
 
 	t.Run("DE", func(t *testing.T) {
 		cpu.writeDE(addrDE)
-		writeTestProgram(cpu, LD_DEMEM_A_OPCODE)
+		writeTestProgram(cpu, LD_DEmem_A_OPCODE)
 		cpu.ExecuteInstruction()
 		if cpu.MMU.Read(addrDE) != cpu.A {
 			t.Fatalf("got %X, expected %X", cpu.MMU.Read(addrDE), cpu.A)
@@ -76,7 +76,7 @@ func Test_LD_R16MEM_A(t *testing.T) {
 
 	t.Run("HLI", func(t *testing.T) {
 		cpu.writeHL(addrHLI)
-		writeTestProgram(cpu, LD_HLIMEM_A_OPCODE)
+		writeTestProgram(cpu, LD_HLImem_A_OPCODE)
 		cpu.ExecuteInstruction()
 		if cpu.MMU.Read(addrHLI) != cpu.A {
 			t.Fatalf("got %X, expected %X", cpu.MMU.Read(addrHLI), cpu.A)
@@ -88,7 +88,7 @@ func Test_LD_R16MEM_A(t *testing.T) {
 
 	t.Run("HLD", func(t *testing.T) {
 		cpu.writeHL(addrHLD)
-		writeTestProgram(cpu, LD_HLDMEM_A_OPCODE)
+		writeTestProgram(cpu, LD_HLDmem_A_OPCODE)
 		cpu.ExecuteInstruction()
 		if cpu.MMU.Read(addrHLD) != cpu.A {
 			t.Fatalf("got %X, expected %X", cpu.MMU.Read(addrHLD), cpu.A)
@@ -102,13 +102,13 @@ func Test_LD_R16MEM_A(t *testing.T) {
 func Test_LD_A_R16MEM(t *testing.T) {
 	cpu := mockCPU()
 
-	var addrBC uint16 = 0x10
+	var addrBC uint16 = 0xA010
 	var byteBC uint8 = 0x01
-	var addrDE uint16 = 0x20
+	var addrDE uint16 = 0xA020
 	var byteDE uint8 = 0x02
-	var addrHLI uint16 = 0x30
+	var addrHLI uint16 = 0xA030
 	var byteHLI uint8 = 0x03
-	var addrHLD uint16 = 0x40
+	var addrHLD uint16 = 0xA040
 	var byteHLD uint8 = 0x04
 
 	t.Run("BC", func(t *testing.T) {
@@ -161,9 +161,10 @@ func Test_LD_A_R16MEM(t *testing.T) {
 func Test_LD_N16_SP(t *testing.T) {
 	cpu := mockCPU()
 	cpu.SP = 0xFD53
-	var addr uint16 = 0x1234
+	var addr uint16 = 0xA034
+	highAddr, lowAddr := util.SplitWord(addr)
 
-	writeTestProgram(cpu, LD_N16_SP_OPCODE, 0x34, 0x12)
+	writeTestProgram(cpu, LD_N16_SP_OPCODE, lowAddr, highAddr)
 	cpu.ExecuteInstruction()
 
 	read := cpu.MMU.ReadWord(addr)
@@ -424,7 +425,7 @@ func Test_INC_R8(t *testing.T) {
 		testCarries(t, ZFlagA, HFlagA)
 	})
 
-	var addrHL uint16 = 0x50
+	var addrHL uint16 = 0xA050
 	var value uint8 = 0xFF
 	var ZFlagHL, HFlagHL uint8 = 1, 1
 
@@ -542,7 +543,7 @@ func Test_DEC_R8(t *testing.T) {
 		testCarries(t, ZFlagA, HFlagA)
 	})
 
-	var addrHL uint16 = 0x50
+	var addrHL uint16 = 0xA050
 	var value uint8 = 0x00
 	var ZFlagHL, HFlagHL uint8 = 0, 1
 
@@ -613,7 +614,7 @@ func Test_LD_R8_N8(t *testing.T) {
 	})
 
 	t.Run("HL_MEM", func(t *testing.T) {
-		var addr uint16 = 0xF0
+		var addr uint16 = 0xA0F0
 		cpu.writeHL(addr)
 		writeTestProgram(cpu, LD_HLMEM_N8_OPCODE, value)
 		cpu.ExecuteInstruction()
@@ -1005,32 +1006,24 @@ func Test_JR_COND_E8(t *testing.T) {
 			t.Run(cond+"/"+name, func(t *testing.T) {
 				// Condition not met
 				expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-				expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 				setFlag(false)
 
 				writeTestProgram(cpu, opcodes[cond], uint8(test.e8))
-				cycles := cpu.ExecuteInstruction()
+				cpu.ExecuteInstruction()
 
 				if cpu.PC != uint16(expectedPC) {
 					t.Errorf("condition not met: got %04X, expected %04X", cpu.PC, expectedPC)
 				}
-				if cycles != expectedCycles {
-					t.Errorf("condition not met: got %v cycles, expected %v", cycles, expectedCycles)
-				}
 
 				// Condition met
 				expectedPC = int(cpu.PC) + OPCODES_BYTES[opcodes[cond]] + int(test.e8)
-				expectedCycles = OPCODES_CYCLES_BRANCH[opcodes[cond]]
 				setFlag(true)
 
 				writeTestProgram(cpu, opcodes[cond], uint8(test.e8))
-				cycles = cpu.ExecuteInstruction()
+				cpu.ExecuteInstruction()
 
 				if cpu.PC != uint16(expectedPC) {
 					t.Errorf("condition met: got %04X, expected %04X", cpu.PC, expectedPC)
-				}
-				if cycles != expectedCycles {
-					t.Errorf("condition not met: got %v cycles, expected %v", cycles, expectedCycles)
 				}
 			})
 		}
@@ -1044,27 +1037,32 @@ func Test_LD_R8_R8(t *testing.T) {
 		opcode uint8
 		read   func() uint8
 	}{
-		"B":      {0x40, func() uint8 { return cpu.B }},
-		"C":      {0x48, func() uint8 { return cpu.C }},
-		"D":      {0x50, func() uint8 { return cpu.D }},
-		"E":      {0x58, func() uint8 { return cpu.E }},
-		"H":      {0x60, func() uint8 { return cpu.H }},
-		"L":      {0x68, func() uint8 { return cpu.L }},
-		"HL_MEM": {0x70, func() uint8 { return cpu.MMU.Read(cpu.readHL()) }},
-		"A":      {0x78, func() uint8 { return cpu.A }},
+		"B":     {0x40, func() uint8 { return cpu.B }},
+		"C":     {0x48, func() uint8 { return cpu.C }},
+		"D":     {0x50, func() uint8 { return cpu.D }},
+		"E":     {0x58, func() uint8 { return cpu.E }},
+		"H":     {0x60, func() uint8 { return cpu.H }},
+		"L":     {0x68, func() uint8 { return cpu.L }},
+		"HLmem": {0x70, func() uint8 { return cpu.MMU.Read(cpu.readHL()) }},
+		"A":     {0x78, func() uint8 { return cpu.A }},
 	}
 	secondReg := map[string]struct {
 		offset uint8
-		set    func(uint8)
+		set    func(uint8) uint8
 	}{
-		"B":      {0, func(value uint8) { cpu.B = value }},
-		"C":      {1, func(value uint8) { cpu.C = value }},
-		"D":      {2, func(value uint8) { cpu.D = value }},
-		"E":      {3, func(value uint8) { cpu.E = value }},
-		"H":      {4, func(value uint8) { cpu.H = value }},
-		"L":      {5, func(value uint8) { cpu.L = value }},
-		"HL_MEM": {6, func(value uint8) { cpu.H = 1; cpu.L = value; cpu.MMU.Write(cpu.readHL(), value) }},
-		"A":      {7, func(value uint8) { cpu.A = value }},
+		"B": {0, func(value uint8) uint8 { cpu.B = value; return value }},
+		"C": {1, func(value uint8) uint8 { cpu.C = value; return value }},
+		"D": {2, func(value uint8) uint8 { cpu.D = value; return value }},
+		"E": {3, func(value uint8) uint8 { cpu.E = value; return value }},
+		"H": {4, func(value uint8) uint8 { cpu.H = 0xA0 + value&0x0F; return cpu.H }},
+		"L": {5, func(value uint8) uint8 { cpu.L = value; return value }},
+		"HLmem": {6, func(value uint8) uint8 {
+			cpu.H = 0xA0
+			cpu.L = value
+			cpu.MMU.Write(cpu.readHL(), value)
+			return value
+		}},
+		"A": {7, func(value uint8) uint8 { cpu.A = value; return value }},
 	}
 
 	for name1, receiver := range firstReg {
@@ -1076,11 +1074,12 @@ func Test_LD_R8_R8(t *testing.T) {
 			}
 			t.Run(name1+"<-"+name2, func(t *testing.T) {
 				value := uint8(rand.Intn(0x100))
-				loaded.set(value)
+				value = loaded.set(value)
 
 				writeTestProgram(cpu, opcode)
 				cpu.ExecuteInstruction()
 				if receiver.read() != value {
+					t.Logf("%04X", cpu.readHL())
 					t.Fatalf("got %02X, expected %02X", receiver.read(), value)
 				}
 			})
@@ -1281,8 +1280,12 @@ func Test_ADD_A_R8(t *testing.T) {
 	t.Run("HL_MEM", func(t *testing.T) {
 		tst := tests["HL_MEM"]
 		cpu.A = tst.A
-		cpu.MMU.Write(cpu.readHL(), tst.R8)
+		var addrHL uint16 = 0xA043
+
+		cpu.writeHL(addrHL)
+		cpu.MMU.Write(addrHL, tst.R8)
 		writeTestProgram(cpu, ADD_A_HLMEM_OPCODE)
+
 		cpu.ExecuteInstruction()
 		if cpu.A != tst.A+tst.R8 {
 			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8)
@@ -1423,9 +1426,13 @@ func Test_ADC_A_R8(t *testing.T) {
 	t.Run("HL_MEM", func(t *testing.T) {
 		tst := tests["HL_MEM"]
 		cpu.A = tst.A
-		cpu.MMU.Write(cpu.readHL(), tst.R8)
+		var addrHL uint16 = 0xA043
+
+		cpu.writeHL(addrHL)
+		cpu.MMU.Write(addrHL, tst.R8)
 		cpu.setCFlag(tst.carry)
 		writeTestProgram(cpu, ADC_A_HLMEM_OPCODE)
+
 		cpu.ExecuteInstruction()
 		if cpu.A != tst.A+tst.R8+tst.carry {
 			t.Fatalf("got %2X, expected %2X", cpu.A, tst.A+tst.R8+tst.carry)
@@ -1454,7 +1461,7 @@ func Test_SUB_A_R8(t *testing.T) {
 		"E":      {0xF0, 0x01, 0, 1, 0, func(v uint8) { cpu.E = v }, SUB_A_E_OPCODE},
 		"H":      {0x80, 0x08, 0, 1, 0, func(v uint8) { cpu.H = v }, SUB_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 0, 1, 1, func(v uint8) { cpu.L = v }, SUB_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, SUB_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, SUB_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 1, 0, 0, func(v uint8) { cpu.A = v }, SUB_A_A_OPCODE},
 	}
 
@@ -1504,7 +1511,7 @@ func Test_SBC_A_R8(t *testing.T) {
 		"E":      {0x00, 0x00, 1, 0, 1, 1, func(v uint8) { cpu.E = v }, SBC_A_E_OPCODE},
 		"H":      {0x80, 0x80, 0, 1, 0, 0, func(v uint8) { cpu.H = v }, SBC_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 1, 0, 1, 1, func(v uint8) { cpu.L = v }, SBC_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x14, 1, 0, 1, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, SBC_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x14, 1, 0, 1, 0, func(v uint8) { cpu.H = 0xA0; cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, SBC_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 1, 0, 1, 1, func(v uint8) { cpu.A = v }, SBC_A_A_OPCODE},
 	}
 
@@ -1553,7 +1560,7 @@ func Test_AND_A_R8(t *testing.T) {
 		"E":      {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, AND_A_E_OPCODE},
 		"H":      {0xAA, 0x55, 1, func(v uint8) { cpu.H = v }, AND_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, AND_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, AND_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, AND_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 0, func(v uint8) { cpu.A = v }, AND_A_A_OPCODE},
 	}
 
@@ -1601,7 +1608,7 @@ func Test_XOR_A_R8(t *testing.T) {
 		"E":      {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, XOR_A_E_OPCODE},
 		"H":      {0xAA, 0x55, 0, func(v uint8) { cpu.H = v }, XOR_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, XOR_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, XOR_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, XOR_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 1, func(v uint8) { cpu.A = v }, XOR_A_A_OPCODE},
 	}
 
@@ -1649,7 +1656,7 @@ func Test_OR_A_R8(t *testing.T) {
 		"E":      {0x00, 0x00, 1, func(v uint8) { cpu.E = v }, OR_A_E_OPCODE},
 		"H":      {0xAA, 0x55, 0, func(v uint8) { cpu.H = v }, OR_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 0, func(v uint8) { cpu.L = v }, OR_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, OR_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x14, 0, func(v uint8) { cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, OR_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 0, func(v uint8) { cpu.A = v }, OR_A_A_OPCODE},
 	}
 
@@ -1699,7 +1706,7 @@ func Test_CP_A_R8(t *testing.T) {
 		"E":      {0xF0, 0x01, 0, 1, 0, func(v uint8) { cpu.E = v }, CP_A_E_OPCODE},
 		"H":      {0x80, 0x08, 0, 1, 0, func(v uint8) { cpu.H = v }, CP_A_H_OPCODE},
 		"L":      {0x57, 0xAD, 0, 1, 1, func(v uint8) { cpu.L = v }, CP_A_L_OPCODE},
-		"HL_MEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = v; cpu.MMU.Write(cpu.readHL(), v) }, CP_A_HLMEM_OPCODE},
+		"HL_MEM": {0x34, 0x12, 0, 0, 0, func(v uint8) { cpu.H = 0xA0; cpu.L = v; cpu.MMU.Write(cpu.readHL(), v) }, CP_A_HLMEM_OPCODE},
 		"A":      {0x80, 0x80, 1, 0, 0, func(v uint8) { cpu.A = v }, CP_A_A_OPCODE},
 	}
 
@@ -2159,11 +2166,10 @@ func Test_RET_COND(t *testing.T) {
 			setFlag(false)
 
 			expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-			expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 			expectedSP := cpu.SP
 
 			writeTestProgram(cpu, opcodes[cond])
-			cycles := cpu.ExecuteInstruction()
+			cpu.ExecuteInstruction()
 
 			if cpu.PC != uint16(expectedPC) {
 				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expectedPC)
@@ -2171,29 +2177,22 @@ func Test_RET_COND(t *testing.T) {
 			if cpu.SP != expectedSP {
 				t.Errorf("unmet: got SP=%04X, expected %04X", cpu.SP, expectedSP)
 			}
-			if cycles != expectedCycles {
-				t.Errorf("unmet: got cycles=%v, expected %v", cycles, expectedCycles)
-			}
 		})
 
 		t.Run(cond+"_met", func(t *testing.T) {
 			setFlag(true)
 
 			expectedPC := addr
-			expectedCycles := OPCODES_CYCLES_BRANCH[opcodes[cond]]
 			expectedSP := cpu.SP + 2
 
 			writeTestProgram(cpu, opcodes[cond])
-			cycles := cpu.ExecuteInstruction()
+			cpu.ExecuteInstruction()
 
 			if cpu.PC != expectedPC {
 				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expectedPC)
 			}
 			if cpu.SP != expectedSP {
 				t.Errorf("met: got SP=%04X, expected %04X", cpu.SP, expectedSP)
-			}
-			if cycles != expectedCycles {
-				t.Errorf("met: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 	}
@@ -2273,16 +2272,12 @@ func Test_JP_COND_N16(t *testing.T) {
 			addr += 2
 
 			expectedPC := int(cpu.PC) + OPCODES_BYTES[opcodes[cond]]
-			expectedCycles := OPCODES_CYCLES[opcodes[cond]]
 
 			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
-			cycles := cpu.ExecuteInstruction()
+			cpu.ExecuteInstruction()
 
 			if cpu.PC != uint16(expectedPC) {
 				t.Errorf("unmet: got PC=%04X, expected %04X", cpu.PC, expectedPC)
-			}
-			if cycles != expectedCycles {
-				t.Errorf("unmet: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 
@@ -2291,16 +2286,12 @@ func Test_JP_COND_N16(t *testing.T) {
 			addr += 2
 
 			expectedPC := addr
-			expectedCycles := OPCODES_CYCLES_BRANCH[opcodes[cond]]
 
 			writeTestProgram(cpu, opcodes[cond], uint8(addr), uint8(addr>>8))
-			cycles := cpu.ExecuteInstruction()
+			cpu.ExecuteInstruction()
 
 			if cpu.PC != expectedPC {
 				t.Errorf("met: got PC=%04X, expected %04X", cpu.PC, expectedPC)
-			}
-			if cycles != expectedCycles {
-				t.Errorf("met: got cycles=%v, expected %v", cycles, expectedCycles)
 			}
 		})
 	}
@@ -3041,6 +3032,7 @@ func Test_BIT_B3_R8(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run("B"+fmt.Sprint(i)+"/"+r8Name[i], func(t *testing.T) {
+			cpu.H = 0xA0
 			cpu.writeR8(test.opcode, test.R8)
 			writeTestProgram(cpu, PREFIX_OPCODE, test.opcode)
 			cpu.ExecuteInstruction()
@@ -3077,6 +3069,7 @@ func Test_RES_B3_R8(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run("B"+fmt.Sprint(i)+"/"+r8Name[i], func(t *testing.T) {
+			cpu.H = 0xA0
 			cpu.writeR8(test.opcode, 0xFF)
 			writeTestProgram(cpu, PREFIX_OPCODE, test.opcode)
 			cpu.ExecuteInstruction()
@@ -3107,6 +3100,7 @@ func Test_SET_B3_R8(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run("B"+fmt.Sprint(i)+"/"+r8Name[i], func(t *testing.T) {
+			cpu.H = 0xA0
 			cpu.writeR8(test.opcode, 0)
 			writeTestProgram(cpu, PREFIX_OPCODE, test.opcode)
 			cpu.ExecuteInstruction()

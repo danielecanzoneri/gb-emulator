@@ -11,6 +11,37 @@ const (
 	CFlagBit = 4
 )
 
+func (cpu *CPU) readA() uint8 {
+	return cpu.A
+}
+func (cpu *CPU) readB() uint8 {
+	return cpu.B
+}
+func (cpu *CPU) readC() uint8 {
+	return cpu.C
+}
+func (cpu *CPU) readD() uint8 {
+	return cpu.D
+}
+func (cpu *CPU) readE() uint8 {
+	return cpu.E
+}
+func (cpu *CPU) readH() uint8 {
+	return cpu.H
+}
+func (cpu *CPU) readL() uint8 {
+	return cpu.L
+}
+func (cpu *CPU) readF() uint8 {
+	return cpu.F
+}
+func (cpu *CPU) readHighSP() uint8 {
+	return uint8(cpu.SP >> 8)
+}
+func (cpu *CPU) readLowSP() uint8 {
+	return uint8(cpu.SP & 0xFF)
+}
+
 func (cpu *CPU) writeA(v uint8) {
 	cpu.A = v
 }
@@ -35,6 +66,12 @@ func (cpu *CPU) writeL(v uint8) {
 func (cpu *CPU) writeF(v uint8) {
 	cpu.F = v & 0xF0
 }
+func (cpu *CPU) writeHighSP(v uint8) {
+	cpu.SP = (cpu.SP & 0x00FF) | (uint16(v) << 8)
+}
+func (cpu *CPU) writeLowSP(v uint8) {
+	cpu.SP = (cpu.SP & 0xFF00) | uint16(v)
+}
 
 func (cpu *CPU) readAF() uint16 {
 	return util.CombineBytes(cpu.A, cpu.F)
@@ -48,6 +85,7 @@ func (cpu *CPU) readDE() uint16 {
 func (cpu *CPU) readHL() uint16 {
 	return util.CombineBytes(cpu.H, cpu.L)
 }
+func (cpu *CPU) readSP() uint16 { return cpu.SP }
 
 func (cpu *CPU) writeAF(word uint16) {
 	h, l := util.SplitWord(word)
@@ -68,6 +106,9 @@ func (cpu *CPU) writeHL(word uint16) {
 	h, l := util.SplitWord(word)
 	cpu.writeH(h)
 	cpu.writeL(l)
+}
+func (cpu *CPU) writeSP(word uint16) {
+	cpu.SP = word
 }
 
 func (cpu *CPU) readZFlag() uint8 {

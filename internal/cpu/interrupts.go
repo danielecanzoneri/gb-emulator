@@ -18,8 +18,6 @@ const (
 
 	joypadMask    = 0b10000
 	joypadHandler = 0x60
-
-	handlerCycles = 5
 )
 
 var interruptsHandler = map[uint8]uint16{
@@ -48,7 +46,7 @@ var (
 	}
 )
 
-func (cpu *CPU) handleInterrupts() uint {
+func (cpu *CPU) handleInterrupts() bool {
 	defer cpu.handleIME()
 
 	// Check for pending interrupts
@@ -60,7 +58,7 @@ func (cpu *CPU) handleInterrupts() uint {
 	}
 
 	if !cpu.IME || triggered == 0 {
-		return 0
+		return false
 	}
 
 	// Serve interrupts with priority
@@ -68,10 +66,10 @@ func (cpu *CPU) handleInterrupts() uint {
 		mask := uint8(1 << i)
 		if triggered&mask > 0 {
 			cpu.serveInterrupt(mask)
-			return handlerCycles
+			return true
 		}
 	}
-	return 0
+	return false
 }
 
 func (cpu *CPU) requestInterrupt(interruptMask uint8) {
@@ -86,8 +84,11 @@ func (cpu *CPU) serveInterrupt(interruptMask uint8) {
 	cpu.MMU.Write(ifAddr, IF)
 	cpu.IME = false
 
+	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
+	cpu.Cycle()
 	cpu.PUSH_STACK(cpu.PC)
 	cpu.PC = interruptsHandler[interruptMask]
+	cpu.Cycle() // Internal (set PC)
 }
 
 func (cpu *CPU) handleIME() {

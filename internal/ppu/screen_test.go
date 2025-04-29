@@ -23,13 +23,13 @@ func TestDrawLineObj(t *testing.T) {
 
 	// Mock objects
 	ppu.objsLY[1] = &Object{ // This has higher priority
-		x:       7,
+		x:       8,
 		y:       26,
 		palette: Palette(0b11100100),
 		tile1:   tile, // Expected row 0
 	}
 	ppu.objsLY[0] = &Object{
-		x:       13,
+		x:       14,
 		y:       21,
 		palette: Palette(0b11100100),
 		tile1:   tile,

@@ -1,12 +1,16 @@
 package memory
 
-import "testing"
+import (
+	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
+	"testing"
+)
 
 func TestMemoryReadWrite(t *testing.T) {
 	mem := &MMU{}
+	mem.SetMBC(&cartridge.Header{})
 
 	// Test writing and reading a byte
-	addr := uint16(0x1234)
+	addr := uint16(0xA034)
 	value := uint8(0xAB)
 	mem.Write(addr, value)
 
@@ -16,7 +20,7 @@ func TestMemoryReadWrite(t *testing.T) {
 	}
 
 	// Test writing and reading a word
-	wordAddr := uint16(0x5678)
+	wordAddr := uint16(0xB078)
 	wordValue := uint16(0xCDEF)
 	mem.WriteWord(wordAddr, wordValue)
 

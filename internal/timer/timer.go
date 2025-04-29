@@ -33,14 +33,14 @@ func (t *Timer) String() string {
 	)
 }
 
-func (t *Timer) Step(cycles uint) {
+func (t *Timer) Cycle() {
 	// Update DIV
-	t.divCounter += cycles
+	t.divCounter++
 	t.updateDIV()
 
 	// Update TIMA if enabled
 	if t.enabled {
-		t.timaCounter += cycles
+		t.timaCounter++
 		t.updateTIMA()
 	}
 }

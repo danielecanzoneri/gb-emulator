@@ -6,6 +6,11 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 )
 
+// Cyclable describes hardware components that needs clock synchronization
+type Cyclable interface {
+	Cycle()
+}
+
 type CPU struct {
 	// 8-bit registers
 	A, F uint8
@@ -28,22 +33,27 @@ type CPU struct {
 	Timer *timer.Timer
 	MMU   *memory.MMU
 
-	// Flag set by opcode handler to compute correct number of cycles
-	branched bool
+	cyclables []Cyclable
 }
 
-func (cpu *CPU) ExecuteInstruction() uint {
-	cpu.branched = false
+func (cpu *CPU) AddCyclable(Cyclable ...Cyclable) {
+	for _, c := range Cyclable {
+		cpu.cyclables = append(cpu.cyclables, c)
+	}
+}
 
-	interruptedCycles := cpu.handleInterrupts()
-	if interruptedCycles > 0 {
-		return interruptedCycles
+func (cpu *CPU) Cycle() {
+	for _, cyclable := range cpu.cyclables {
+		cyclable.Cycle()
+	}
+}
+
+func (cpu *CPU) ExecuteInstruction() {
+	if cpu.handleInterrupts() {
+		return
 	}
 
-	var cycles uint = 1 // Default halted
 	if !cpu.halted {
-		cycles = 0
-
 		opcode := cpu.ReadNextByte()
 		cpu.logState(opcode)
 
@@ -51,7 +61,8 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		// NOP
 		case NOP_OPCODE:
 			cpu.NOP()
-		// LD_R16_N16
+
+		// LD R16 N16
 		case LD_BC_N16_OPCODE:
 			cpu.LD_BC_N16()
 		case LD_DE_N16_OPCODE:
@@ -60,24 +71,27 @@ func (cpu *CPU) ExecuteInstruction() uint {
 			cpu.LD_HL_N16()
 		case LD_SP_N16_OPCODE:
 			cpu.LD_SP_N16()
-		// LD_R16MEM_A
-		case LD_BCMEM_A_OPCODE:
-			cpu.LD_BCMEM_A()
-		case LD_DEMEM_A_OPCODE:
-			cpu.LD_DEMEM_A()
-		case LD_HLIMEM_A_OPCODE:
-			cpu.LD_HLIMEM_A()
-		case LD_HLDMEM_A_OPCODE:
-			cpu.LD_HLDMEM_A()
-		// LD_A_R16MEM
+
+		// LD [R16] A
+		case LD_BCmem_A_OPCODE:
+			cpu.LD_BCmem_A()
+		case LD_DEmem_A_OPCODE:
+			cpu.LD_DEmem_A()
+		case LD_HLImem_A_OPCODE:
+			cpu.LD_HLImem_A()
+		case LD_HLDmem_A_OPCODE:
+			cpu.LD_HLDmem_A()
+
+		// LD A [R16]
 		case LD_A_BCMEM_OPCODE:
-			cpu.LD_A_BCMEM()
+			cpu.LD_A_BCmem()
 		case LD_A_DEMEM_OPCODE:
-			cpu.LD_A_DEMEM()
+			cpu.LD_A_DEmem()
 		case LD_A_HLIMEM_OPCODE:
-			cpu.LD_A_HLIMEM()
+			cpu.LD_A_HLImem()
 		case LD_A_HLDMEM_OPCODE:
-			cpu.LD_A_HLDMEM()
+			cpu.LD_A_HLDmem()
+
 		// LD_N16_SP
 		case LD_N16_SP_OPCODE:
 			cpu.LD_N16_SP()
@@ -122,7 +136,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case INC_L_OPCODE:
 			cpu.INC_L()
 		case INC_HLMEM_OPCODE:
-			cpu.INC_HLMEM()
+			cpu.INC_HLmem()
 		case INC_A_OPCODE:
 			cpu.INC_A()
 		// DEC_R8
@@ -139,7 +153,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case DEC_L_OPCODE:
 			cpu.DEC_L()
 		case DEC_HLMEM_OPCODE:
-			cpu.DEC_HLMEM()
+			cpu.DEC_HLmem()
 		case DEC_A_OPCODE:
 			cpu.DEC_A()
 		// LD_R8_N8
@@ -156,7 +170,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_L_N8_OPCODE:
 			cpu.LD_L_N8()
 		case LD_HLMEM_N8_OPCODE:
-			cpu.LD_HLMEM_N8()
+			cpu.LD_HLmem_N8()
 		case LD_A_N8_OPCODE:
 			cpu.LD_A_N8()
 		// 8-bit logic
@@ -206,7 +220,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_B_L_OPCODE:
 			cpu.LD_B_L()
 		case LD_B_HLMEM_OPCODE:
-			cpu.LD_B_HLMEM()
+			cpu.LD_B_HLmem()
 		case LD_B_A_OPCODE:
 			cpu.LD_B_A()
 		case LD_C_B_OPCODE:
@@ -222,7 +236,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_C_L_OPCODE:
 			cpu.LD_C_L()
 		case LD_C_HLMEM_OPCODE:
-			cpu.LD_C_HLMEM()
+			cpu.LD_C_HLmem()
 		case LD_C_A_OPCODE:
 			cpu.LD_C_A()
 		case LD_D_B_OPCODE:
@@ -238,7 +252,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_D_L_OPCODE:
 			cpu.LD_D_L()
 		case LD_D_HLMEM_OPCODE:
-			cpu.LD_D_HLMEM()
+			cpu.LD_D_HLmem()
 		case LD_D_A_OPCODE:
 			cpu.LD_D_A()
 		case LD_E_B_OPCODE:
@@ -254,7 +268,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_E_L_OPCODE:
 			cpu.LD_E_L()
 		case LD_E_HLMEM_OPCODE:
-			cpu.LD_E_HLMEM()
+			cpu.LD_E_HLmem()
 		case LD_E_A_OPCODE:
 			cpu.LD_E_A()
 		case LD_H_B_OPCODE:
@@ -270,7 +284,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_H_L_OPCODE:
 			cpu.LD_H_L()
 		case LD_H_HLMEM_OPCODE:
-			cpu.LD_H_HLMEM()
+			cpu.LD_H_HLmem()
 		case LD_H_A_OPCODE:
 			cpu.LD_H_A()
 		case LD_L_B_OPCODE:
@@ -286,23 +300,23 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_L_L_OPCODE:
 			cpu.LD_L_L()
 		case LD_L_HLMEM_OPCODE:
-			cpu.LD_L_HLMEM()
+			cpu.LD_L_HLmem()
 		case LD_L_A_OPCODE:
 			cpu.LD_L_A()
 		case LD_HLMEM_B_OPCODE:
-			cpu.LD_HLMEM_B()
+			cpu.LD_HLmem_B()
 		case LD_HLMEM_C_OPCODE:
-			cpu.LD_HLMEM_C()
+			cpu.LD_HLmem_C()
 		case LD_HLMEM_D_OPCODE:
-			cpu.LD_HLMEM_D()
+			cpu.LD_HLmem_D()
 		case LD_HLMEM_E_OPCODE:
-			cpu.LD_HLMEM_E()
+			cpu.LD_HLmem_E()
 		case LD_HLMEM_H_OPCODE:
-			cpu.LD_HLMEM_H()
+			cpu.LD_HLmem_H()
 		case LD_HLMEM_L_OPCODE:
-			cpu.LD_HLMEM_L()
+			cpu.LD_HLmem_L()
 		case LD_HLMEM_A_OPCODE:
-			cpu.LD_HLMEM_A()
+			cpu.LD_HLmem_A()
 		case LD_A_B_OPCODE:
 			cpu.LD_A_B()
 		case LD_A_C_OPCODE:
@@ -316,7 +330,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case LD_A_L_OPCODE:
 			cpu.LD_A_L()
 		case LD_A_HLMEM_OPCODE:
-			cpu.LD_A_HLMEM()
+			cpu.LD_A_HLmem()
 		case LD_A_A_OPCODE:
 			cpu.LD_A_A()
 		// HALT
@@ -336,7 +350,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case ADD_A_L_OPCODE:
 			cpu.ADD_A_L()
 		case ADD_A_HLMEM_OPCODE:
-			cpu.ADD_A_HLMEM()
+			cpu.ADD_A_HLmem()
 		case ADD_A_A_OPCODE:
 			cpu.ADD_A_A()
 		// ADC A R8
@@ -353,7 +367,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case ADC_A_L_OPCODE:
 			cpu.ADC_A_L()
 		case ADC_A_HLMEM_OPCODE:
-			cpu.ADC_A_HLMEM()
+			cpu.ADC_A_HLmem()
 		case ADC_A_A_OPCODE:
 			cpu.ADC_A_A()
 		// SUB A R8
@@ -370,7 +384,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case SUB_A_L_OPCODE:
 			cpu.SUB_A_L()
 		case SUB_A_HLMEM_OPCODE:
-			cpu.SUB_A_HLMEM()
+			cpu.SUB_A_HLmem()
 		case SUB_A_A_OPCODE:
 			cpu.SUB_A_A()
 		// SBC A R8
@@ -387,7 +401,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case SBC_A_L_OPCODE:
 			cpu.SBC_A_L()
 		case SBC_A_HLMEM_OPCODE:
-			cpu.SBC_A_HLMEM()
+			cpu.SBC_A_HLmem()
 		case SBC_A_A_OPCODE:
 			cpu.SBC_A_A()
 		// AND A R8
@@ -404,7 +418,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case AND_A_L_OPCODE:
 			cpu.AND_A_L()
 		case AND_A_HLMEM_OPCODE:
-			cpu.AND_A_HLMEM()
+			cpu.AND_A_HLmem()
 		case AND_A_A_OPCODE:
 			cpu.AND_A_A()
 		// XOR A R8
@@ -421,7 +435,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case XOR_A_L_OPCODE:
 			cpu.XOR_A_L()
 		case XOR_A_HLMEM_OPCODE:
-			cpu.XOR_A_HLMEM()
+			cpu.XOR_A_HLmem()
 		case XOR_A_A_OPCODE:
 			cpu.XOR_A_A()
 		// OR A R8
@@ -438,7 +452,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case OR_A_L_OPCODE:
 			cpu.OR_A_L()
 		case OR_A_HLMEM_OPCODE:
-			cpu.OR_A_HLMEM()
+			cpu.OR_A_HLmem()
 		case OR_A_A_OPCODE:
 			cpu.OR_A_A()
 		// CP A R8
@@ -455,7 +469,7 @@ func (cpu *CPU) ExecuteInstruction() uint {
 		case CP_A_L_OPCODE:
 			cpu.CP_A_L()
 		case CP_A_HLMEM_OPCODE:
-			cpu.CP_A_HLMEM()
+			cpu.CP_A_HLmem()
 		case CP_A_A_OPCODE:
 			cpu.CP_A_A()
 		// ADD A R8
@@ -594,24 +608,16 @@ func (cpu *CPU) ExecuteInstruction() uint {
 			cpu.EI()
 		// PREFIX
 		case PREFIX_OPCODE:
-			cycles += cpu.prefixedOpcode()
+			cpu.prefixedOpcode()
 		default:
 			fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 		}
-
-		if cpu.branched {
-			cycles += OPCODES_CYCLES_BRANCH[opcode]
-		} else {
-			cycles += OPCODES_CYCLES[opcode]
-		}
+	} else { // Cycle if halted
+		cpu.Cycle()
 	}
-
-	return cycles
 }
 
-func (cpu *CPU) prefixedOpcode() uint {
-	cpu.branched = false
-
+func (cpu *CPU) prefixedOpcode() {
 	opcode := cpu.ReadNextByte()
 	switch opcode & 0b11111000 {
 	case RLC_R8_OPCODE:
@@ -679,28 +685,6 @@ func (cpu *CPU) prefixedOpcode() uint {
 	case SET_7_R8_OPCODE:
 		cpu.SET_B3_R8(7, opcode)
 	}
-
-	return PREFIX_OPCODES_CYCLES[opcode]
-}
-
-func (cpu *CPU) ReadNextByte() uint8 {
-	b := cpu.MMU.Read(cpu.PC)
-	cpu.PC++
-	return b
-}
-func (cpu *CPU) WriteNextByte(b uint8) {
-	cpu.MMU.Write(cpu.PC, b)
-	cpu.PC++
-}
-
-func (cpu *CPU) ReadNextWord() uint16 {
-	w := cpu.MMU.ReadWord(cpu.PC)
-	cpu.PC += 2
-	return w
-}
-func (cpu *CPU) WriteNextWord(w uint16) {
-	cpu.MMU.WriteWord(cpu.PC, w)
-	cpu.PC += 2
 }
 
 func (cpu *CPU) String() string {
