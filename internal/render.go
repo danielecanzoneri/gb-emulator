@@ -1,7 +1,6 @@
 package gameboy
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
@@ -38,11 +37,7 @@ func (gb *GameBoy) Update() error {
 	//if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 	for !gb.PPU.FrameComplete {
 		gb.CPU.ExecuteInstruction()
-		if gb.cycles == 133900 {
-			fmt.Println(gb.cycles)
-		}
 	}
-	fmt.Println(gb.cycles)
 	gb.PPU.FrameComplete = false
 
 	return nil
