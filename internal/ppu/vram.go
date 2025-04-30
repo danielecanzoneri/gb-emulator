@@ -9,15 +9,15 @@ const (
 )
 
 type vRAM struct {
-	data [vRAMSize]uint8
+	Data [vRAMSize]uint8
 }
 
 func (v *vRAM) read(addr uint16) uint8 {
-	return v.data[addr]
+	return v.Data[addr]
 }
 
 func (v *vRAM) write(addr uint16, value uint8) {
-	v.data[addr] = value
+	v.Data[addr] = value
 }
 
 type Tile struct {
@@ -42,7 +42,7 @@ func (t *Tile) getRowPixels(row uint8) [8]uint8 {
 func (v *vRAM) readTile(tileNum uint16) *Tile {
 	tile := &Tile{}
 
-	rawTileData := v.data[tileSize*tileNum : tileSize*(tileNum+1)]
+	rawTileData := v.Data[tileSize*tileNum : tileSize*(tileNum+1)]
 	for i := 0; i < int(tileSize); i += 2 {
 		// First byte specifies the least significant bit of the color ID of each pixel,
 		// second byte specifies the most significant bit.

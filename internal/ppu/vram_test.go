@@ -31,7 +31,7 @@ func TestReadTile(t *testing.T) {
 	tileId := uint16(0)
 	// Write tileData in vRAM
 	for i := range tileSize {
-		v.data[tileId*tileSize+i] = TestTileData[i]
+		v.Data[tileId*tileSize+i] = TestTileData[i]
 	}
 
 	tile := v.readTile(tileId)
@@ -48,7 +48,7 @@ func TestReadTileBGWindow(t *testing.T) {
 	tileId := uint16(300)
 	// Write tileData in vRAM
 	for i := range tileSize {
-		ppu.vRAM.data[tileId*tileSize+i] = TestTileData[i]
+		ppu.vRAM.Data[tileId*tileSize+i] = TestTileData[i]
 	}
 
 	ppu.bgWindowTileDataArea = 0

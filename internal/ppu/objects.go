@@ -69,7 +69,7 @@ func (p Palette) getColor(id uint8) uint8 {
 }
 
 func (ppu *PPU) parseObject(objAddr uint8) *Object {
-	data := ppu.OAM.data[objAddr : objAddr+objSize]
+	data := ppu.OAM.Data[objAddr : objAddr+objSize]
 
 	var tile1, tile2 *Tile
 	if !ppu.obj8x16Size {
@@ -111,7 +111,7 @@ func (ppu *PPU) selectObjects() {
 	// Scan OAM and select objects that lie in current line
 	for of := 0; of < OAMSize; of += 4 {
 		// obj is on the line if obj.y <= LY+16 < obj.y + height
-		if ppu.OAM.data[of] <= ppu.LY+yOffset && ppu.LY+yOffset < ppu.OAM.data[of]+objHeight {
+		if ppu.OAM.Data[of] <= ppu.LY+yOffset && ppu.LY+yOffset < ppu.OAM.Data[of]+objHeight {
 			ppu.objsLY[ppu.numObjs] = ppu.parseObject(uint8(of))
 			ppu.numObjs++
 

@@ -17,12 +17,39 @@ type MMU struct {
 
 	Timer *timer.Timer
 	PPU   *ppu.PPU
+
+	// DMA cycles
+	dmaTransfer bool
+	dmaOffset   uint16
+	dmaValue    uint8
 }
 
 func (mmu *MMU) Cycle() {
+	// dmaCycles go from 0xA0 to 0
+	if mmu.dmaTransfer {
+		if mmu.dmaOffset == dmaDuration {
+			mmu.dmaTransfer = false
+			return
+		}
+
+		addr := uint16(mmu.read(dmaAddress)) << 8
+		mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
+
+		mmu.PPU.OAM.Data[mmu.dmaOffset] = mmu.dmaValue
+		mmu.dmaOffset++
+	}
 }
 
 func (mmu *MMU) Read(addr uint16) uint8 {
+	// During DMA, HRAM can still be accessed otherwise return what DMA is reading
+	if mmu.dmaTransfer && !(0xFF80 <= addr && addr < 0xFFFF) {
+		return mmu.dmaValue
+	}
+
+	return mmu.read(addr)
+}
+
+func (mmu *MMU) read(addr uint16) uint8 {
 	switch {
 	// MBC addresses
 	case addr < 0x8000:
@@ -35,7 +62,7 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 		return mmu.mbc.RAM[RAMAddress]
 	// case addr < 0xE000 // wRAM
 	case 0xE000 <= addr && addr < 0xFE00: // Echo RAM
-		return mmu.Read(addr - 0x2000)
+		return mmu.read(addr - 0x2000)
 	case 0xFE00 <= addr && addr < 0xFEA0: // OAM
 		return mmu.PPU.ReadOAM(addr)
 	case 0xFEA0 <= addr && addr < 0xFF00:
@@ -48,6 +75,13 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 }
 
 func (mmu *MMU) Write(addr uint16, value uint8) {
+	if mmu.dmaTransfer && !(0xFF80 <= addr && addr < 0xFFFF) {
+		return
+	}
+	mmu.write(addr, value)
+}
+
+func (mmu *MMU) write(addr uint16, value uint8) {
 	switch {
 	// MBC addresses
 	case addr < 0x2000:

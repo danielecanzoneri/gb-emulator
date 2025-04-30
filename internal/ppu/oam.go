@@ -5,13 +5,13 @@ const (
 )
 
 type OAM struct {
-	data [OAMSize]uint8
+	Data [OAMSize]uint8
 }
 
 func (o *OAM) read(addr uint16) uint8 {
-	return o.data[addr]
+	return o.Data[addr]
 }
 
 func (o *OAM) write(addr uint16, value uint8) {
-	o.data[addr] = value
+	o.Data[addr] = value
 }

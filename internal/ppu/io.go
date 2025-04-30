@@ -144,6 +144,6 @@ func (ppu *PPU) WriteOAM(addr uint16, value uint8) {
 	ppu.OAM.write(addr-OAMStartAddr, value)
 }
 
-func (ppu *PPU) DMAWrite(index int, value uint8) {
-	ppu.OAM.data[index] = value
+func (ppu *PPU) DMAWrite(index uint16, value uint8) {
+	ppu.OAM.Data[index] = value
 }

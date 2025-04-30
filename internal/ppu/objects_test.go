@@ -119,8 +119,8 @@ func TestObjectSelection8x16(t *testing.T) {
 
 func writeObjectsOAM(o *OAM, objs []Object) {
 	for i, obj := range objs {
-		o.data[objSize*i] = obj.y
-		o.data[objSize*i+1] = obj.x
+		o.Data[objSize*i] = obj.y
+		o.Data[objSize*i+1] = obj.x
 	}
 }
 
@@ -138,11 +138,11 @@ func TestObjectParsing8x8(t *testing.T) {
 		0xFF, // Flags
 	}
 
-	// Write obj data in OAM
-	copy(ppu.OAM.data[objAddr:objAddr+4], objData[:])
+	// Write obj Data in OAM
+	copy(ppu.OAM.Data[objAddr:objAddr+4], objData[:])
 
-	// Write tile data at obj addr
-	copy(ppu.vRAM.data[16*int(objData[2]):16*(int(objData[2])+1)], TestTileData[:])
+	// Write tile Data at obj addr
+	copy(ppu.vRAM.Data[16*int(objData[2]):16*(int(objData[2])+1)], TestTileData[:])
 
 	obj := ppu.parseObject(objAddr)
 	if obj.y != objData[0] {
@@ -185,12 +185,12 @@ func TestObjectParsing8x16(t *testing.T) {
 		0xFF, // Flags
 	}
 
-	// Write obj data in OAM
-	copy(ppu.OAM.data[objAddr:objAddr+4], objData[:])
+	// Write obj Data in OAM
+	copy(ppu.OAM.Data[objAddr:objAddr+4], objData[:])
 
-	// Write 2 tile data at 0xE0 and 0xE1
-	copy(ppu.vRAM.data[16*0xE0:16*0xE1], TestTileData[:])
-	copy(ppu.vRAM.data[16*0xE1:16*0xE2], TestTileData[:])
+	// Write 2 tile Data at 0xE0 and 0xE1
+	copy(ppu.vRAM.Data[16*0xE0:16*0xE1], TestTileData[:])
+	copy(ppu.vRAM.Data[16*0xE1:16*0xE2], TestTileData[:])
 
 	obj := ppu.parseObject(objAddr)
 	if obj.y != objData[0] {
