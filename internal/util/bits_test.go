@@ -40,6 +40,20 @@ func TestCheckBit(t *testing.T) {
 	}
 }
 
+func TestCheckBit16(t *testing.T) {
+	var w uint16 = 0b111100001111
+	bit := uint8(5)
+
+	if ReadBit16(w, bit) != 0 {
+		t.Errorf("checkBit(): b=%04X, bit=%d -> expected false, got true", w, bit)
+	}
+
+	bit = 10
+	if ReadBit16(w, bit) != 1 {
+		t.Errorf("checkBit(): b=%04X, bit=%d -> expected true, got false", w, bit)
+	}
+}
+
 func TestSetBit(t *testing.T) {
 	var b uint8 = 0b00001111
 	bit := uint8(4)

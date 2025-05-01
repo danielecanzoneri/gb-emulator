@@ -1,23 +1,27 @@
 package timer
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/internal/util"
+)
 
 const (
 	divFreq = 64
 )
 
 type Timer struct {
-	DIV  uint8
+	// DIV  uint8
 	TIMA uint8
 	TMA  uint8
 	TAC  uint8
 
-	divCounter  uint
-	timaCounter uint
+	// Updated at every M-cycle (high part is DIV)
+	systemCounter uint16
 
 	// Frequency to update TIMA (lower 2 bits of TAC)
-	timaFreq uint
-	enabled  bool
+	bitFalling uint8
+	prevState  uint8 // Falling edge detector to detect when to update
+	enabled    bool
 
 	// Flag to request interrupt at next step
 	timaOverflow bool
@@ -28,52 +32,42 @@ type Timer struct {
 
 func (t *Timer) String() string {
 	return fmt.Sprintf(
-		"DIV:%02X, TIMA:%02X, TMA:%02X, TAC:%02X, DIV counter:%d, TIMA counter:%d",
-		t.DIV, t.TIMA, t.TMA, t.TAC, t.divCounter, t.timaCounter,
+		"DIV:%02X, TIMA:%02X, TMA:%02X, TAC:%02X, counter:%04X",
+		t.Read(divAddr), t.TIMA, t.TMA, t.TAC, t.systemCounter,
 	)
 }
 
 func (t *Timer) Cycle() {
+	if t.timaOverflow {
+		t.handleTIMAOverflow()
+	}
+
 	// Update DIV
-	t.divCounter++
-	t.updateDIV()
+	t.systemCounter += 4
 
 	// Update TIMA if enabled
 	if t.enabled {
-		t.timaCounter++
 		t.updateTIMA()
 	}
 }
 
-func (t *Timer) updateDIV() {
-	if t.divCounter >= divFreq {
-		t.DIV++
-		t.divCounter -= divFreq
-	}
-}
-
 func (t *Timer) handleTIMAOverflow() {
-	if t.timaOverflow {
-		t.timaOverflow = false
-		t.RequestInterrupt()
-		t.TIMA = t.TMA
-	}
+	t.timaOverflow = false
+	t.RequestInterrupt()
+	t.TIMA = t.TMA
 }
 
 func (t *Timer) updateTIMA() {
-	t.handleTIMAOverflow()
+	currState := util.ReadBit16(t.systemCounter, t.bitFalling)
+	fallingEdge := t.prevState == 1 && currState == 0
+	t.prevState = currState
 
-	for t.timaCounter >= t.timaFreq {
+	if fallingEdge {
 		t.TIMA++
-		t.timaCounter -= t.timaFreq
 
 		// Check overflow
 		if t.TIMA == 0 {
 			t.timaOverflow = true
-		}
-
-		if t.timaCounter > 0 {
-			t.handleTIMAOverflow()
 		}
 	}
 }
