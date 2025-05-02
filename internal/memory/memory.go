@@ -18,6 +18,11 @@ type MMU struct {
 	Timer *timer.Timer
 	PPU   *ppu.PPU
 
+	// I/O registers
+	dmaReg uint8
+	ifReg  uint8
+	ieReg  uint8
+
 	// DMA cycles
 	dmaTransfer bool
 	dmaOffset   uint16
@@ -67,7 +72,7 @@ func (mmu *MMU) read(addr uint16) uint8 {
 		return mmu.PPU.ReadOAM(addr)
 	case 0xFEA0 <= addr && addr < 0xFF00:
 		panic("Can't read reserved memory: " + strconv.FormatUint(uint64(addr), 16))
-	case 0xFF00 <= addr && addr < 0xFF80: // I/O registers
+	case 0xFF00 <= addr && addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		return mmu.readIO(addr)
 	default:
 		return mmu.Data[addr]
@@ -104,7 +109,7 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 		mmu.PPU.WriteOAM(addr, value)
 	case 0xFEA0 <= addr && addr < 0xFF00:
 		panic("Can't write reserved memory: " + strconv.FormatUint(uint64(addr), 16))
-	case 0xFF00 <= addr && addr < 0xFF80: // I/O registers
+	case 0xFF00 <= addr && addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		mmu.writeIO(addr, value)
 	default:
 		mmu.Data[addr] = value

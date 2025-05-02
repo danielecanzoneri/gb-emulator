@@ -7,6 +7,8 @@ const (
 	timaAddr = 0xFF05
 	tmaAddr  = 0xFF06
 	tacAddr  = 0xFF07
+
+	tacMask uint8 = 0b00000111
 )
 
 func (t *Timer) Write(addr uint16, v uint8) {
@@ -41,7 +43,7 @@ func (t *Timer) Read(addr uint16) uint8 {
 	case tmaAddr:
 		return t.TMA
 	case tacAddr:
-		return t.TAC
+		return ^tacMask | (t.TAC & tacMask)
 	default:
 		panic("timer: unknown addr " + strconv.Itoa(int(addr)))
 	}

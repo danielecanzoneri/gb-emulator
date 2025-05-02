@@ -18,6 +18,10 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
+
+	IFAddr              = 0xFF0F
+	IEAddr              = 0xFFFF
+	interruptMask uint8 = 0b00011111
 )
 
 func (mmu *MMU) writeIO(addr uint16, v uint8) {
@@ -60,6 +64,12 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	case DMAAddr:
 		mmu.DMA(v)
 
+	// Interrupt flags
+	case IFAddr:
+		mmu.ifReg = v
+	case IEAddr:
+		mmu.ieReg = v
+
 	default:
 		mmu.Data[addr] = v
 	}
@@ -101,7 +111,17 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	case WXAddr:
 		return mmu.PPU.Read(addr)
 
-	default:
-		return mmu.Data[addr]
+	// DMA transfer
+	case DMAAddr:
+		return mmu.dmaReg
+
+	// Interrupt flags
+	case IFAddr:
+		return ^interruptMask | (mmu.ifReg & interruptMask)
+	case IEAddr:
+		return ^interruptMask | (mmu.ieReg & interruptMask)
+
+	default: // Unused I/O return 1
+		return 0xFF
 	}
 }
