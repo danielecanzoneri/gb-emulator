@@ -6,8 +6,8 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 )
 
-// Cyclable describes hardware components that needs clock synchronization
-type Cyclable interface {
+// Cycler describes hardware components that needs clock synchronization
+type Cycler interface {
 	Cycle()
 }
 
@@ -33,18 +33,18 @@ type CPU struct {
 	Timer *timer.Timer
 	MMU   *memory.MMU
 
-	cyclables []Cyclable
+	cyclers []Cycler
 }
 
-func (cpu *CPU) AddCyclable(Cyclable ...Cyclable) {
-	for _, c := range Cyclable {
-		cpu.cyclables = append(cpu.cyclables, c)
+func (cpu *CPU) AddCycler(cyclers ...Cycler) {
+	for _, c := range cyclers {
+		cpu.cyclers = append(cpu.cyclers, c)
 	}
 }
 
 func (cpu *CPU) Cycle() {
-	for _, cyclable := range cpu.cyclables {
-		cyclable.Cycle()
+	for _, cycler := range cpu.cyclers {
+		cycler.Cycle()
 	}
 }
 

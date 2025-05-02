@@ -23,7 +23,7 @@ func TestOpcodesTiming(t *testing.T) {
 
 		cpu := mockCPU()
 		counter := &CycleCounter{}
-		cpu.AddCyclable(counter)
+		cpu.AddCycler(counter)
 		writeTestProgram(cpu, uint8(opcode))
 		cpu.ExecuteInstruction()
 
@@ -37,7 +37,7 @@ func TestPrefixedOpcodesTiming(t *testing.T) {
 	for opcode := range 0x100 {
 		cpu := mockCPU()
 		counter := &CycleCounter{}
-		cpu.AddCyclable(counter)
+		cpu.AddCycler(counter)
 		writeTestProgram(cpu, PREFIX_OPCODE, uint8(opcode))
 		cpu.ExecuteInstruction()
 
@@ -63,7 +63,7 @@ func TestOpcodesWithBranchingTiming(t *testing.T) {
 	for _, opcode := range opcodesBase {
 		for offset, setCondition := range conditions {
 			counter := &CycleCounter{}
-			cpu.AddCyclable(counter)
+			cpu.AddCycler(counter)
 
 			op := opcode + uint8(offset*8)
 

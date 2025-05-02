@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Scale = 1
+	Scale = 3
 )
 
 var (

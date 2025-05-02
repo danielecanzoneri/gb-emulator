@@ -12,5 +12,5 @@ func (mmu *MMU) DMA(xx uint8) {
 	}
 
 	mmu.dmaTransfer = true
-	mmu.Data[dmaAddress] = xx
+	mmu.dmaReg = xx
 }
