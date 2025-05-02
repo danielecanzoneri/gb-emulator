@@ -101,13 +101,13 @@ func TestTimer_WriteTIMAWhenOverflow(t *testing.T) {
 	timer.Cycle()
 	timer.Cycle()
 	timer.Cycle()
+	timer.Cycle() // TIMA should be 0
 	timer.Write(timaAddr, newTIMA)
-	timer.Cycle()
-	timer.Cycle()
+	timer.Cycle() // Tima should not have been reset and interrupt not requested
 
 	// TIMA should not be reset and interrupt not requested
-	if timer.TIMA == TMA {
-		t.Errorf("TIMA should have been reset to TMA")
+	if timer.TIMA != newTIMA {
+		t.Errorf("TIMA should not have been reset to TMA")
 	}
 	if interruptSet {
 		t.Errorf("interrupt should have not been requested")
@@ -128,8 +128,9 @@ func TestTimer_WriteTIMAAfterOverflow(t *testing.T) {
 	timer.TMA = TMA
 	timer.Write(tacAddr, 0b101) // timaFreq = 4
 
-	var newTIMA uint8 = 0x12
+	var newTIMA uint8 = 0x80
 
+	timer.Cycle()
 	timer.Cycle()
 	timer.Cycle()
 	timer.Cycle()
@@ -162,6 +163,7 @@ func TestTimer_WriteTMAAfterOverflow(t *testing.T) {
 
 	var newTMA uint8 = 0x20
 
+	timer.Cycle()
 	timer.Cycle()
 	timer.Cycle()
 	timer.Cycle()

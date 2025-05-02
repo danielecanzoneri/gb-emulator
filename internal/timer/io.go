@@ -9,26 +9,24 @@ const (
 	tacAddr  = 0xFF07
 )
 
-var tacClockToBitFallMapping = map[uint8]uint8{
-	0b00: 9,
-	0b01: 3,
-	0b10: 5,
-	0b11: 7,
-}
-
 func (t *Timer) Write(addr uint16, v uint8) {
 	switch addr {
 	case divAddr:
 		t.systemCounter = 0
 	case timaAddr:
-		t.TIMA = v
-		// t.timaCounter = 0
+		if !t.timaReloaded {
+			t.TIMA = v
+			t.timaOverflow = false
+		}
 	case tmaAddr:
 		t.TMA = v
+		if t.timaReloaded {
+			// New TMA is written to TIMA if write happens while reloading
+			t.TIMA = v
+		}
 	case tacAddr:
 		t.TAC = v
-		t.enabled = v&0b100 > 0
-		t.bitFalling = tacClockToBitFallMapping[v&0b11]
+		t.detectFallingEdge()
 	default:
 		panic("timer: unknown addr " + strconv.Itoa(int(addr)))
 	}

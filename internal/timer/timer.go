@@ -2,11 +2,6 @@ package timer
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/internal/util"
-)
-
-const (
-	divFreq = 64
 )
 
 type Timer struct {
@@ -18,13 +13,12 @@ type Timer struct {
 	// Updated at every M-cycle (high part is DIV)
 	systemCounter uint16
 
-	// Frequency to update TIMA (lower 2 bits of TAC)
-	bitFalling uint8
-	prevState  uint8 // Falling edge detector to detect when to update
-	enabled    bool
+	// Falling edge detector to detect when to update TIMA
+	prevState uint8
 
 	// Flag to request interrupt at next step
 	timaOverflow bool
+	timaReloaded bool // Don't reload TIMA if is written after overflow
 
 	// Callback to request interrupt
 	RequestInterrupt func()
@@ -38,33 +32,41 @@ func (t *Timer) String() string {
 }
 
 func (t *Timer) Cycle() {
+	t.timaReloaded = false
 	if t.timaOverflow {
-		t.handleTIMAOverflow()
+		t.timaOverflow = false
+		t.timaReloaded = true
+		t.RequestInterrupt()
+		t.TIMA = t.TMA
 	}
 
 	// Update DIV
 	t.systemCounter += 4
 
-	// Update TIMA if enabled
-	if t.enabled {
-		t.updateTIMA()
+	// Update TIMA
+	t.detectFallingEdge()
+}
+
+func (t *Timer) detectFallingEdge() {
+	var currBit uint16
+	switch t.TAC & 0b11 {
+	case 0: // 00 = bit 9
+		currBit = (t.systemCounter >> 9) & 1
+	case 1: // 01 = bit 3
+		currBit = (t.systemCounter >> 3) & 1
+	case 2: // 10 = bit 5
+		currBit = (t.systemCounter >> 5) & 1
+	case 3: // 11 = bit 7
+		currBit = (t.systemCounter >> 7) & 1
 	}
-}
 
-func (t *Timer) handleTIMAOverflow() {
-	t.timaOverflow = false
-	t.RequestInterrupt()
-	t.TIMA = t.TMA
-}
-
-func (t *Timer) updateTIMA() {
-	currState := util.ReadBit16(t.systemCounter, t.bitFalling)
+	// And with timer enable bit
+	currState := uint8(currBit) & (t.TAC >> 2)
 	fallingEdge := t.prevState == 1 && currState == 0
 	t.prevState = currState
 
 	if fallingEdge {
 		t.TIMA++
-
 		// Check overflow
 		if t.TIMA == 0 {
 			t.timaOverflow = true
