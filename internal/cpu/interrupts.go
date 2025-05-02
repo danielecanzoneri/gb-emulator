@@ -46,11 +46,11 @@ var (
 	}
 )
 
-func (cpu *CPU) handleInterrupts() bool {
+func (cpu *CPU) handleInterrupts() {
 	defer cpu.handleIME()
 
 	// Check for pending interrupts
-	triggered := cpu.MMU.Read(ieAddr) & cpu.MMU.Read(ifAddr)
+	triggered := cpu.MMU.Read(ieAddr) & cpu.MMU.Read(ifAddr) & 0x1F
 
 	// Awake if halted
 	if cpu.halted && triggered > 0 {
@@ -58,7 +58,7 @@ func (cpu *CPU) handleInterrupts() bool {
 	}
 
 	if !cpu.IME || triggered == 0 {
-		return false
+		return
 	}
 
 	// Serve interrupts with priority
@@ -66,10 +66,8 @@ func (cpu *CPU) handleInterrupts() bool {
 		mask := uint8(1 << i)
 		if triggered&mask > 0 {
 			cpu.serveInterrupt(mask)
-			return true
 		}
 	}
-	return false
 }
 
 func (cpu *CPU) requestInterrupt(interruptMask uint8) {
@@ -79,15 +77,23 @@ func (cpu *CPU) requestInterrupt(interruptMask uint8) {
 }
 
 func (cpu *CPU) serveInterrupt(interruptMask uint8) {
-	IF := cpu.MMU.Read(ifAddr)
-	IF &= ^interruptMask
-	cpu.MMU.Write(ifAddr, IF)
+	cpu.intMaskRequested = interruptMask
 	cpu.IME = false
 
 	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
 	cpu.Cycle()
 	cpu.PUSH_STACK(cpu.PC)
-	cpu.PC = interruptsHandler[interruptMask]
+
+	// Check if interrupt is still requested, otherwise set PC to 0000
+	if !cpu.intCancelled {
+		cpu.PC = interruptsHandler[interruptMask]
+
+		IF := cpu.MMU.Read(ifAddr)
+		IF &= ^interruptMask
+		cpu.MMU.Write(ifAddr, IF)
+	} else {
+		cpu.PC = 0
+	}
 	cpu.Cycle() // Internal (set PC)
 }
 

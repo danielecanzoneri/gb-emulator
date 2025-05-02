@@ -4,13 +4,11 @@ import "github.com/danielecanzoneri/gb-emulator/internal/util"
 
 // ReadByte uses 1 M-cycle
 func (cpu *CPU) ReadByte(addr uint16) uint8 {
-	defer cpu.Cycle()
-
+	cpu.Cycle()
 	return cpu.MMU.Read(addr)
 }
 func (cpu *CPU) WriteByte(addr uint16, v uint8) {
-	defer cpu.Cycle()
-
+	cpu.Cycle()
 	cpu.MMU.Write(addr, v)
 }
 

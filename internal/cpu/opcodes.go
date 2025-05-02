@@ -888,9 +888,14 @@ func (cpu *CPU) POP_AF() {
 
 // PUSH R16STK
 func (cpu *CPU) PUSH_STACK(v uint16) {
-	cpu.SP -= 2
 	cpu.Cycle() // Internal
-	cpu.WriteWord(cpu.SP, v)
+
+	// Write first high then low
+	high, low := util.SplitWord(v)
+	cpu.SP--
+	cpu.WriteByte(cpu.SP, high)
+	cpu.SP--
+	cpu.WriteByte(cpu.SP, low)
 }
 func (cpu *CPU) PUSH_BC() {
 	cpu.PUSH_STACK(cpu.readBC())
@@ -936,6 +941,8 @@ func (cpu *CPU) RET() {
 func (cpu *CPU) RETI() {
 	cpu.PC = cpu.POP_STACK()
 	cpu.Cycle() // Internal (set PC)
+
+	cpu.intMaskRequested = 0
 	cpu.IME = true
 }
 

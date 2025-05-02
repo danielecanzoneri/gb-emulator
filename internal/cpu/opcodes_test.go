@@ -1126,8 +1126,8 @@ func Test_HALT(t *testing.T) {
 		cpu.MMU.Write(ieAddr, timerMask)
 		cpu.ExecuteInstruction()
 
-		if cpu.PC != timerHandler {
-			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, timerHandler)
+		if cpu.PC != timerHandler+1 {
+			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, timerHandler+1)
 		}
 	})
 
@@ -2453,7 +2453,7 @@ func Test_TST_VEC_N16(t *testing.T) {
 
 func Test_LDH_C_A(t *testing.T) {
 	cpu := mockCPU()
-	var A, C uint8 = 0xD1, 0x12
+	var A, C uint8 = 0xD1, 0x06
 
 	cpu.A = A
 	cpu.C = C
@@ -2468,7 +2468,7 @@ func Test_LDH_C_A(t *testing.T) {
 
 func Test_LDH_A_C(t *testing.T) {
 	cpu := mockCPU()
-	var value, C uint8 = 0xD1, 0x12
+	var value, C uint8 = 0xD1, 0x06
 
 	cpu.MMU.Write(0xFF00+uint16(C), value)
 	cpu.C = C
@@ -2483,7 +2483,7 @@ func Test_LDH_A_C(t *testing.T) {
 
 func Test_LDH_N8_A(t *testing.T) {
 	cpu := mockCPU()
-	var A, offset uint8 = 0xD1, 0x12
+	var A, offset uint8 = 0xD1, 0x06
 
 	cpu.A = A
 	writeTestProgram(cpu, LDH_N8_A_OPCODE, offset)
@@ -2497,7 +2497,7 @@ func Test_LDH_N8_A(t *testing.T) {
 
 func Test_LDH_A_N8(t *testing.T) {
 	cpu := mockCPU()
-	var value, offset uint8 = 0xD1, 0x12
+	var value, offset uint8 = 0xD1, 0x06
 
 	cpu.MMU.Write(0xFF00+uint16(offset), value)
 	writeTestProgram(cpu, LDH_A_N8_OPCODE, offset)

@@ -4,11 +4,12 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
+	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 )
 
 func mockCPU() *CPU {
 	p := &ppu.PPU{}
-	mem := &memory.MMU{PPU: p, CartridgeData: make([]uint8, 0x8000)}
+	mem := &memory.MMU{PPU: p, CartridgeData: make([]uint8, 0x8000), Timer: &timer.Timer{}}
 	mem.SetMBC(&cartridge.Header{ROMBanks: 1})
 	return &CPU{SP: 0xFFFE, MMU: mem}
 }
