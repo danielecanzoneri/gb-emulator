@@ -16,23 +16,22 @@ func TestDMA(t *testing.T) {
 		mmu.write(uint16(startAddr+i), uint8(0xA0-i))
 	}
 
-	testDMAAddresses := []uint16{0x0000, 0x3FFF, 0x7FFF, 0x8000, 0x9000, 0xA000, 0xC000, 0xD000, 0xF000, 0xFF7F}
+	var oamAddress uint16 = 0xFE12
 	var validAddress uint16 = 0xFF90 // Address in hRAM that is accessible during DMA
 	mmu.write(validAddress, 0x12)
 
 	mmu.write(dmaAddress, uint8(startAddr>>8))
+	mmu.Cycle()
 	for i := 0; i < dmaDuration; i++ {
 		mmu.Cycle()
 
-		// Check that at every cycle everything read from the MMU will return the value being currently written in DMA
-		for _, addr := range testDMAAddresses {
-			if mmu.Read(addr) != uint8(0xA0-i) {
-				t.Errorf("Incorrect DMA value read on 0x%04X at cycle %d: %02X", addr, i, mmu.Read(addr))
-			}
+		// Check that at every cycle everything read from the OAM will return 0xFF
+		if mmu.Read(oamAddress) != 0xFF {
+			t.Errorf("Incorrect OAM value read at cycle %d: %02X", i, mmu.Read(oamAddress))
+		}
 
-			if mmu.Read(validAddress) != 0x12 {
-				t.Errorf("Incorrect value read in hRAM during DMA")
-			}
+		if mmu.Read(validAddress) != 0x12 {
+			t.Errorf("Incorrect value read in hRAM during DMA")
 		}
 	}
 }

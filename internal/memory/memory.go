@@ -24,31 +24,45 @@ type MMU struct {
 	ieReg  uint8
 
 	// DMA cycles
-	dmaTransfer bool
-	dmaOffset   uint16
-	dmaValue    uint8
+	dmaStart      bool
+	dmaWaitCycles uint8 // Wait two cycles before starting dma
+	dmaTransfer   bool
+	dmaOffset     uint16
+	dmaValue      uint8
 }
 
 func (mmu *MMU) Cycle() {
-	// dmaCycles go from 0xA0 to 0
 	if mmu.dmaTransfer {
-		if mmu.dmaOffset == dmaDuration {
-			mmu.dmaTransfer = false
-			return
-		}
-
 		addr := uint16(mmu.read(dmaAddress)) << 8
 		mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
 
 		mmu.PPU.OAM.Data[mmu.dmaOffset] = mmu.dmaValue
 		mmu.dmaOffset++
+
+		if mmu.dmaOffset == dmaDuration {
+			mmu.dmaTransfer = false
+		}
+	}
+
+	// Start dma one cycle later
+	if mmu.dmaStart {
+		mmu.dmaWaitCycles--
+		if mmu.dmaWaitCycles == 0 {
+			mmu.dmaStart = false
+			mmu.dmaTransfer = true
+			mmu.dmaOffset = 0
+		}
 	}
 }
 
 func (mmu *MMU) Read(addr uint16) uint8 {
 	// During DMA, HRAM can still be accessed otherwise return what DMA is reading
-	if mmu.dmaTransfer && !(0xFF80 <= addr && addr < 0xFFFF) {
-		return mmu.dmaValue
+	//if mmu.dmaTransfer && !(0xFF00 <= addr && addr < 0xFFFF) {
+	//	return mmu.dmaValue
+	//}
+	// OAM is inaccessible during DMA
+	if mmu.dmaTransfer && 0xFE00 <= addr && addr < 0xFEA0 {
+		return 0xFF
 	}
 
 	return mmu.read(addr)
@@ -80,9 +94,15 @@ func (mmu *MMU) read(addr uint16) uint8 {
 }
 
 func (mmu *MMU) Write(addr uint16, value uint8) {
-	if mmu.dmaTransfer && !(0xFF80 <= addr && addr < 0xFFFF) {
+	// During DMA, HRAM can still be accessed
+	// if mmu.dmaTransfer && !(0xFF80 <= addr && addr < 0xFFFF) {
+	// 	return
+	// }
+	// OAM is inaccessible during DMA
+	if mmu.dmaTransfer && 0xFE00 <= addr && addr < 0xFEA0 {
 		return
 	}
+
 	mmu.write(addr, value)
 }
 

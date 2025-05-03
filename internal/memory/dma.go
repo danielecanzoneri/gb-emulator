@@ -11,6 +11,7 @@ func (mmu *MMU) DMA(xx uint8) {
 		panic("DMA address out of range")
 	}
 
-	mmu.dmaTransfer = true
+	mmu.dmaStart = true
+	mmu.dmaWaitCycles = 2
 	mmu.dmaReg = xx
 }
