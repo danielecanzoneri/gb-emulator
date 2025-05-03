@@ -77,7 +77,7 @@ func (cpu *CPU) requestInterrupt(interruptMask uint8) {
 }
 
 func (cpu *CPU) serveInterrupt(interruptMask uint8) {
-	cpu.intMaskRequested = interruptMask
+	cpu.interruptMaskRequested = interruptMask
 	cpu.IME = false
 
 	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
@@ -85,7 +85,7 @@ func (cpu *CPU) serveInterrupt(interruptMask uint8) {
 	cpu.PUSH_STACK(cpu.PC)
 
 	// Check if interrupt is still requested, otherwise set PC to 0000
-	if !cpu.intCancelled {
+	if !cpu.interruptCancelled {
 		cpu.PC = interruptsHandler[interruptMask]
 
 		IF := cpu.MMU.Read(ifAddr)

@@ -942,7 +942,7 @@ func (cpu *CPU) RETI() {
 	cpu.PC = cpu.POP_STACK()
 	cpu.Cycle() // Internal (set PC)
 
-	cpu.intMaskRequested = 0
+	cpu.interruptMaskRequested = 0
 	cpu.IME = true
 }
 

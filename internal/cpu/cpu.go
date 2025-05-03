@@ -26,9 +26,10 @@ type CPU struct {
 	IME        bool
 	_EIDelayed bool // Set to true when EI is executed, but not yet effective
 
-	// Flags to detect when interrupt is requested and cancelled (write to IE mid servicing)
-	intMaskRequested uint8
-	intCancelled     bool
+	// Flags to detect when interrupt is requested and cancelled (write to IE mid-servicing)
+	interruptMaskRequested       uint8
+	writeIEHasCancelledInterrupt bool
+	interruptCancelled           bool
 
 	// Halt flag
 	halted bool
@@ -48,9 +49,16 @@ func (cpu *CPU) AddCycler(cyclers ...Cycler) {
 }
 
 func (cpu *CPU) Cycle() {
-	cpu.intCancelled = false
-	if cpu.intMaskRequested > 0 && !(cpu.MMU.Read(ieAddr)&cpu.intMaskRequested > 0) {
-		cpu.intCancelled = true
+	cpu.interruptCancelled = false
+
+	// Cancel interrupt one cycle later
+	if cpu.writeIEHasCancelledInterrupt {
+		cpu.interruptCancelled = true
+	}
+
+	cpu.writeIEHasCancelledInterrupt = false
+	if cpu.interruptMaskRequested > 0 && !(cpu.MMU.Read(ieAddr)&cpu.interruptMaskRequested > 0) {
+		cpu.writeIEHasCancelledInterrupt = true
 	}
 
 	for _, cycler := range cpu.cyclers {
