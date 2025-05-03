@@ -1,3 +1,5 @@
 gb-test-roms/
+mooneye-test-suite/
 
 .idea/
+go.sum
