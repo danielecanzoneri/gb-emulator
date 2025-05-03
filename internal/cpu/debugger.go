@@ -31,9 +31,9 @@ func (cpu *CPU) logState(opcode uint8) {
 			)
 		}
 		fmt.Printf(
-			"A:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X | F:%02X | SP:%04X\n",
+			"A:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X | F:%02X | SP:%04X | Steps:%d\n",
 			cpu.A, cpu.B, cpu.C, cpu.D, cpu.E, cpu.H, cpu.L,
-			cpu.F, cpu.SP,
+			cpu.F, cpu.SP, cpu.steps,
 		)
 		fmt.Println("Timer:", cpu.Timer)
 

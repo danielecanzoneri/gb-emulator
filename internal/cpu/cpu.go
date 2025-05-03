@@ -38,6 +38,7 @@ type CPU struct {
 	MMU   *memory.MMU
 
 	cyclers []Cycler
+	steps   uint
 }
 
 func (cpu *CPU) AddCycler(cyclers ...Cycler) {
@@ -63,6 +64,7 @@ func (cpu *CPU) ExecuteInstruction() {
 	if !cpu.halted {
 		opcode := cpu.ReadNextByte()
 		cpu.logState(opcode)
+		cpu.steps++
 
 		switch opcode {
 		// NOP
