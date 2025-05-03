@@ -65,9 +65,13 @@ func (cpu *CPU) handleInterrupts() {
 	for i := range 5 {
 		mask := uint8(1 << i)
 		if triggered&mask > 0 {
-			cpu.serveInterrupt(mask)
+			// If interrupt is cancelled, serve other
+			if cpu.serveInterrupt(mask) {
+				return
+			}
 		}
 	}
+	return
 }
 
 func (cpu *CPU) requestInterrupt(interruptMask uint8) {
@@ -76,13 +80,16 @@ func (cpu *CPU) requestInterrupt(interruptMask uint8) {
 	cpu.MMU.Write(ifAddr, IF)
 }
 
-func (cpu *CPU) serveInterrupt(interruptMask uint8) {
+// serveInterrupt return false if interrupt is cancelled, true otherwise
+func (cpu *CPU) serveInterrupt(interruptMask uint8) bool {
 	cpu.interruptMaskRequested = interruptMask
 	cpu.IME = false
 
 	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
 	cpu.Cycle()
 	cpu.PUSH_STACK(cpu.PC)
+
+	defer cpu.Cycle() // Internal (set PC)
 
 	// Check if interrupt is still requested, otherwise set PC to 0000
 	if !cpu.interruptCancelled {
@@ -91,10 +98,11 @@ func (cpu *CPU) serveInterrupt(interruptMask uint8) {
 		IF := cpu.MMU.Read(ifAddr)
 		IF &= ^interruptMask
 		cpu.MMU.Write(ifAddr, IF)
+		return true
 	} else {
 		cpu.PC = 0
+		return false
 	}
-	cpu.Cycle() // Internal (set PC)
 }
 
 func (cpu *CPU) handleIME() {

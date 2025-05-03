@@ -26,7 +26,7 @@ type CPU struct {
 	IME        bool
 	_EIDelayed bool // Set to true when EI is executed, but not yet effective
 
-	// Flags to detect when interrupt is requested and cancelled (write to IE mid-servicing)
+	// Flags to detect when interrupt is requested and cancelled (write to IE mid servicing)
 	interruptMaskRequested       uint8
 	writeIEHasCancelledInterrupt bool
 	interruptCancelled           bool
@@ -67,6 +67,7 @@ func (cpu *CPU) Cycle() {
 }
 
 func (cpu *CPU) ExecuteInstruction() {
+	// Service all interrupts (they may be cancelled)
 	cpu.handleInterrupts()
 
 	if !cpu.halted {
