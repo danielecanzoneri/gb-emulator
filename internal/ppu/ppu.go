@@ -5,8 +5,9 @@ import (
 )
 
 type PPU struct {
-	Mode uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
-	Dots uint  // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
+	Mode           uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
+	Dots           uint  // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
+	mode3ExtraDots uint
 
 	// vRAM and OAM data
 	vRAM vRAM
@@ -75,8 +76,7 @@ func (ppu *PPU) Cycle() {
 			ppu.setMode(drawing)
 		}
 	case drawing:
-		if ppu.Dots >= 172+80 {
-			// TODO - Correctly compute Mode 3 length
+		if ppu.Dots >= 172+80+ppu.mode3ExtraDots {
 			ppu.setMode(hBlank)
 		}
 	case hBlank:
@@ -94,8 +94,7 @@ func (ppu *PPU) Cycle() {
 			ppu.Dots -= 456
 			ppu.newLine()
 
-			if ppu.LY > 153 {
-				ppu.LY = 0
+			if ppu.LY == 0 {
 				ppu.setMode(oamScan)
 			}
 		}
@@ -112,8 +111,8 @@ func (ppu *PPU) setMode(mode uint8) {
 	case oamScan:
 	case drawing:
 		ppu.selectObjects()
+		ppu.mode3ExtraDots = ppu.drawLine()
 	case hBlank:
-		ppu.drawLine()
 	case vBlank:
 		ppu.wyCounter = 0
 		ppu.FrameComplete = true
@@ -123,6 +122,9 @@ func (ppu *PPU) setMode(mode uint8) {
 
 func (ppu *PPU) newLine() {
 	ppu.LY++
+	if ppu.LY > 153 {
+		ppu.LY = 0
+	}
 
 	// Bit 2 of STAT register is set when LY = LYC
 	if ppu.LY == ppu.LYC {

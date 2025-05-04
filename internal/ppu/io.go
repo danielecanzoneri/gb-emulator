@@ -117,6 +117,10 @@ func (ppu *PPU) ReadVRAM(addr uint16) uint8 {
 	if ppu.Mode == 3 {
 		return 0xFF
 	}
+	return ppu.readVRAM(addr)
+}
+
+func (ppu *PPU) readVRAM(addr uint16) uint8 {
 	return ppu.vRAM.read(addr - vRAMStartAddr)
 }
 
