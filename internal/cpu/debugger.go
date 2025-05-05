@@ -36,6 +36,7 @@ func (cpu *CPU) logState(opcode uint8) {
 			cpu.F, cpu.SP, cpu.steps,
 		)
 		fmt.Println("Timer:", cpu.Timer)
+		fmt.Printf("PPU: Mode=%d, dots=%d, LY=%02X\n", cpu.MMU.PPU.Mode, cpu.MMU.PPU.Dots, cpu.MMU.PPU.LY)
 
 		// Get user input
 		scanner := bufio.NewScanner(os.Stdin)
