@@ -57,6 +57,7 @@ type PPU struct {
 
 	// FrameComplete signal when frame is ready to be rendered
 	FrameComplete bool
+	EmptyFrame    bool // True when this is the first frame after LCD enabling or when LCD is disabled
 }
 
 const (

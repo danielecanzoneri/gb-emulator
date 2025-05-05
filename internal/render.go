@@ -21,7 +21,7 @@ var (
 	pixels [4]*ebiten.Image
 )
 
-func renderInit() {
+func RenderInit() {
 	for i := range pixels {
 		// Create a Scale x Scale image of the corresponding color
 		square := ebiten.NewImage(Scale, Scale)
@@ -36,6 +36,7 @@ func renderInit() {
 func (gb *GameBoy) Update() error {
 	//if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 	for !gb.PPU.FrameComplete {
+		gb.Joypad.DetectKeysPressed()
 		gb.CPU.ExecuteInstruction()
 	}
 	gb.PPU.FrameComplete = false
@@ -44,6 +45,12 @@ func (gb *GameBoy) Update() error {
 }
 
 func (gb *GameBoy) Draw(screen *ebiten.Image) {
+	if gb.PPU.EmptyFrame {
+		screen.Fill(color.White)
+		gb.PPU.EmptyFrame = false
+		return
+	}
+
 	// Draw all 144 x 160 pixels
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {

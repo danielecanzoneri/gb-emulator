@@ -6,8 +6,6 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
-	"github.com/hajimehoshi/ebiten/v2"
-	"log"
 )
 
 type GameBoy struct {
@@ -25,7 +23,7 @@ func (gb *GameBoy) Cycle() {
 
 func Init() *GameBoy {
 	t := &timer.Timer{}
-	p := &ppu.PPU{}
+	p := ppu.New()
 	m := &memory.MMU{Timer: t, PPU: p}
 	c := &cpu.CPU{Timer: t, MMU: m}
 	c.AddCycler(t, p, m)
@@ -70,15 +68,4 @@ func (gb *GameBoy) Load(rom *cartridge.Rom) {
 	// Load ROM into memory
 	gb.Memory.CartridgeData = rom.Data
 	gb.Memory.SetMBC(rom.Header)
-}
-
-func (gb *GameBoy) Run() {
-	ebiten.SetWindowSize(gb.Layout(0, 0))
-	ebiten.SetWindowTitle("Game Boy")
-
-	renderInit()
-
-	if err := ebiten.RunGame(gb); err != nil {
-		log.Fatal(err)
-	}
 }
