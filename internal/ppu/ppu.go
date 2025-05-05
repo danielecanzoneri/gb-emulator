@@ -45,6 +45,9 @@ type PPU struct {
 	objEnabled           bool   // Bit 1
 	bgWindowEnabled      bool   // Bit 0
 
+	// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
+	lcdJustEnabled bool
+
 	// Shared STAT interrupt line (STAT interrupt is triggered after low -> high transition)
 	STATInterruptState bool
 
@@ -80,6 +83,15 @@ func (ppu *PPU) Cycle() {
 			ppu.setMode(hBlank)
 		}
 	case hBlank:
+		// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
+		if ppu.lcdJustEnabled && ppu.Dots >= 80 {
+			// When enabling LCD line 0 has different timings because the PPU is late by 2 T-cycles
+			//ppu.Dots -= 2
+
+			ppu.lcdJustEnabled = false
+			ppu.setMode(drawing)
+		}
+
 		if ppu.Dots >= 456 {
 			ppu.Dots -= 456
 			ppu.newLine()
@@ -99,6 +111,15 @@ func (ppu *PPU) Cycle() {
 			}
 		}
 	}
+}
+
+func New() *PPU {
+	ppu := new(PPU)
+	ppu.STAT = 0x80 // Set unused bit
+	ppu.setMode(oamScan)
+	ppu.checkLYLYC()
+
+	return ppu
 }
 
 func (ppu *PPU) setMode(mode uint8) {
@@ -126,16 +147,29 @@ func (ppu *PPU) newLine() {
 		ppu.LY = 0
 	}
 
-	// Bit 2 of STAT register is set when LY = LYC
-	if ppu.LY == ppu.LYC {
-		util.SetBit(&ppu.STAT, 2, 1)
-	} else {
-		util.SetBit(&ppu.STAT, 2, 0)
+	ppu.checkLYLYC()
+}
+
+func (ppu *PPU) checkLYLYC() {
+	if !ppu.active {
+		return
 	}
-	ppu.checkSTATInterruptState()
+
+	if util.ReadBit(ppu.STAT, 6) > 0 {
+		// Bit 2 of STAT register is set when LY = LYC
+		if ppu.LY == ppu.LYC {
+			util.SetBit(&ppu.STAT, 2, 1)
+		} else {
+			util.SetBit(&ppu.STAT, 2, 0)
+		}
+		ppu.checkSTATInterruptState()
+	}
 }
 
 func (ppu *PPU) checkSTATInterruptState() {
+	if !ppu.active {
+		return
+	}
 	state := false
 
 	// LYC == LY int (bit 6)
@@ -145,7 +179,7 @@ func (ppu *PPU) checkSTATInterruptState() {
 		// Mode 1 int (bit 4)
 		(ppu.Mode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
 		// Mode 0 int (bit 3)
-		(ppu.Mode == 2 && (util.ReadBit(ppu.STAT, 3) > 0)) {
+		(ppu.Mode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
 		state = true
 	}
 

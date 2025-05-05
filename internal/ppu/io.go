@@ -1,7 +1,6 @@
 package ppu
 
 import (
-	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/internal/util"
 	"strconv"
 )
@@ -34,13 +33,12 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		//}
 		ppu.LCDC = v
 		// Update LCD control
-		ppu.active = util.ReadBit(v, 7) > 0
-		if !ppu.active {
-			// Reset to HBlank
-			ppu.LY = 0
-			ppu.Dots = 0
-			ppu.setMode(hBlank)
+		if util.ReadBit(v, 7) > 0 {
+			ppu.enable()
+		} else {
+			ppu.disable()
 		}
+
 		if util.ReadBit(v, 6) == 0 {
 			ppu.windowTileMapAddr = 0x9800
 		} else {
@@ -57,10 +55,10 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.objEnabled = util.ReadBit(v, 1) > 0
 		ppu.bgWindowEnabled = util.ReadBit(v, 0) > 0
 	case LYAddr:
-		fmt.Println("WARNING: should not write LY")
-		ppu.LY = v
+		panic("should not write LY")
 	case LYCAddr:
 		ppu.LYC = v
+		ppu.checkLYLYC()
 	case STATAddr:
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
 		ppu.checkSTATInterruptState()
@@ -110,6 +108,27 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
+}
+
+func (ppu *PPU) enable() {
+	if ppu.active {
+		return
+	}
+	ppu.active = true
+	ppu.checkLYLYC()
+	ppu.lcdJustEnabled = true
+}
+
+func (ppu *PPU) disable() {
+	if !ppu.active {
+		return
+	}
+	ppu.active = false
+
+	// Reset to HBlank
+	ppu.LY = 0
+	ppu.Dots = 0
+	ppu.setMode(hBlank)
 }
 
 // ReadVRAM prevents vRAM reads during PPU mode 3
