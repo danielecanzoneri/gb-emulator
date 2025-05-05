@@ -2,8 +2,10 @@ package joypad
 
 import "github.com/hajimehoshi/ebiten/v2"
 
+type gbKey uint8
+
 const (
-	KeyStart = iota
+	KeyStart gbKey = iota
 	KeySelect
 	KeyB
 	KeyA
@@ -13,13 +15,13 @@ const (
 	KeyRight
 )
 
-var buttonsKeyMapping = map[int]ebiten.Key{
+var buttonsKeyMapping = map[gbKey]ebiten.Key{
 	KeyStart:  ebiten.KeyX,
 	KeySelect: ebiten.KeyZ,
 	KeyB:      ebiten.KeyA,
 	KeyA:      ebiten.KeyS,
 }
-var dPadKeyMapping = map[int]ebiten.Key{
+var dPadKeyMapping = map[gbKey]ebiten.Key{
 	KeyDown:  ebiten.KeyDown,
 	KeyUp:    ebiten.KeyUp,
 	KeyLeft:  ebiten.KeyLeft,
