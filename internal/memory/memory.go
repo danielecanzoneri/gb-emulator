@@ -1,9 +1,9 @@
 package memory
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
-	"strconv"
 )
 
 const Size = 0x10000 // 64KB
@@ -15,8 +15,9 @@ type MMU struct {
 	// Memory Bank Controller
 	mbc MBC
 
-	Timer *timer.Timer
-	PPU   *ppu.PPU
+	Timer  *timer.Timer
+	PPU    *ppu.PPU
+	Joypad *joypad.Joypad
 
 	// I/O registers
 	dmaReg uint8

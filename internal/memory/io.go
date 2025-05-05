@@ -1,6 +1,8 @@
 package memory
 
 const (
+	JOYPAddr = 0xFF00
+
 	DIVAddr  = 0xFF04
 	TIMAAddr = 0xFF05
 	TMAAddr  = 0xFF06
@@ -26,6 +28,10 @@ const (
 
 func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	switch addr {
+	// Joypad
+	case JOYPAddr:
+		mmu.Joypad.Write(v)
+
 	// Timer I/O
 	case DIVAddr:
 		fallthrough
@@ -77,6 +83,9 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 
 func (mmu *MMU) readIO(addr uint16) uint8 {
 	switch addr {
+	// Joypad
+	case JOYPAddr:
+		return mmu.Joypad.Read()
 	// Timer I/O
 	case DIVAddr:
 		fallthrough

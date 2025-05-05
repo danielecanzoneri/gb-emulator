@@ -3,6 +3,7 @@ package gameboy
 import (
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
+	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
@@ -13,6 +14,7 @@ type GameBoy struct {
 	Timer  *timer.Timer
 	Memory *memory.MMU
 	PPU    *ppu.PPU
+	Joypad *joypad.Joypad
 
 	cycles uint
 }
@@ -24,7 +26,8 @@ func (gb *GameBoy) Cycle() {
 func Init() *GameBoy {
 	t := &timer.Timer{}
 	p := ppu.New()
-	m := &memory.MMU{Timer: t, PPU: p}
+	j := joypad.New()
+	m := &memory.MMU{Timer: t, PPU: p, Joypad: j}
 	c := &cpu.CPU{Timer: t, MMU: m}
 	c.AddCycler(t, p, m)
 
@@ -34,7 +37,7 @@ func Init() *GameBoy {
 	p.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(c)
 	p.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(c)
 
-	gb := &GameBoy{CPU: c, Timer: t, PPU: p, Memory: m}
+	gb := &GameBoy{CPU: c, Timer: t, PPU: p, Memory: m, Joypad: j}
 	c.AddCycler(gb)
 
 	return gb
