@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/internal/audio"
 	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
@@ -18,6 +19,7 @@ type MMU struct {
 	Timer  *timer.Timer
 	PPU    *ppu.PPU
 	Joypad *joypad.Joypad
+	APU    *audio.APU
 
 	// I/O registers
 	dmaReg uint8
