@@ -3,6 +3,7 @@ module github.com/danielecanzoneri/gb-emulator
 go 1.24.0
 
 require (
+	github.com/ebitengine/oto/v3 v3.3.3
 	github.com/hajimehoshi/ebiten/v2 v2.8.8
 	github.com/sqweek/dialog v0.0.0-20240226140203-065105509627
 )

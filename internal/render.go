@@ -1,10 +1,9 @@
 package gameboy
 
 import (
-	"image/color"
-
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
+	"image/color"
 )
 
 const (
@@ -34,17 +33,17 @@ func RenderInit() {
 // Inherit Ebiten Game interface
 
 func (gb *GameBoy) Update() error {
-	//if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-	for !gb.PPU.FrameComplete {
-		gb.Joypad.DetectKeysPressed()
-		gb.CPU.ExecuteInstruction()
-	}
-	gb.PPU.FrameComplete = false
-
+	// Game updates are called in the audio callback function
 	return nil
 }
 
 func (gb *GameBoy) Draw(screen *ebiten.Image) {
+	if !gb.PPU.FrameComplete {
+		return
+	}
+
+	gb.PPU.FrameComplete = false
+
 	if gb.PPU.EmptyFrame {
 		screen.Fill(color.White)
 		gb.PPU.EmptyFrame = false

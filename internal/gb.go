@@ -1,12 +1,14 @@
 package gameboy
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/internal/audio"
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
 	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
 	"github.com/danielecanzoneri/gb-emulator/internal/memory"
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
+	"github.com/ebitengine/oto/v3"
 )
 
 type GameBoy struct {
@@ -15,6 +17,7 @@ type GameBoy struct {
 	Memory *memory.MMU
 	PPU    *ppu.PPU
 	Joypad *joypad.Joypad
+	APU    *audio.APU
 
 	cycles uint
 }
@@ -23,13 +26,16 @@ func (gb *GameBoy) Cycle() {
 	gb.cycles++
 }
 
-func Init() *GameBoy {
-	t := &timer.Timer{}
+func Init() (*GameBoy, *oto.Player) {
+	sampleBuffer := make(chan float32, bufferSize)
+
 	p := ppu.New()
 	j := joypad.New()
-	m := &memory.MMU{Timer: t, PPU: p, Joypad: j}
+	a := audio.NewAPU(sampleRate, sampleBuffer)
+	t := &timer.Timer{APU: a}
+	m := &memory.MMU{Timer: t, PPU: p, Joypad: j, APU: a}
 	c := &cpu.CPU{Timer: t, MMU: m}
-	c.AddCycler(t, p, m)
+	c.AddCycler(t, p, m, a)
 
 	// Set interrupt request for timer
 	t.RequestInterrupt = cpu.RequestTimerInterruptFunc(c)
@@ -37,10 +43,18 @@ func Init() *GameBoy {
 	p.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(c)
 	p.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(c)
 
-	gb := &GameBoy{CPU: c, Timer: t, PPU: p, Memory: m, Joypad: j}
+	gb := &GameBoy{
+		CPU: c, Timer: t, PPU: p, Memory: m, Joypad: j,
+		APU: a,
+	}
 	c.AddCycler(gb)
 
-	return gb
+	player, err := newAudioPlayer(gb, sampleBuffer)
+	if err != nil {
+		panic(err)
+	}
+
+	return gb, player
 }
 
 func (gb *GameBoy) Reset() {
