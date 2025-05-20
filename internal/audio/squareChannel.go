@@ -7,50 +7,40 @@ type SquareChannel struct {
 	active     bool
 
 	// Sweep (NRx0)
-	addrNRx0        uint16
-	sweepPace       uint8 // Bits 6-4
-	sweepDecreasing uint8 // Bit 3
-	sweepStep       uint8 // Bits 2-0
-
-	sweepCounter     uint8
-	sweepEnabled     bool
-	shadowRegister   uint16
-	currentSweepPace uint8
+	addrNRx0 uint16
+	sweep    Sweep
 
 	// Wave duty and length timer (NRx1)
-	addrNRx1        uint16
-	waveDuty        uint8 // Bits 7-6
-	lengthTimerInit uint8 // Bits 5-0
-
-	lengthTimer uint8
+	addrNRx1    uint16
+	waveDuty    uint8 // Bits 7-6
+	lengthTimer LengthTimer
 
 	// Volume and Envelope (NRx2)
-	addrNRx2           uint16
-	volume             uint8 // Bits 7-4
-	envelopeIncreasing bool  // Bit 3
-	envelopePace       uint8 // Bits 2-0
-
-	envelopeTimer uint8
-	currentVolume uint8
+	addrNRx2 uint16
+	envelope Envelope
 
 	// Frequency and control
-	addrNRx3           uint16
-	addrNRx4           uint16
-	period             uint16 // Bits 2-0 of NR24 and 7-0 of NRx3 (11 bits)
-	lengthTimerEnabled bool   // Bit 6 of NRx4
+	addrNRx3 uint16
+	addrNRx4 uint16
+	period   uint16 // Bits 2-0 of NR24 and 7-0 of NRx3 (11 bits)
 
 	periodCounter uint16
 	wavePosition  uint8 // Varies from 0 to 7
 }
 
 func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *SquareChannel {
-	return &SquareChannel{
+	ch := &SquareChannel{
 		addrNRx0: addrNRx0,
 		addrNRx1: addrNRx1,
 		addrNRx2: addrNRx2,
 		addrNRx3: addrNRx3,
 		addrNRx4: addrNRx4,
 	}
+
+	ch.sweep.channel = ch
+	ch.lengthTimer.channel = ch
+
+	return ch
 }
 
 func (ch *SquareChannel) IsActive() bool {
@@ -66,7 +56,7 @@ func (ch *SquareChannel) Output() (sample float32) {
 	// If a DAC is enabled, the digital range $0 to $F is linearly translated to the analog range -1 to 1.
 	// The slope is negative: “digital 0” maps to “analog 1”, not “analog -1”.
 	if waveforms[ch.waveDuty][ch.wavePosition] {
-		sample = 1 - float32(ch.currentVolume)/7.5
+		sample = 1 - float32(ch.envelope.Volume())/7.5
 	}
 	return
 }
@@ -84,13 +74,11 @@ func (ch *SquareChannel) Cycle() {
 func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case ch.addrNRx0:
-		ch.sweepPace = (v >> 4) & 0b111
-		ch.sweepDecreasing = (v >> 3) & 0b1
-		ch.sweepStep = v & 0b111
+		ch.sweep.WriteRegister(v)
 
 	case ch.addrNRx1:
 		ch.waveDuty = (v >> 6) & 0b11
-		ch.lengthTimerInit = v & 0x3F
+		ch.lengthTimer.Set(v)
 
 	case ch.addrNRx2:
 		ch.dacEnabled = v&0xF8 > 0
@@ -98,9 +86,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 			ch.active = false
 		}
 
-		ch.envelopePace = v & 0x7
-		ch.envelopeIncreasing = v&0x8 > 0
-		ch.volume = v >> 4
+		ch.envelope.WriteRegister(v)
 
 	case ch.addrNRx3:
 		// Low 8 bits of period
@@ -111,7 +97,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimerEnabled = v&0x40 > 0
+		ch.lengthTimer.Enabled = v&0x40 > 0
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
@@ -126,18 +112,14 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 	switch addr {
 	case ch.addrNRx0:
-		return 0x80 | ch.sweepPace<<4 | ch.sweepDecreasing<<3 | ch.sweepStep
+		return ch.sweep.ReadRegister()
 
 	case ch.addrNRx1:
 		// Length timer is write-only
 		return ch.waveDuty<<6 | 0x3F
 
 	case ch.addrNRx2:
-		out := ch.volume<<4 | ch.envelopePace
-		if ch.envelopeIncreasing {
-			util.SetBit(&out, 3, 1)
-		}
-		return out
+		return ch.envelope.ReadRegister()
 
 	case ch.addrNRx3:
 		// Period is write-only
@@ -146,7 +128,7 @@ func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 	case ch.addrNRx4:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimerEnabled {
+		if ch.lengthTimer.Enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -170,84 +152,7 @@ func (ch *SquareChannel) trigger() {
 	}
 	ch.active = true
 
-	ch.shadowRegister = ch.period
-	ch.sweepCounter = 0
-	ch.sweepEnabled = ch.sweepPace != 0 || ch.sweepStep != 0
-
-	if ch.sweepStep != 0 {
-		ch.sweepOverflowCheck()
-	}
-
-	if ch.lengthTimer == 0 {
-		ch.lengthTimer = ch.lengthTimerInit
-	}
-
-	ch.envelopeTimer = ch.envelopePace
-	ch.currentVolume = ch.volume
-}
-
-func (ch *SquareChannel) stepSoundLength() {
-	if !ch.lengthTimerEnabled || ch.lengthTimer >= 64 {
-		return
-	}
-
-	ch.lengthTimer++
-	if ch.lengthTimer == 64 {
-		ch.active = false
-	}
-}
-
-func (ch *SquareChannel) stepVolume() {
-	if ch.envelopePace == 0 {
-		// Envelope disabled
-		return
-	}
-
-	ch.envelopeTimer--
-	if ch.envelopeTimer == 0 {
-		ch.envelopeTimer = ch.envelopePace
-
-		// The digital value produced by the generator ranges between $0 and $F
-		if ch.envelopeIncreasing && ch.currentVolume < 0xF {
-			ch.currentVolume++
-		} else if !ch.envelopeIncreasing && ch.currentVolume > 0 {
-			ch.currentVolume--
-		}
-	}
-}
-
-func (ch *SquareChannel) sweepOverflowCheck() uint16 {
-	step := ch.shadowRegister >> ch.sweepStep
-	newFrequency := ch.shadowRegister
-	if ch.sweepDecreasing > 0 {
-		newFrequency -= step
-	} else {
-		newFrequency += step
-	}
-
-	if newFrequency > 0x7FF {
-		ch.active = false
-	}
-
-	return newFrequency
-}
-
-func (ch *SquareChannel) stepSweep() {
-	if !ch.sweepEnabled || ch.sweepPace == 0 {
-		return
-	}
-
-	ch.sweepCounter++
-	if ch.sweepCounter == ch.currentSweepPace {
-		newFrequency := ch.sweepOverflowCheck()
-
-		ch.currentSweepPace = ch.sweepPace
-		ch.sweepCounter = 0
-
-		ch.shadowRegister = newFrequency
-		ch.period = newFrequency
-
-		// Perform another overflow check without writing it back
-		ch.sweepOverflowCheck()
-	}
+	ch.sweep.Trigger()
+	ch.lengthTimer.Trigger()
+	ch.envelope.Trigger()
 }

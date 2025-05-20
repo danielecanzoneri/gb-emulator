@@ -16,16 +16,16 @@ func (apu *APU) StepCounter() {
 	apu.audioCounter++
 
 	if apu.audioCounter%2 == 0 {
-		apu.channel1.stepSoundLength()
-		apu.channel2.stepSoundLength()
-		apu.channel4.stepSoundLength()
+		apu.channel1.lengthTimer.Step()
+		apu.channel2.lengthTimer.Step()
+		apu.channel4.lengthTimer.Step()
 	}
 	if (apu.audioCounter-2)%4 == 0 {
-		apu.channel1.stepSweep()
+		apu.channel1.sweep.Step()
 	}
 	if (apu.audioCounter-7)%8 == 0 {
-		apu.channel1.stepVolume()
-		apu.channel2.stepVolume()
-		apu.channel4.stepVolume()
+		apu.channel1.envelope.Step()
+		apu.channel2.envelope.Step()
+		apu.channel4.envelope.Step()
 	}
 }

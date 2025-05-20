@@ -11,30 +11,22 @@ type NoiseChannel struct {
 	lfsr             uint16 // State of LFSR
 	frequencyCounter uint16 // It steps LFSR when 0
 
-	// Wave duty and length timer (NR41)
-	lengthTimerInit uint8 // Bits 5-0 (write only)
-
-	lengthTimer uint8
+	// Length timer (NR41)
+	lengthTimer LengthTimer
 
 	// Volume and Envelope (NR42)
-	volume             uint8 // Bits 7-4
-	envelopeIncreasing bool  // Bit 3
-	envelopePace       uint8 // Bits 2-0
-
-	envelopeTimer uint8
-	currentVolume uint8
+	envelope Envelope
 
 	// Frequency & randomness (NR43)
 	clockShift   uint8 // Bits 7-4
 	lfsrWidth    uint8 // Bit 3 (0 = 15-bit, 1 = 7-bit)
 	clockDivider uint8 // Bits 2-0
-
-	// Control (NR44)
-	lengthTimerEnabled bool // Bit 6
 }
 
 func NewNoiseChannel() *NoiseChannel {
 	ch := new(NoiseChannel)
+	ch.lengthTimer.channel = ch
+
 	ch.resetFrequency()
 	return ch
 }
@@ -64,7 +56,7 @@ func (ch *NoiseChannel) Output() (sample float32) {
 	}
 
 	if ch.lfsr&0b1 > 0 {
-		sample = 1 - float32(ch.currentVolume)/7.5
+		sample = 1 - float32(ch.envelope.Volume())/7.5
 	}
 	return
 }
@@ -89,7 +81,7 @@ func (ch *NoiseChannel) Cycle() {
 func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case nr41Addr:
-		ch.lengthTimerInit = v & 0x3F
+		ch.lengthTimer.Set(v)
 
 	case nr42Addr:
 		ch.dacEnabled = v&0xF8 > 0
@@ -97,9 +89,7 @@ func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 			ch.active = false
 		}
 
-		ch.envelopePace = v & 0x7
-		ch.envelopeIncreasing = v&0x8 > 0
-		ch.volume = v >> 4
+		ch.envelope.WriteRegister(v)
 
 	case nr43Addr:
 		ch.clockShift = v >> 4
@@ -107,7 +97,7 @@ func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 		ch.clockDivider = v & 0b111
 
 	case nr44Addr:
-		ch.lengthTimerEnabled = v&0x40 > 0
+		ch.lengthTimer.Enabled = v&0x40 > 0
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
@@ -126,11 +116,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 		return 0xFF
 
 	case nr42Addr:
-		out := ch.volume<<4 | ch.envelopePace
-		if ch.envelopeIncreasing {
-			util.SetBit(&out, 3, 1)
-		}
-		return out
+		return ch.envelope.ReadRegister()
 
 	case nr43Addr:
 		return ch.clockShift<<4 | ch.lfsrWidth<<3 | ch.clockDivider
@@ -138,7 +124,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 	case nr44Addr:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimerEnabled {
+		if ch.lengthTimer.Enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -164,40 +150,6 @@ func (ch *NoiseChannel) trigger() {
 	// Reset LFSR bits
 	ch.lfsr = 0
 
-	if ch.lengthTimer == 0 {
-		ch.lengthTimer = ch.lengthTimerInit
-	}
-
-	ch.envelopeTimer = ch.envelopePace
-	ch.currentVolume = ch.volume
-}
-
-func (ch *NoiseChannel) stepSoundLength() {
-	if !ch.lengthTimerEnabled || ch.lengthTimer >= 64 {
-		return
-	}
-
-	ch.lengthTimer++
-	if ch.lengthTimer == 64 {
-		ch.active = false
-	}
-}
-
-func (ch *NoiseChannel) stepVolume() {
-	if ch.envelopePace == 0 {
-		// Envelope disabled
-		return
-	}
-
-	ch.envelopeTimer--
-	if ch.envelopeTimer == 0 {
-		ch.envelopeTimer = ch.envelopePace
-
-		// The digital value produced by the generator ranges between $0 and $F
-		if ch.envelopeIncreasing && ch.currentVolume < 0xF {
-			ch.currentVolume++
-		} else if !ch.envelopeIncreasing && ch.currentVolume > 0 {
-			ch.currentVolume--
-		}
-	}
+	ch.lengthTimer.Trigger()
+	ch.envelope.Trigger()
 }
