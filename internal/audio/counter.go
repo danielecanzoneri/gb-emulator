@@ -18,6 +18,7 @@ func (apu *APU) StepCounter() {
 	if apu.audioCounter%2 == 0 {
 		apu.channel1.stepSoundLength()
 		apu.channel2.stepSoundLength()
+		apu.channel4.stepSoundLength()
 	}
 	if (apu.audioCounter-2)%4 == 0 {
 		apu.channel1.stepSweep()
@@ -25,5 +26,6 @@ func (apu *APU) StepCounter() {
 	if (apu.audioCounter-7)%8 == 0 {
 		apu.channel1.stepVolume()
 		apu.channel2.stepVolume()
+		apu.channel4.stepVolume()
 	}
 }

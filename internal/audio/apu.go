@@ -29,7 +29,7 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 		channel1:     NewSquareChannel(nr10Addr, nr11Addr, nr12Addr, nr13Addr, nr14Addr),
 		channel2:     NewSquareChannel(0, nr21Addr, nr22Addr, nr23Addr, nr24Addr),
 		channel3:     new(WaveChannel),
-		channel4:     new(NoiseChannel),
+		channel4:     NewNoiseChannel(),
 		sampleBuffer: sampleBuffer,
 	}
 }
