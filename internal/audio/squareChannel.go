@@ -111,7 +111,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimerEnabled = ch.period&0x40 > 0
+		ch.lengthTimerEnabled = v&0x40 > 0
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
