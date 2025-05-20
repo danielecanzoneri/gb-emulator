@@ -10,15 +10,11 @@ func SplitWord(word uint16) (high, low uint8) {
 	return
 }
 
-func ReadBit(b uint8, bit uint8) uint8 {
+func ReadBit[T uint8 | uint16](b T, bit uint8) T {
 	return (b >> bit) & 1
 }
 
-func ReadBit16(w uint16, bit uint8) uint8 {
-	return uint8((w >> bit) & 1)
-}
-
-func SetBit(b *uint8, bit uint8, value uint8) {
+func SetBit[T uint8 | uint16](b *T, bit uint8, value T) {
 	*b = *b & ^(1 << bit)
 	*b = *b | ((value & 1) << bit)
 }
