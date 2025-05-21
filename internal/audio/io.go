@@ -174,9 +174,14 @@ func (apu *APU) readNR52() uint8 {
 	return nr52
 }
 
-func (apu *APU) getVolume() (left, right uint8) {
-	left = (apu.nr50 & 0x70) >> 4
-	right = apu.nr50 & 0x7
+// Returns the volume for left and right between 0 and 1
+func (apu *APU) getVolume() (left, right float32) {
+	// A value of 0 is treated as a volume of 1 (very quiet), and a value of 7 is treated as a volume of 8 (no volume reduction).
+	// Importantly, the amplifier never mutes a non-silent input.
+	leftU8 := (apu.nr50 & 0x70) >> 4
+	rightU8 := apu.nr50 & 0x7
+	left = float32(leftU8+1) / 8
+	right = float32(rightU8+1) / 8
 	return
 }
 

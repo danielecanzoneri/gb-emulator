@@ -68,7 +68,7 @@ func (apu *APU) sample() (left, right float32) {
 	if leftCh4 {
 		left += apu.channel4.Output()
 	}
-	left = (left / 4) * (float32(leftVolume) / 7)
+	left = (left / 4) * leftVolume
 
 	if rightCh1 {
 		right += apu.channel1.Output()
@@ -82,7 +82,7 @@ func (apu *APU) sample() (left, right float32) {
 	if rightCh4 {
 		right += apu.channel4.Output()
 	}
-	right = (right / 4) * (float32(rightVolume) / 7)
+	right = (right / 4) * rightVolume
 
 	return
 }
