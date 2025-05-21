@@ -38,7 +38,7 @@ func (e *Envelope) Step() {
 
 func (e *Envelope) WriteRegister(v uint8) {
 	e.pace = v & 0x7
-	e.isIncreasing = v&0x8 > 0
+	e.isIncreasing = util.ReadBit(v, 3) > 0
 	e.volumeInit = v >> 4
 }
 
