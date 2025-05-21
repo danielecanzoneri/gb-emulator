@@ -3,6 +3,7 @@ package gameboy
 import (
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"image/color"
 )
 
@@ -33,6 +34,9 @@ func RenderInit() {
 // Inherit Ebiten Game interface
 
 func (gb *GameBoy) Update() error {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		gb.Pause()
+	}
 	// Game updates are called in the audio callback function
 	return nil
 }

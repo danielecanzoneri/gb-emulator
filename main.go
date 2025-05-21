@@ -45,7 +45,6 @@ func main() {
 	// Since game boy is 59.7 FPS but ebiten updates at 60 FPS there are
 	// some frames where nothing is drawn. This avoids screen flickering
 	ebiten.SetScreenClearedEveryFrame(false)
-	ebiten.SetWindowTitle(romPath)
 	ebiten.SetWindowSize(gb.Layout(0, 0))
 
 	gameboy.RenderInit()

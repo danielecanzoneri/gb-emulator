@@ -9,6 +9,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/danielecanzoneri/gb-emulator/internal/timer"
 	"github.com/ebitengine/oto/v3"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type GameBoy struct {
@@ -20,6 +21,9 @@ type GameBoy struct {
 	APU    *audio.APU
 
 	cycles uint
+	paused bool
+
+	gameTitle string
 }
 
 func (gb *GameBoy) Cycle() {
@@ -85,4 +89,17 @@ func (gb *GameBoy) Load(rom *cartridge.Rom) {
 	// Load ROM into memory
 	gb.Memory.CartridgeData = rom.Data
 	gb.Memory.SetMBC(rom.Header)
+
+	gb.gameTitle = rom.Header.Title
+	ebiten.SetWindowTitle(gb.gameTitle)
+}
+
+func (gb *GameBoy) Pause() {
+	gb.paused = !gb.paused
+
+	if gb.paused {
+		ebiten.SetWindowTitle(gb.gameTitle + " (paused)")
+	} else {
+		ebiten.SetWindowTitle(gb.gameTitle)
+	}
 }
