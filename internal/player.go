@@ -2,11 +2,9 @@ package gameboy
 
 import (
 	"encoding/binary"
+	"github.com/ebitengine/oto/v3"
 	"io"
 	"math"
-	"time"
-
-	"github.com/ebitengine/oto/v3"
 )
 
 const (
@@ -14,7 +12,7 @@ const (
 	channels   = 2
 	format     = oto.FormatFloat32LE
 
-	bufferSize = 1024
+	bufferSize = 8192
 )
 
 type AudioPlayer struct {
@@ -28,7 +26,6 @@ func newAudioPlayer(gb *GameBoy, sampleBuffer chan float32) (*oto.Player, error)
 	op.SampleRate = sampleRate
 	op.ChannelCount = channels
 	op.Format = format
-	op.BufferSize = 16 * time.Millisecond
 
 	ctx, ready, err := oto.NewContext(op)
 	if err != nil {
@@ -43,22 +40,23 @@ func newAudioPlayer(gb *GameBoy, sampleBuffer chan float32) (*oto.Player, error)
 	}
 
 	p := ctx.NewPlayer(a)
+	p.SetBufferSize(bufferSize)
+
 	return p, nil
 }
 
 func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
 	// If Game Boy is paused return silence and don't execute cpu instructions
 	if a.gb.paused {
-		for i := range bufferSize {
+		for i := range len(buf) {
 			buf[i] = 0
 		}
-		return bufferSize, nil
+		return len(buf), nil
 	}
 
 	bufferPosition := 0
-	samples := 0
 
-	for samples < bufferSize {
+	for bufferPosition < len(buf) {
 		// If not enough samples have been produced, keep executing CPU instructions
 		select {
 		case sample, ok := <-a.sampleBuffer:
@@ -68,7 +66,6 @@ func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
 
 			binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(sample))
 			bufferPosition += 4
-			samples++
 
 		default:
 			a.gb.Joypad.DetectKeysPressed()
