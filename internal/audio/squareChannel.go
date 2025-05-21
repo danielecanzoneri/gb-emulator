@@ -48,15 +48,13 @@ func (ch *SquareChannel) IsActive() bool {
 }
 
 func (ch *SquareChannel) Output() (sample float32) {
-	// If a DAC is disabled, it fades to an analog value of 0, which corresponds to “digital 7.5”
 	if !(ch.dacEnabled && ch.active) {
 		return
 	}
 
-	// If a DAC is enabled, the digital range $0 to $F is linearly translated to the analog range -1 to 1.
-	// The slope is negative: “digital 0” maps to “analog 1”, not “analog -1”.
+	// Each channel outputs a value between 0 and 1
 	if waveforms[ch.waveDuty][ch.wavePosition] {
-		sample = 1 - float32(ch.envelope.Volume())/7.5
+		sample = float32(ch.envelope.Volume()) / 15
 	}
 	return
 }

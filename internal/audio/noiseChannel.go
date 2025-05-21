@@ -50,13 +50,12 @@ func (ch *NoiseChannel) IsActive() bool {
 }
 
 func (ch *NoiseChannel) Output() (sample float32) {
-	// If a DAC is disabled, it fades to an analog value of 0, which corresponds to “digital 7.5”
 	if !(ch.dacEnabled && ch.active) {
 		return
 	}
 
 	if ch.lfsr&0b1 > 0 {
-		sample = 1 - float32(ch.envelope.Volume())/7.5
+		sample = float32(ch.envelope.Volume()) / 15
 	}
 	return
 }
