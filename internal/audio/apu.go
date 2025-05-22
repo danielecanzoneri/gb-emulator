@@ -107,8 +107,8 @@ func (apu *APU) disable() {
 	apu.active = false
 
 	// Reset all registers except NR52 and wave RAM
-	apu.channel1.Disable()
-	apu.channel2.Disable()
-	apu.channel3.Disable()
-	apu.channel4.Disable()
+	apu.channel1.Reset()
+	apu.channel2.Reset()
+	apu.channel3.Reset()
+	apu.channel4.Reset()
 }

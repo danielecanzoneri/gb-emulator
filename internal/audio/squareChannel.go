@@ -44,6 +44,10 @@ func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *
 	return ch
 }
 
+func (ch *SquareChannel) Disable() {
+	ch.active = false
+}
+
 func (ch *SquareChannel) IsActive() bool {
 	return ch.active
 }
@@ -137,7 +141,7 @@ func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 	}
 }
 
-func (ch *SquareChannel) Disable() {
+func (ch *SquareChannel) Reset() {
 	ch.WriteRegister(ch.addrNRx0, 0)
 	ch.WriteRegister(ch.addrNRx1, 0)
 	ch.WriteRegister(ch.addrNRx2, 0)

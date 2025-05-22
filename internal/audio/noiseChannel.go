@@ -4,6 +4,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/internal/util"
 )
 
+// TODO - fix incorrect noise
 type NoiseChannel struct {
 	dacEnabled bool
 	active     bool
@@ -44,6 +45,10 @@ func (ch *NoiseChannel) resetFrequency() {
 	} else {
 		ch.frequencyCounter *= uint16(ch.clockDivider)
 	}
+}
+
+func (ch *NoiseChannel) Disable() {
+	ch.active = false
 }
 
 func (ch *NoiseChannel) IsActive() bool {
@@ -134,7 +139,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 	}
 }
 
-func (ch *NoiseChannel) Disable() {
+func (ch *NoiseChannel) Reset() {
 	ch.WriteRegister(nr41Addr, 0)
 	ch.WriteRegister(nr42Addr, 0)
 	ch.WriteRegister(nr43Addr, 0)
