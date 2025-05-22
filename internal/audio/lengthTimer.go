@@ -1,37 +1,38 @@
 package audio
 
-type Disabler interface {
+type channel interface {
 	Disable()
 }
 
 type LengthTimer struct {
-	channel Disabler
+	channel channel
 
 	// How many times timer must be ticked before disabling the channel
 	length uint8 // Bits 5-0 of NRx1
 	// Keep count of elapsed ticks
-	timer uint8
+	timer uint
 
+	Max     uint // 64 for ch1, ch2, ch4, 256 for ch3
 	Enabled bool // Bit 6 of NRx4
 }
 
 func (lt *LengthTimer) Step() {
-	if !lt.Enabled || lt.timer >= 64 {
+	if !lt.Enabled {
 		return
 	}
 
 	lt.timer++
-	if lt.timer == 64 {
+	if lt.timer == lt.Max {
 		lt.channel.Disable()
 	}
 }
 
 func (lt *LengthTimer) Set(timer uint8) {
-	lt.length = timer & 0x3F
+	lt.length = timer
 }
 
 func (lt *LengthTimer) Trigger() {
 	if lt.timer == 0 {
-		lt.timer = lt.length
+		lt.timer = uint(lt.length)
 	}
 }

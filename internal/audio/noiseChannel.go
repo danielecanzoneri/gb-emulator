@@ -26,6 +26,7 @@ type NoiseChannel struct {
 func NewNoiseChannel() *NoiseChannel {
 	ch := new(NoiseChannel)
 	ch.lengthTimer.channel = ch
+	ch.lengthTimer.Max = 64
 
 	ch.resetFrequency()
 	return ch
@@ -37,7 +38,7 @@ func (ch *NoiseChannel) resetFrequency() {
 	// that means every 4194304 / 262144 * (divider * 2^shift) ticks.
 	// Divider = 0 is treated as divider = 0.5
 
-	ch.frequencyCounter = 4 * (2 << ch.clockShift)
+	ch.frequencyCounter = 4 << ch.clockShift
 	if ch.clockDivider == 0 {
 		ch.frequencyCounter >>= 1 // Divide by 2 = multiply 0.5
 	} else {
@@ -80,7 +81,7 @@ func (ch *NoiseChannel) Cycle() {
 func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case nr41Addr:
-		ch.lengthTimer.Set(v)
+		ch.lengthTimer.Set(v & 0x3F)
 
 	case nr42Addr:
 		ch.dacEnabled = v&0xF8 > 0

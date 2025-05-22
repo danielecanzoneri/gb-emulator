@@ -39,6 +39,7 @@ func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *
 
 	ch.sweep.channel = ch
 	ch.lengthTimer.channel = ch
+	ch.lengthTimer.Max = 64
 
 	return ch
 }
@@ -76,7 +77,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 
 	case ch.addrNRx1:
 		ch.waveDuty = (v >> 6) & 0b11
-		ch.lengthTimer.Set(v)
+		ch.lengthTimer.Set(v & 0x3F)
 
 	case ch.addrNRx2:
 		ch.dacEnabled = v&0xF8 > 0
