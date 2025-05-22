@@ -42,111 +42,55 @@ func (apu *APU) IOWrite(addr uint16, v uint8) {
 		return
 	}
 
-	switch addr {
-	case nr10Addr:
-		fallthrough
-	case nr11Addr:
-		fallthrough
-	case nr12Addr:
-		fallthrough
-	case nr13Addr:
-		fallthrough
-	case nr14Addr:
+	if nr10Addr <= addr && addr <= nr14Addr {
 		apu.channel1.WriteRegister(addr, v)
-	case nr21Addr:
-		fallthrough
-	case nr22Addr:
-		fallthrough
-	case nr23Addr:
-		fallthrough
-	case nr24Addr:
+	} else if nr21Addr <= addr && addr <= nr24Addr {
 		apu.channel2.WriteRegister(addr, v)
-	case nr30Addr:
-		fallthrough
-	case nr31Addr:
-		fallthrough
-	case nr32Addr:
-		fallthrough
-	case nr33Addr:
-		fallthrough
-	case nr34Addr:
+	} else if nr30Addr <= addr && addr <= nr34Addr {
 		apu.channel3.WriteRegister(addr, v)
-	case nr41Addr:
-		fallthrough
-	case nr42Addr:
-		fallthrough
-	case nr43Addr:
-		fallthrough
-	case nr44Addr:
+	} else if nr41Addr <= addr && addr <= nr44Addr {
 		apu.channel4.WriteRegister(addr, v)
-	case nr50Addr:
-		apu.nr50 = v
-	case nr51Addr:
-		apu.nr51 = v
-	case nr52Addr:
-		active := v&0x80 > 0
-		if active {
-			apu.enable()
-		} else {
-			apu.disable()
-		}
-	default:
-		if waveRAMAddr <= addr && addr < waveRAMAddr+waveRAMSize {
-			apu.WaveRam[addr-waveRAMAddr] = v
-		} else {
+	} else if waveRAMAddr <= addr && addr < waveRAMAddr+waveRAMSize {
+		apu.channel3.WriteWRAM(addr, v)
+	} else {
+		switch addr {
+		case nr50Addr:
+			apu.nr50 = v
+		case nr51Addr:
+			apu.nr51 = v
+		case nr52Addr:
+			active := v&0x80 > 0
+			if active {
+				apu.enable()
+			} else {
+				apu.disable()
+			}
+		default:
 			panic("APU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 		}
 	}
 }
 
 func (apu *APU) IORead(addr uint16) uint8 {
-	switch addr {
-	case nr10Addr:
-		fallthrough
-	case nr11Addr:
-		fallthrough
-	case nr12Addr:
-		fallthrough
-	case nr13Addr:
-		fallthrough
-	case nr14Addr:
+	if nr10Addr <= addr && addr <= nr14Addr {
 		return apu.channel1.ReadRegister(addr)
-	case nr21Addr:
-		fallthrough
-	case nr22Addr:
-		fallthrough
-	case nr23Addr:
-		fallthrough
-	case nr24Addr:
+	} else if nr21Addr <= addr && addr <= nr24Addr {
 		return apu.channel2.ReadRegister(addr)
-	case nr30Addr:
-		fallthrough
-	case nr31Addr:
-		fallthrough
-	case nr32Addr:
-		fallthrough
-	case nr33Addr:
-		fallthrough
-	case nr34Addr:
+	} else if nr30Addr <= addr && addr <= nr34Addr {
 		return apu.channel3.ReadRegister(addr)
-	case nr41Addr:
-		fallthrough
-	case nr42Addr:
-		fallthrough
-	case nr43Addr:
-		fallthrough
-	case nr44Addr:
+	} else if nr41Addr <= addr && addr <= nr44Addr {
 		return apu.channel4.ReadRegister(addr)
-	case nr50Addr:
-		return apu.nr50
-	case nr51Addr:
-		return apu.nr51
-	case nr52Addr:
-		return apu.readNR52()
-	default:
-		if waveRAMAddr <= addr && addr < waveRAMAddr+waveRAMSize {
-			return apu.WaveRam[addr-waveRAMAddr]
-		} else {
+	} else if waveRAMAddr <= addr && addr < waveRAMAddr+waveRAMSize {
+		return apu.channel3.ReadWRAM(addr)
+	} else {
+		switch addr {
+		case nr50Addr:
+			return apu.nr50
+		case nr51Addr:
+			return apu.nr51
+		case nr52Addr:
+			return apu.readNR52()
+		default:
 			panic("APU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 		}
 	}

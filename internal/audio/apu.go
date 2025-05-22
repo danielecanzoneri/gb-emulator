@@ -11,9 +11,6 @@ type APU struct {
 	nr51   uint8 // bits 7-4 left panning, bits 3-0 right panning
 	active bool  // Bit 7 of NR52
 
-	// Wave RAM
-	WaveRam [16]uint8
-
 	// Counter
 	audioCounter uint8
 
@@ -28,7 +25,7 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 		sampleRate:   sampleRate,
 		channel1:     NewSquareChannel(nr10Addr, nr11Addr, nr12Addr, nr13Addr, nr14Addr),
 		channel2:     NewSquareChannel(0, nr21Addr, nr22Addr, nr23Addr, nr24Addr),
-		channel3:     new(WaveChannel),
+		channel3:     NewWaveChannel(),
 		channel4:     NewNoiseChannel(),
 		sampleBuffer: sampleBuffer,
 	}
