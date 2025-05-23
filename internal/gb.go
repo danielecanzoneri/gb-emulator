@@ -24,6 +24,9 @@ type GameBoy struct {
 	paused bool
 
 	gameTitle string
+
+	debugString      string
+	debugStringTimer uint
 }
 
 func (gb *GameBoy) Cycle() {

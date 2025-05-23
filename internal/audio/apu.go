@@ -18,6 +18,12 @@ type APU struct {
 	sampleRate    float64
 	sampleCounter float64 // Counter used to produce samples at correct rate
 	sampleBuffer  chan float32
+
+	// Control manually channels
+	Ch1Enabled bool
+	Ch2Enabled bool
+	Ch3Enabled bool
+	Ch4Enabled bool
 }
 
 func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
@@ -28,6 +34,7 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 		channel3:     NewWaveChannel(),
 		channel4:     NewNoiseChannel(),
 		sampleBuffer: sampleBuffer,
+		Ch1Enabled:   true, Ch2Enabled: true, Ch3Enabled: true, Ch4Enabled: true,
 	}
 }
 
@@ -53,30 +60,30 @@ func (apu *APU) sample() (left, right float32) {
 	rightCh1, rightCh2, rightCh3, rightCh4 := apu.getRightPanning()
 	leftVolume, rightVolume := apu.getVolume()
 
-	if leftCh1 {
+	if leftCh1 && apu.Ch1Enabled {
 		left += apu.channel1.Output()
 	}
-	if leftCh2 {
+	if leftCh2 && apu.Ch2Enabled {
 		left += apu.channel2.Output()
 	}
-	if leftCh3 {
+	if leftCh3 && apu.Ch3Enabled {
 		left += apu.channel3.Output()
 	}
-	if leftCh4 {
+	if leftCh4 && apu.Ch4Enabled {
 		left += apu.channel4.Output()
 	}
 	left = (left / 4) * leftVolume
 
-	if rightCh1 {
+	if rightCh1 && apu.Ch1Enabled {
 		right += apu.channel1.Output()
 	}
-	if rightCh2 {
+	if rightCh2 && apu.Ch2Enabled {
 		right += apu.channel2.Output()
 	}
-	if rightCh3 {
+	if rightCh3 && apu.Ch3Enabled {
 		right += apu.channel3.Output()
 	}
-	if rightCh4 {
+	if rightCh4 && apu.Ch4Enabled {
 		right += apu.channel4.Output()
 	}
 	right = (right / 4) * rightVolume
