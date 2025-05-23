@@ -12,22 +12,32 @@ type LengthTimer struct {
 	// Keep count of elapsed ticks
 	timer uint
 
-	Enabled bool // Bit 6 of NRx4
+	enabled bool // Bit 6 of NRx4
 }
 
 func (lt *LengthTimer) Step() {
-	if !lt.Enabled {
+	if !lt.enabled {
 		return
 	}
 
 	lt.timer--
 	if lt.timer == 0 {
 		lt.channel.Disable()
+		lt.enabled = false
 	}
 }
 
 func (lt *LengthTimer) Set(timer uint) {
 	lt.length = timer
+}
+
+func (lt *LengthTimer) Enable(enabled bool) {
+	if enabled {
+		lt.enabled = true
+		lt.timer = lt.length
+	} else {
+		lt.enabled = false
+	}
 }
 
 func (lt *LengthTimer) Trigger() {

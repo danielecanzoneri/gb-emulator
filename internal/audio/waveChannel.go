@@ -103,7 +103,7 @@ func (ch *WaveChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimer.Enabled = v&0x40 > 0
+		ch.lengthTimer.Enable(v&0x40 > 0)
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {

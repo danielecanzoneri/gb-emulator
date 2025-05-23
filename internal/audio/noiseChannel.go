@@ -38,12 +38,13 @@ func (ch *NoiseChannel) resetFrequency() {
 	// that means every 4194304 / 262144 * (divider * 2^shift) ticks.
 	// Divider = 0 is treated as divider = 0.5
 
-	ch.frequencyCounter = 4 << ch.clockShift
+	ch.frequencyCounter = 4
 	if ch.clockDivider == 0 {
 		ch.frequencyCounter >>= 1 // Divide by 2 = multiply 0.5
 	} else {
 		ch.frequencyCounter *= uint16(ch.clockDivider)
 	}
+	ch.frequencyCounter <<= ch.clockShift
 }
 
 func (ch *NoiseChannel) Disable() {
@@ -59,9 +60,7 @@ func (ch *NoiseChannel) Output() (sample float32) {
 		return
 	}
 
-	if ch.lfsr&0b1 > 0 {
-		sample = float32(ch.envelope.Volume()) / 15
-	}
+	sample = float32(ch.lfsr&0b1) * float32(ch.envelope.Volume()) / 15
 	return
 }
 
@@ -102,7 +101,7 @@ func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 		ch.clockDivider = v & 0b111
 
 	case nr44Addr:
-		ch.lengthTimer.Enabled = v&0x40 > 0
+		ch.lengthTimer.Enable(v&0x40 > 0)
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
@@ -129,7 +128,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 	case nr44Addr:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimer.Enabled {
+		if ch.lengthTimer.enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -147,10 +146,9 @@ func (ch *NoiseChannel) Reset() {
 }
 
 func (ch *NoiseChannel) trigger() {
-	if !ch.dacEnabled {
-		return
+	if ch.dacEnabled {
+		ch.active = true
 	}
-	ch.active = true
 
 	// Reset LFSR bits
 	ch.lfsr = 0
