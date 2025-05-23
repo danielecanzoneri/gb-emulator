@@ -131,6 +131,18 @@ func (ch *WaveChannel) ReadRegister(addr uint16) uint8 {
 	case nr32Addr:
 		return 0x9F | (ch.volume << 5)
 
+	case nr33Addr:
+		// Period is write-only
+		return 0xFF
+
+	case nr34Addr:
+		// Only length timer can be read
+		var out uint8 = 0b10111111
+		if ch.lengthTimer.enabled {
+			util.SetBit(&out, 6, 1)
+		}
+		return out
+
 	default:
 		panic("WaveChannel: invalid address")
 	}
@@ -150,6 +162,11 @@ func (ch *WaveChannel) ReadWRAM(addr uint16) uint8 {
 }
 
 func (ch *WaveChannel) Reset() {
+	ch.WriteRegister(nr30Addr, 0)
+	ch.WriteRegister(nr31Addr, 0)
+	ch.WriteRegister(nr32Addr, 0)
+	ch.WriteRegister(nr33Addr, 0)
+	ch.WriteRegister(nr34Addr, 0)
 }
 
 func (ch *WaveChannel) trigger() {
