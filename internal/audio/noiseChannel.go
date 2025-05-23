@@ -27,7 +27,6 @@ type NoiseChannel struct {
 func NewNoiseChannel() *NoiseChannel {
 	ch := new(NoiseChannel)
 	ch.lengthTimer.channel = ch
-	ch.lengthTimer.Max = 64
 
 	ch.resetFrequency()
 	return ch
@@ -86,7 +85,8 @@ func (ch *NoiseChannel) Cycle() {
 func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case nr41Addr:
-		ch.lengthTimer.Set(v & 0x3F)
+		// TODO - check if should be ^v ^ 0x3F
+		ch.lengthTimer.Set(uint(64 - v&0x3F))
 
 	case nr42Addr:
 		ch.dacEnabled = v&0xF8 > 0

@@ -29,7 +29,6 @@ type WaveChannel struct {
 func NewWaveChannel() *WaveChannel {
 	ch := new(WaveChannel)
 	ch.lengthTimer.channel = ch
-	ch.lengthTimer.Max = 256
 
 	return ch
 }
@@ -89,7 +88,8 @@ func (ch *WaveChannel) WriteRegister(addr uint16, v uint8) {
 
 	case nr31Addr:
 		// Timer should count up to 256, but we make it count down to 0
-		ch.lengthTimer.Set(^v + 1)
+		// TODO - check if should be ^v
+		ch.lengthTimer.Set(256 - uint(v))
 
 	case nr32Addr:
 		ch.volume = (v >> 5) & 0b11
