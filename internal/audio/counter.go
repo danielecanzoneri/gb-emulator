@@ -18,6 +18,7 @@ func (apu *APU) StepCounter() {
 	if apu.audioCounter%2 == 0 {
 		apu.channel1.lengthTimer.Step()
 		apu.channel2.lengthTimer.Step()
+		apu.channel3.lengthTimer.Step()
 		apu.channel4.lengthTimer.Step()
 	}
 	if (apu.audioCounter-2)%4 == 0 {
