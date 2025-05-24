@@ -3,13 +3,13 @@ package main
 import (
 	"log"
 
-	gameboy "github.com/danielecanzoneri/gb-emulator/internal"
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sqweek/dialog"
 )
 
+// Global reference to the audio player to keep it active
 var audioPlayer *oto.Player
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 		log.Fatal("Error: ROM file path is required")
 	}
 
-	gb, player := gameboy.Init()
+	gb, player := Init()
 
 	// Load the ROM
 	rom, err := cartridge.LoadROM(romPath)
@@ -35,7 +35,7 @@ func main() {
 	}
 	gb.Load(rom)
 
-	// Initialize cpu
+	// Initialize CPU
 	gb.Reset()
 
 	// Keep a reference to the audio player
@@ -45,9 +45,13 @@ func main() {
 	// Since game boy is 59.7 FPS but ebiten updates at 60 FPS there are
 	// some frames where nothing is drawn. This avoids screen flickering
 	ebiten.SetScreenClearedEveryFrame(false)
+
+	// Initialize the renderer
+	RenderInit()
+
+	// Initial window size without the debug panel
 	ebiten.SetWindowSize(gb.Layout(0, 0))
 
-	gameboy.RenderInit()
 	if err := ebiten.RunGame(gb); err != nil {
 		log.Fatal(err)
 	}

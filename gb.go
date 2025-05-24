@@ -1,6 +1,7 @@
-package gameboy
+package main
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/debugger"
 	"github.com/danielecanzoneri/gb-emulator/internal/audio"
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
@@ -19,6 +20,8 @@ type GameBoy struct {
 	PPU    *ppu.PPU
 	Joypad *joypad.Joypad
 	APU    *audio.APU
+
+	debugger *debugger.Debugger
 
 	cycles uint
 	paused bool
@@ -55,6 +58,9 @@ func Init() (*GameBoy, *oto.Player) {
 		APU: a,
 	}
 	c.AddCycler(gb)
+
+	// Create Debugger
+	gb.debugger = debugger.NewDebugger(gb.Memory, gb.CPU)
 
 	player, err := newAudioPlayer(gb, sampleBuffer)
 	if err != nil {
@@ -105,4 +111,9 @@ func (gb *GameBoy) Pause() {
 	} else {
 		ebiten.SetWindowTitle(gb.gameTitle)
 	}
+}
+
+// ToggleDebugger enables/disables visualization of I/O registers
+func (gb *GameBoy) ToggleDebugger() {
+	gb.debugger.ToggleVisibility()
 }

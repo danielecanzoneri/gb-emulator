@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"golang.org/x/image/font/gofont/gomono"
-	"image/color"
 	"log"
 	"strings"
 
@@ -80,8 +79,9 @@ func (d *Debugger) Update() {
 		return
 	}
 
-	// Clear the debug image with a semi-transparent background
-	d.debugImage.Fill(color.RGBA{R: 40, G: 40, B: 40, A: 220})
+	// Clear the debug image
+	d.debugImage.Clear()
+
 	d.panels.Update()
 	d.panels.Draw(d.debugImage, 0, 0)
 }

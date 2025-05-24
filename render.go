@@ -1,11 +1,12 @@
-package gameboy
+package main
 
 import (
+	"image/color"
+
 	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"image/color"
 )
 
 const (
@@ -35,6 +36,15 @@ func RenderInit() {
 func (gb *GameBoy) handleKeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		gb.Pause()
+	}
+
+	// ESC key to enter in debug mode
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		gb.ToggleDebugger()
+
+		// Update window size when debugger is enabled/disabled
+		width, height := gb.Layout(0, 0)
+		ebiten.SetWindowSize(width, height)
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
@@ -90,22 +100,20 @@ func (gb *GameBoy) handleKeys() {
 
 func (gb *GameBoy) Update() error {
 	gb.handleKeys()
+
+	// Update the debugger
+	gb.debugger.Update()
+
 	// Game updates are called in the audio callback function
 	return nil
 }
 
 func (gb *GameBoy) Draw(screen *ebiten.Image) {
-	if !gb.PPU.FrameComplete {
-		return
-	}
+	// Background color
+	screen.Fill(color.RGBA{R: 40, G: 40, B: 40, A: 220})
 
-	gb.PPU.FrameComplete = false
-
-	if gb.PPU.EmptyFrame {
-		screen.Fill(color.White)
-		gb.PPU.EmptyFrame = false
-		return
-	}
+	// Draw the debugger
+	gb.debugger.Draw(screen, Scale*ppu.FrameWidth, 0)
 
 	// Draw all 144 x 160 pixels
 	for y := range ppu.FrameHeight {
@@ -125,5 +133,10 @@ func (gb *GameBoy) Draw(screen *ebiten.Image) {
 }
 
 func (gb *GameBoy) Layout(_, _ int) (int, int) {
+	// Adjust the layout based on whether the debugger is visible
+	if gb.debugger.IsVisible() {
+		debugWidth, debugHeight := gb.debugger.Layout(0, 0)
+		return Scale*ppu.FrameWidth + debugWidth, max(Scale*ppu.FrameHeight, debugHeight)
+	}
 	return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight
 }
