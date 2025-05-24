@@ -103,16 +103,16 @@ func (apu *APU) readNR52() uint8 {
 		util.SetBit(&nr52, 7, 1)
 
 		if apu.channel1.IsActive() {
-			util.SetBit(&nr52, 0, 0)
+			util.SetBit(&nr52, 0, 1)
 		}
 		if apu.channel2.IsActive() {
-			util.SetBit(&nr52, 1, 0)
+			util.SetBit(&nr52, 1, 1)
 		}
 		if apu.channel3.IsActive() {
-			util.SetBit(&nr52, 2, 0)
+			util.SetBit(&nr52, 2, 1)
 		}
 		if apu.channel4.IsActive() {
-			util.SetBit(&nr52, 3, 0)
+			util.SetBit(&nr52, 3, 1)
 		}
 	}
 	return nr52

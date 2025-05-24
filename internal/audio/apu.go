@@ -39,6 +39,10 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 }
 
 func (apu *APU) Cycle() {
+	if !apu.active {
+		return
+	}
+
 	apu.channel1.Cycle()
 	apu.channel2.Cycle()
 	apu.channel3.Cycle()
@@ -56,6 +60,10 @@ func (apu *APU) Cycle() {
 }
 
 func (apu *APU) sample() (left, right float32) {
+	if !apu.active {
+		return
+	}
+
 	leftCh1, leftCh2, leftCh3, leftCh4 := apu.getLeftPanning()
 	rightCh1, rightCh2, rightCh3, rightCh4 := apu.getRightPanning()
 	leftVolume, rightVolume := apu.getVolume()
