@@ -135,6 +135,9 @@ func (d *Debugger) initPanels() {
 		AddComponent(channels).
 		AddComponent(soundMisc)
 
+	// Opcode
+	sound.AddComponent(d.opcodePanel())
+
 	container.AddComponent(sound)
 
 	d.panels = container
@@ -158,6 +161,27 @@ func (d *Debugger) registersPanel() *Panel {
 		builder.WriteString(fmt.Sprintf("SP: %04X\n", sp))
 
 		return "CPU", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) opcodePanel() *Panel {
+	updateFunc := func() (title, content string) {
+		pc := d.cpu.ReadPC()
+		opcode := d.mem.DebugRead(pc)
+
+		var opcodeHex, opcodeName string
+		if opcode == 0xCB { // Prefix
+			suffix := d.mem.DebugRead(pc + 1)
+			opcodeHex = fmt.Sprintf("0xCB %02X", suffix)
+			opcodeName = prefixedOpcodes[suffix]
+		} else {
+			opcodeHex = fmt.Sprintf("0x%02X", opcode)
+			opcodeName = opcodes[opcode]
+		}
+
+		return "Opcode " + opcodeHex, opcodeName
 	}
 
 	return NewPanel(updateFunc, d.face)

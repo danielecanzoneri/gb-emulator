@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/debugger"
 	"log"
 
 	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
@@ -34,6 +35,9 @@ func main() {
 		log.Fatalf("Error loading the cartridge: %v", err)
 	}
 	gb.Load(rom)
+
+	// Create Debugger
+	gb.debugger = debugger.NewDebugger(gb.Memory, gb.CPU)
 
 	// Initialize CPU
 	gb.Reset()

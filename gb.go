@@ -59,9 +59,6 @@ func Init() (*GameBoy, *oto.Player) {
 	}
 	c.AddCycler(gb)
 
-	// Create Debugger
-	gb.debugger = debugger.NewDebugger(gb.Memory, gb.CPU)
-
 	player, err := newAudioPlayer(gb, sampleBuffer)
 	if err != nil {
 		panic(err)
