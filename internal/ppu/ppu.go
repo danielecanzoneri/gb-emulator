@@ -54,10 +54,6 @@ type PPU struct {
 	// Callbacks to request interrupt
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
-
-	// FrameComplete signal when frame is ready to be rendered
-	FrameComplete bool
-	EmptyFrame    bool // True when this is the first frame after LCD enabling or when LCD is disabled
 }
 
 const (
@@ -137,7 +133,7 @@ func (ppu *PPU) setMode(mode uint8) {
 	case hBlank:
 	case vBlank:
 		ppu.wyCounter = 0
-		ppu.FrameComplete = true
+		// ppu.FrameComplete = true
 		ppu.RequestVBlankInterrupt()
 	}
 }

@@ -117,7 +117,7 @@ func (ppu *PPU) enable() {
 	ppu.active = true
 	ppu.checkLYLYC()
 	ppu.lcdJustEnabled = true
-	ppu.EmptyFrame = true
+	ppu.emptyFrame()
 }
 
 func (ppu *PPU) disable() {
@@ -132,8 +132,7 @@ func (ppu *PPU) disable() {
 	ppu.setMode(hBlank)
 
 	// Blank screen
-	ppu.FrameComplete = true
-	ppu.EmptyFrame = true
+	ppu.emptyFrame()
 }
 
 // ReadVRAM prevents vRAM reads during PPU mode 3

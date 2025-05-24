@@ -5,6 +5,14 @@ const (
 	FrameHeight = 144
 )
 
+func (ppu *PPU) emptyFrame() {
+	for x := range FrameWidth {
+		for y := range FrameHeight {
+			ppu.Framebuffer[y][x] = 0
+		}
+	}
+}
+
 // drawLine returns the number of penalty dots incurred to draw this line
 func (ppu *PPU) drawLine() uint {
 	// SCX % 8 pixels are discarded from the leftmost tile
