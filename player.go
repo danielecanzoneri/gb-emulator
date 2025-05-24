@@ -1,4 +1,4 @@
-package gameboy
+package main
 
 import (
 	"encoding/binary"
