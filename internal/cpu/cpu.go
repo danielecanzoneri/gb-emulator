@@ -72,7 +72,6 @@ func (cpu *CPU) ExecuteInstruction() {
 
 	if !cpu.halted {
 		opcode := cpu.ReadNextByte()
-		cpu.logState(opcode)
 		cpu.steps++
 
 		switch opcode {
