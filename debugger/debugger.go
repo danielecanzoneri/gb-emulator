@@ -1,0 +1,355 @@
+package debugger
+
+import (
+	"bytes"
+	"fmt"
+	"golang.org/x/image/font/gofont/gomono"
+	"image/color"
+	"log"
+	"strings"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+)
+
+type MemoryDebugger interface {
+	DebugRead(uint16) uint8
+}
+
+type CPUDebugger interface {
+	ReadAF() uint16
+	ReadBC() uint16
+	ReadDE() uint16
+	ReadHL() uint16
+
+	ReadPC() uint16
+	ReadSP() uint16
+
+	InterruptEnabled() bool
+}
+
+// Debugger is a component that displays Game Boy I/O registers
+type Debugger struct {
+	mem        MemoryDebugger
+	cpu        CPUDebugger
+	visible    bool
+	debugImage *ebiten.Image
+	face       *text.GoTextFace
+
+	panels Component
+}
+
+// NewDebugger creates a new I/O registers debugger
+func NewDebugger(mem MemoryDebugger, cpu CPUDebugger) *Debugger {
+	d := &Debugger{
+		mem:     mem,
+		cpu:     cpu,
+		visible: false,
+	}
+
+	// Load the font
+	fontData := bytes.NewReader(gomono.TTF)
+	s, err := text.NewGoTextFaceSource(fontData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	d.face = &text.GoTextFace{
+		Source: s,
+		Size:   16,
+	}
+
+	d.initPanels()
+
+	d.debugImage = ebiten.NewImage(d.panels.Layout())
+	return d
+}
+
+// ToggleVisibility toggles the visibility of the debug panel
+func (d *Debugger) ToggleVisibility() {
+	d.visible = !d.visible
+}
+
+// IsVisible returns true if the debug panel is visible
+func (d *Debugger) IsVisible() bool {
+	return d.visible
+}
+
+// Update updates the debugger state
+func (d *Debugger) Update() {
+	if !d.visible {
+		return
+	}
+
+	// Clear the debug image with a semi-transparent background
+	d.debugImage.Fill(color.RGBA{R: 40, G: 40, B: 40, A: 220})
+	d.panels.Update()
+	d.panels.Draw(d.debugImage, 0, 0)
+}
+
+// Draw renders the debug panel to the screen
+func (d *Debugger) Draw(screen *ebiten.Image, x, y int) {
+	if !d.visible {
+		return
+	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	screen.DrawImage(d.debugImage, op)
+}
+
+func (d *Debugger) Layout(_, _ int) (int, int) {
+	return d.panels.Layout()
+}
+
+func (d *Debugger) initPanels() {
+	container := NewContainer(Horizontal)
+
+	// Registers, interrupts and LCD
+	cpu := NewContainer(Vertical).
+		AddComponent(d.registersPanel()).
+		AddComponent(d.interruptsPanel()).
+		AddComponent(d.lcdPanel())
+	container.AddComponent(cpu)
+
+	// Sound Channel 1 & 2
+	ch1ch2 := NewContainer(Vertical).
+		AddComponent(d.soundCh1Panel()).
+		AddComponent(d.soundCh2Panel())
+
+	// Sound Channel 3 & 4
+	ch3ch4 := NewContainer(Vertical).
+		AddComponent(d.soundCh3Panel()).
+		AddComponent(d.soundCh4Panel())
+
+	channels := NewContainer(Horizontal).
+		AddComponent(ch1ch2).
+		AddComponent(ch3ch4)
+
+	// Sound Control and Wave Ram
+	soundMisc := NewContainer(Horizontal).
+		AddComponent(d.soundControlPanel()).
+		AddComponent(d.waveRamPanel())
+
+	// Sound container
+	sound := NewContainer(Vertical).
+		AddComponent(channels).
+		AddComponent(soundMisc)
+
+	container.AddComponent(sound)
+
+	d.panels = container
+}
+
+func (d *Debugger) registersPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		af := d.cpu.ReadAF()
+		bc := d.cpu.ReadBC()
+		de := d.cpu.ReadDE()
+		hl := d.cpu.ReadHL()
+		pc := d.cpu.ReadPC()
+		sp := d.cpu.ReadSP()
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("AF: %04X\n", af))
+		builder.WriteString(fmt.Sprintf("BC: %04X\n", bc))
+		builder.WriteString(fmt.Sprintf("DE: %04X\n", de))
+		builder.WriteString(fmt.Sprintf("HL: %04X\n", hl))
+		builder.WriteString(fmt.Sprintf("PC: %04X\n", pc))
+		builder.WriteString(fmt.Sprintf("SP: %04X\n", sp))
+
+		return "CPU", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) interruptsPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		IF := d.mem.DebugRead(0xFF0F)
+		IE := d.mem.DebugRead(0xFFFF)
+		ime := d.cpu.InterruptEnabled()
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF0F IF: %02X\n", IF))
+		builder.WriteString(fmt.Sprintf("FFFF IE: %02X\n", IE))
+		builder.WriteString("IME ")
+		if ime {
+			builder.WriteString("enabled")
+		} else {
+			builder.WriteString("disabled")
+		}
+
+		return "Interrupts", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) lcdPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		lcdc := d.mem.DebugRead(0xFF40)
+		stat := d.mem.DebugRead(0xFF41)
+		scy := d.mem.DebugRead(0xFF42)
+		scx := d.mem.DebugRead(0xFF43)
+		ly := d.mem.DebugRead(0xFF44)
+		lyc := d.mem.DebugRead(0xFF45)
+		dma := d.mem.DebugRead(0xFF46)
+		bgp := d.mem.DebugRead(0xFF47)
+		obp0 := d.mem.DebugRead(0xFF48)
+		obp1 := d.mem.DebugRead(0xFF49)
+		wy := d.mem.DebugRead(0xFF4A)
+		wx := d.mem.DebugRead(0xFF4B)
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF40 LCDC: %02X\n", lcdc))
+		builder.WriteString(fmt.Sprintf("FF41 STAT: %02X\n", stat))
+		builder.WriteString(fmt.Sprintf("FF42 SCY:  %02X\n", scy))
+		builder.WriteString(fmt.Sprintf("FF43 SCX:  %02X\n", scx))
+		builder.WriteString(fmt.Sprintf("FF44 LY:   %02X\n", ly))
+		builder.WriteString(fmt.Sprintf("FF45 LYC:  %02X\n", lyc))
+		builder.WriteString(fmt.Sprintf("FF46 DMA:  %02X\n", dma))
+		builder.WriteString(fmt.Sprintf("FF47 BGP:  %02X\n", bgp))
+		builder.WriteString(fmt.Sprintf("FF48 OBP0: %02X\n", obp0))
+		builder.WriteString(fmt.Sprintf("FF49 OBP1: %02X\n", obp1))
+		builder.WriteString(fmt.Sprintf("FF4A WY:   %02X\n", wy))
+		builder.WriteString(fmt.Sprintf("FF4B WX:   %02X", wx))
+
+		return "LCD", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) soundCh1Panel() *Panel {
+	updateFunc := func() (title, content string) {
+		nr10 := d.mem.DebugRead(0xFF10)
+		nr11 := d.mem.DebugRead(0xFF11)
+		nr12 := d.mem.DebugRead(0xFF12)
+		nr13 := d.mem.DebugRead(0xFF13)
+		nr14 := d.mem.DebugRead(0xFF14)
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF10 NR10: %02X\n", nr10))
+		builder.WriteString(fmt.Sprintf("FF11 NR11: %02X\n", nr11))
+		builder.WriteString(fmt.Sprintf("FF12 NR12: %02X\n", nr12))
+		builder.WriteString(fmt.Sprintf("FF13 NR13: %02X\n", nr13))
+		builder.WriteString(fmt.Sprintf("FF14 NR14: %02X", nr14))
+
+		return "Square (ch1)", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) soundCh2Panel() *Panel {
+	updateFunc := func() (title, content string) {
+		nr21 := d.mem.DebugRead(0xFF16)
+		nr22 := d.mem.DebugRead(0xFF17)
+		nr23 := d.mem.DebugRead(0xFF18)
+		nr24 := d.mem.DebugRead(0xFF19)
+
+		var builder strings.Builder
+		builder.WriteString("FF15 NR20: --\n")
+		builder.WriteString(fmt.Sprintf("FF16 NR21: %02X\n", nr21))
+		builder.WriteString(fmt.Sprintf("FF17 NR22: %02X\n", nr22))
+		builder.WriteString(fmt.Sprintf("FF18 NR23: %02X\n", nr23))
+		builder.WriteString(fmt.Sprintf("FF19 NR24: %02X", nr24))
+
+		return "Square (ch2)", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) soundCh3Panel() *Panel {
+	updateFunc := func() (title, content string) {
+		nr30 := d.mem.DebugRead(0xFF1A)
+		nr31 := d.mem.DebugRead(0xFF1B)
+		nr32 := d.mem.DebugRead(0xFF1C)
+		nr33 := d.mem.DebugRead(0xFF1D)
+		nr34 := d.mem.DebugRead(0xFF1E)
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF1A NR30: %02X\n", nr30))
+		builder.WriteString(fmt.Sprintf("FF1B NR31: %02X\n", nr31))
+		builder.WriteString(fmt.Sprintf("FF1C NR32: %02X\n", nr32))
+		builder.WriteString(fmt.Sprintf("FF1D NR33: %02X\n", nr33))
+		builder.WriteString(fmt.Sprintf("FF1E NR34: %02X", nr34))
+
+		return "Wave (ch3)", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) soundCh4Panel() *Panel {
+	updateFunc := func() (title, content string) {
+		nr41 := d.mem.DebugRead(0xFF20)
+		nr42 := d.mem.DebugRead(0xFF21)
+		nr43 := d.mem.DebugRead(0xFF22)
+		nr44 := d.mem.DebugRead(0xFF23)
+
+		var builder strings.Builder
+		builder.WriteString("FF1F NR40: --\n")
+		builder.WriteString(fmt.Sprintf("FF20 NR41: %02X\n", nr41))
+		builder.WriteString(fmt.Sprintf("FF21 NR42: %02X\n", nr42))
+		builder.WriteString(fmt.Sprintf("FF22 NR43: %02X\n", nr43))
+		builder.WriteString(fmt.Sprintf("FF23 NR44: %02X", nr44))
+
+		return "Noise (ch4)", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) waveRamPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		var builder strings.Builder
+		for i := uint16(0); i < 16; i++ {
+			b := d.mem.DebugRead(0xFF30 + i)
+			builder.WriteString(fmt.Sprintf("%02X ", b))
+			if i%4 == 3 && i < 15 {
+				builder.WriteString("\n")
+			}
+		}
+		return "WaveRam", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) soundControlPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		nr50 := d.mem.DebugRead(0xFF24)
+		nr51 := d.mem.DebugRead(0xFF25)
+		nr52 := d.mem.DebugRead(0xFF26)
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF24 NR50: %02X\n", nr50))
+		builder.WriteString(fmt.Sprintf("FF25 NR51: %02X\n", nr51))
+		builder.WriteString(fmt.Sprintf("FF26 NR52: %02X", nr52))
+
+		return "Sound Control", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
+
+func (d *Debugger) timerPanel() *Panel {
+	updateFunc := func() (title, content string) {
+		div := d.mem.DebugRead(0xFF04)
+		tima := d.mem.DebugRead(0xFF05)
+		tma := d.mem.DebugRead(0xFF06)
+		tac := d.mem.DebugRead(0xFF07)
+
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("FF04 DIV:  %02X\n", div))
+		builder.WriteString(fmt.Sprintf("FF05 TIMA: %02X\n", tima))
+		builder.WriteString(fmt.Sprintf("FF06 TMA:  %02X\n", tma))
+		builder.WriteString(fmt.Sprintf("FF07 TAC:  %02X\n", tac))
+
+		return "Timer", builder.String()
+	}
+
+	return NewPanel(updateFunc, d.face)
+}
