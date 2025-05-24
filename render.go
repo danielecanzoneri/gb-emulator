@@ -34,7 +34,7 @@ func RenderInit() {
 }
 
 func (gb *GameBoy) handleKeys() {
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		gb.Pause()
 	}
 
