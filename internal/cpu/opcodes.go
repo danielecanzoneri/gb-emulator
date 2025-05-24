@@ -33,18 +33,18 @@ func (cpu *CPU) LD_R16mem_A(readR16 func() uint16) {
 	cpu.WriteByte(readR16(), cpu.A)
 }
 func (cpu *CPU) LD_BCmem_A() {
-	cpu.LD_R16mem_A(cpu.readBC)
+	cpu.LD_R16mem_A(cpu.ReadBC)
 }
 func (cpu *CPU) LD_DEmem_A() {
-	cpu.LD_R16mem_A(cpu.readDE)
+	cpu.LD_R16mem_A(cpu.ReadDE)
 }
 func (cpu *CPU) LD_HLImem_A() {
-	cpu.LD_R16mem_A(cpu.readHL)
-	cpu.writeHL(cpu.readHL() + 1)
+	cpu.LD_R16mem_A(cpu.ReadHL)
+	cpu.writeHL(cpu.ReadHL() + 1)
 }
 func (cpu *CPU) LD_HLDmem_A() {
-	cpu.LD_R16mem_A(cpu.readHL)
-	cpu.writeHL(cpu.readHL() - 1)
+	cpu.LD_R16mem_A(cpu.ReadHL)
+	cpu.writeHL(cpu.ReadHL() - 1)
 }
 
 // LD A [R16]
@@ -52,18 +52,18 @@ func (cpu *CPU) LD_A_R16mem(readR16 func() uint16) {
 	cpu.A = cpu.ReadByte(readR16())
 }
 func (cpu *CPU) LD_A_BCmem() {
-	cpu.LD_A_R16mem(cpu.readBC)
+	cpu.LD_A_R16mem(cpu.ReadBC)
 }
 func (cpu *CPU) LD_A_DEmem() {
-	cpu.LD_A_R16mem(cpu.readDE)
+	cpu.LD_A_R16mem(cpu.ReadDE)
 }
 func (cpu *CPU) LD_A_HLImem() {
-	cpu.LD_A_R16mem(cpu.readHL)
-	cpu.writeHL(cpu.readHL() + 1)
+	cpu.LD_A_R16mem(cpu.ReadHL)
+	cpu.writeHL(cpu.ReadHL() + 1)
 }
 func (cpu *CPU) LD_A_HLDmem() {
-	cpu.LD_A_R16mem(cpu.readHL)
-	cpu.writeHL(cpu.readHL() - 1)
+	cpu.LD_A_R16mem(cpu.ReadHL)
+	cpu.writeHL(cpu.ReadHL() - 1)
 }
 
 // LD N16 SP
@@ -78,16 +78,16 @@ func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
 	cpu.Cycle()
 }
 func (cpu *CPU) INC_BC() {
-	cpu.INC_R16(cpu.readBC, cpu.writeBC)
+	cpu.INC_R16(cpu.ReadBC, cpu.writeBC)
 }
 func (cpu *CPU) INC_DE() {
-	cpu.INC_R16(cpu.readDE, cpu.writeDE)
+	cpu.INC_R16(cpu.ReadDE, cpu.writeDE)
 }
 func (cpu *CPU) INC_HL() {
-	cpu.INC_R16(cpu.readHL, cpu.writeHL)
+	cpu.INC_R16(cpu.ReadHL, cpu.writeHL)
 }
 func (cpu *CPU) INC_SP() {
-	cpu.INC_R16(cpu.readSP, cpu.writeSP)
+	cpu.INC_R16(cpu.ReadSP, cpu.writeSP)
 }
 
 // DEC R16
@@ -96,21 +96,21 @@ func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
 	cpu.Cycle()
 }
 func (cpu *CPU) DEC_BC() {
-	cpu.DEC_R16(cpu.readBC, cpu.writeBC)
+	cpu.DEC_R16(cpu.ReadBC, cpu.writeBC)
 }
 func (cpu *CPU) DEC_DE() {
-	cpu.DEC_R16(cpu.readDE, cpu.writeDE)
+	cpu.DEC_R16(cpu.ReadDE, cpu.writeDE)
 }
 func (cpu *CPU) DEC_HL() {
-	cpu.DEC_R16(cpu.readHL, cpu.writeHL)
+	cpu.DEC_R16(cpu.ReadHL, cpu.writeHL)
 }
 func (cpu *CPU) DEC_SP() {
-	cpu.DEC_R16(cpu.readSP, cpu.writeSP)
+	cpu.DEC_R16(cpu.ReadSP, cpu.writeSP)
 }
 
 // ADD HL R16
 func (cpu *CPU) ADD_HL_R16(readR16 func() uint16) {
-	sum, carry, half_carry := util.SumWordsWithCarry(cpu.readHL(), readR16())
+	sum, carry, half_carry := util.SumWordsWithCarry(cpu.ReadHL(), readR16())
 	cpu.setNFlag(0)
 	cpu.setHFlag(half_carry)
 	cpu.setCFlag(carry)
@@ -119,16 +119,16 @@ func (cpu *CPU) ADD_HL_R16(readR16 func() uint16) {
 	cpu.Cycle()
 }
 func (cpu *CPU) ADD_HL_BC() {
-	cpu.ADD_HL_R16(cpu.readBC)
+	cpu.ADD_HL_R16(cpu.ReadBC)
 }
 func (cpu *CPU) ADD_HL_DE() {
-	cpu.ADD_HL_R16(cpu.readDE)
+	cpu.ADD_HL_R16(cpu.ReadDE)
 }
 func (cpu *CPU) ADD_HL_HL() {
-	cpu.ADD_HL_R16(cpu.readHL)
+	cpu.ADD_HL_R16(cpu.ReadHL)
 }
 func (cpu *CPU) ADD_HL_SP() {
-	cpu.ADD_HL_R16(cpu.readSP)
+	cpu.ADD_HL_R16(cpu.ReadSP)
 }
 
 // INC R8
@@ -898,16 +898,16 @@ func (cpu *CPU) PUSH_STACK(v uint16) {
 	cpu.WriteByte(cpu.SP, low)
 }
 func (cpu *CPU) PUSH_BC() {
-	cpu.PUSH_STACK(cpu.readBC())
+	cpu.PUSH_STACK(cpu.ReadBC())
 }
 func (cpu *CPU) PUSH_DE() {
-	cpu.PUSH_STACK(cpu.readDE())
+	cpu.PUSH_STACK(cpu.ReadDE())
 }
 func (cpu *CPU) PUSH_HL() {
-	cpu.PUSH_STACK(cpu.readHL())
+	cpu.PUSH_STACK(cpu.ReadHL())
 }
 func (cpu *CPU) PUSH_AF() {
-	cpu.PUSH_STACK(cpu.readAF())
+	cpu.PUSH_STACK(cpu.ReadAF())
 }
 
 // RET COND
@@ -974,7 +974,7 @@ func (cpu *CPU) JP_N16() {
 
 // JP HL
 func (cpu *CPU) JP_HL() {
-	cpu.PC = cpu.readHL()
+	cpu.PC = cpu.ReadHL()
 }
 
 // CALL COND N16
@@ -1091,7 +1091,7 @@ func (cpu *CPU) LD_HL_SP_E8() {
 
 // LD SP HL
 func (cpu *CPU) LD_SP_HL() {
-	cpu.SP = cpu.readHL()
+	cpu.SP = cpu.ReadHL()
 	cpu.Cycle() // Internal
 }
 

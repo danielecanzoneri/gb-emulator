@@ -73,19 +73,27 @@ func (cpu *CPU) writeLowSP(v uint8) {
 	cpu.SP = (cpu.SP & 0xFF00) | uint16(v)
 }
 
-func (cpu *CPU) readAF() uint16 {
+func (cpu *CPU) ReadAF() uint16 {
 	return util.CombineBytes(cpu.A, cpu.F)
 }
-func (cpu *CPU) readBC() uint16 {
+func (cpu *CPU) ReadBC() uint16 {
 	return util.CombineBytes(cpu.B, cpu.C)
 }
-func (cpu *CPU) readDE() uint16 {
+func (cpu *CPU) ReadDE() uint16 {
 	return util.CombineBytes(cpu.D, cpu.E)
 }
-func (cpu *CPU) readHL() uint16 {
+func (cpu *CPU) ReadHL() uint16 {
 	return util.CombineBytes(cpu.H, cpu.L)
 }
-func (cpu *CPU) readSP() uint16 { return cpu.SP }
+func (cpu *CPU) ReadSP() uint16 {
+	return cpu.SP
+}
+func (cpu *CPU) ReadPC() uint16 {
+	return cpu.PC
+}
+func (cpu *CPU) InterruptEnabled() bool {
+	return cpu.IME
+}
 
 func (cpu *CPU) writeAF(word uint16) {
 	h, l := util.SplitWord(word)

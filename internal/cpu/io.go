@@ -49,9 +49,9 @@ func (cpu *CPU) WriteNextWord(v uint16) {
 }
 
 func (cpu *CPU) readHLmem() uint8 {
-	addr := cpu.readHL()
+	addr := cpu.ReadHL()
 	return cpu.ReadByte(addr)
 }
 func (cpu *CPU) writeHLmem(v uint8) {
-	cpu.WriteByte(cpu.readHL(), v)
+	cpu.WriteByte(cpu.ReadHL(), v)
 }
