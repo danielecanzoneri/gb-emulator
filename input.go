@@ -6,14 +6,26 @@ import (
 )
 
 func (ui *UI) handleInput() {
-	// Step next instruction
-	if ui.debugging && inpututil.IsKeyJustPressed(ebiten.KeyF3) {
-		ui.stepInstruction = true
-	}
-
 	// Ctrl+P to pause
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		ui.Pause()
+	}
+
+	ui.handleDebugInput()
+	ui.handleAudioToggle()
+}
+
+func (ui *UI) handleDebugInput() {
+	// Scroll memory viewer
+	_, scrollY := ebiten.Wheel()
+	if scrollY != 0 {
+		x, y := ebiten.CursorPosition()
+		ui.debugger.MemViewer.Scroll(x, y, scrollY)
+	}
+
+	// Step next instruction
+	if ui.debugging && inpututil.IsKeyJustPressed(ebiten.KeyF3) {
+		ui.stepInstruction = true
 	}
 
 	// ESC key to enter in debug mode
@@ -24,7 +36,9 @@ func (ui *UI) handleInput() {
 		width, height := ui.Layout(0, 0)
 		ebiten.SetWindowSize(width, height)
 	}
+}
 
+func (ui *UI) handleAudioToggle() {
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		ui.gameBoy.APU.Ch1Enabled = !ui.gameBoy.APU.Ch1Enabled
 		debugString := "Channel 1 "

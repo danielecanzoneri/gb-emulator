@@ -2,7 +2,6 @@ package debugger
 
 import (
 	"bytes"
-	"image"
 	"image/color"
 	"log"
 
@@ -38,14 +37,11 @@ type Debugger struct {
 	visible bool
 	face    *text.GoTextFace
 
-	// The rectangle of the game screen in the window
-	gameScreenRect image.Rectangle
-
 	ui       *ebitenui.UI
 	rootCont *widget.Container
 
 	// Memory viewer
-	memViewer *MemoryViewer
+	MemViewer *MemoryViewer
 
 	// updateHandlers is a map of functions that are called to update the contents of the panels
 	updateHandlers map[string]func()
