@@ -1,10 +1,10 @@
 package memory
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/internal/audio"
-	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
-	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
-	"github.com/danielecanzoneri/gb-emulator/internal/timer"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
 
 const Size = 0x10000 // 64KB

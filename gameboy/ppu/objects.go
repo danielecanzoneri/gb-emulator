@@ -2,7 +2,7 @@ package ppu
 
 import (
 	"cmp"
-	"github.com/danielecanzoneri/gb-emulator/internal/util"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/util"
 	"slices"
 	"strconv"
 )

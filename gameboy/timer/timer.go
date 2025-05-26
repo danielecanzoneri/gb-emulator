@@ -3,7 +3,7 @@ package timer
 import (
 	"fmt"
 
-	"github.com/danielecanzoneri/gb-emulator/internal/audio"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
 )
 
 type Timer struct {

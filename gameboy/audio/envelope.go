@@ -1,6 +1,6 @@
 package audio
 
-import "github.com/danielecanzoneri/gb-emulator/internal/util"
+import "github.com/danielecanzoneri/gb-emulator/gameboy/util"
 
 // Envelope manages the NRx2 register
 type Envelope struct {

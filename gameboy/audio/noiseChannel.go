@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/internal/util"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/util"
 )
 
 // TODO - fix incorrect noise

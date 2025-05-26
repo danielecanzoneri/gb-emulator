@@ -1,6 +1,6 @@
 package ppu
 
-import "github.com/danielecanzoneri/gb-emulator/internal/util"
+import "github.com/danielecanzoneri/gb-emulator/gameboy/util"
 
 const (
 	vRAMSize uint16 = 0x2000

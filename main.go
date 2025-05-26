@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/debugger"
 	"log"
 
-	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
+	"github.com/danielecanzoneri/gb-emulator/debugger"
+
+	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sqweek/dialog"

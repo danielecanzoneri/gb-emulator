@@ -3,7 +3,7 @@ package main
 import (
 	"image/color"
 
-	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

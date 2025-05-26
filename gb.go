@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/debugger"
-	"github.com/danielecanzoneri/gb-emulator/internal/audio"
-	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
-	"github.com/danielecanzoneri/gb-emulator/internal/cpu"
-	"github.com/danielecanzoneri/gb-emulator/internal/joypad"
-	"github.com/danielecanzoneri/gb-emulator/internal/memory"
-	"github.com/danielecanzoneri/gb-emulator/internal/ppu"
-	"github.com/danielecanzoneri/gb-emulator/internal/timer"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/cpu"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -1,6 +1,6 @@
 package memory
 
-import "github.com/danielecanzoneri/gb-emulator/internal/cartridge"
+import "github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 
 // MBC (Memory Bank Controller)
 type MBC struct {

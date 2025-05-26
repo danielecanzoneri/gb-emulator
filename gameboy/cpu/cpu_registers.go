@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/internal/util"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/util"
 )
 
 const (

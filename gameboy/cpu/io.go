@@ -1,6 +1,6 @@
 package cpu
 
-import "github.com/danielecanzoneri/gb-emulator/internal/util"
+import "github.com/danielecanzoneri/gb-emulator/gameboy/util"
 
 // ReadByte uses 1 M-cycle
 func (cpu *CPU) ReadByte(addr uint16) uint8 {

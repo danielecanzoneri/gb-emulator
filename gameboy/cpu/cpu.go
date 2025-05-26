@@ -2,8 +2,8 @@ package cpu
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/internal/memory"
-	"github.com/danielecanzoneri/gb-emulator/internal/timer"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
 
 // Cycler describes hardware components that needs clock synchronization

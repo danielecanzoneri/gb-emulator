@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/internal/cartridge"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 	"testing"
 )
 
