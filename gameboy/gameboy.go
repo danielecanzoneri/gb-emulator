@@ -1,7 +1,7 @@
-package main
+package gameboy
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/debugger"
+	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cpu"
@@ -9,8 +9,6 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
-	"github.com/ebitengine/oto/v3"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type GameBoy struct {
@@ -21,30 +19,17 @@ type GameBoy struct {
 	Joypad *joypad.Joypad
 	APU    *audio.APU
 
-	// True if we are in debug mode
-	debugging       bool
-	debugger        *debugger.Debugger
-	stepInstruction bool // Set when in debug we must execute one instruction
-
 	cycles uint
-	paused bool
-
-	gameTitle string
-
-	debugString      string
-	debugStringTimer uint
 }
 
 func (gb *GameBoy) Cycle() {
 	gb.cycles++
 }
 
-func Init() (*GameBoy, *oto.Player) {
-	sampleBuffer := make(chan float32, bufferSize)
-
+func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 	p := ppu.New()
 	j := joypad.New()
-	a := audio.NewAPU(sampleRate, sampleBuffer)
+	a := audio.NewAPU(sampleRate, audioSampleBuffer)
 	t := &timer.Timer{APU: a}
 	m := &memory.MMU{Timer: t, PPU: p, Joypad: j, APU: a}
 	c := &cpu.CPU{Timer: t, MMU: m}
@@ -62,12 +47,7 @@ func Init() (*GameBoy, *oto.Player) {
 	}
 	c.AddCycler(gb)
 
-	player, err := newAudioPlayer(gb, sampleBuffer)
-	if err != nil {
-		panic(err)
-	}
-
-	return gb, player
+	return gb
 }
 
 func (gb *GameBoy) Reset() {
@@ -94,27 +74,15 @@ func (gb *GameBoy) Reset() {
 	gb.PPU.Write(0xFF49, 0x00) // OBP1
 }
 
-func (gb *GameBoy) Load(rom *cartridge.Rom) {
+func (gb *GameBoy) Load(romPath string) (string, error) {
+	rom, err := cartridge.LoadROM(romPath)
+	if err != nil {
+		return "", fmt.Errorf("error loading the cartridge: %v", err)
+	}
+
 	// Load ROM into memory
 	gb.Memory.CartridgeData = rom.Data
 	gb.Memory.SetMBC(rom.Header)
 
-	gb.gameTitle = rom.Header.Title
-	ebiten.SetWindowTitle(gb.gameTitle)
-}
-
-func (gb *GameBoy) Pause() {
-	gb.paused = !gb.paused
-
-	if gb.paused {
-		ebiten.SetWindowTitle(gb.gameTitle + " (paused)")
-	} else {
-		ebiten.SetWindowTitle(gb.gameTitle)
-	}
-}
-
-// ToggleDebugger enables/disables visualization of I/O registers
-func (gb *GameBoy) ToggleDebugger() {
-	gb.debugger.ToggleVisibility()
-	gb.debugging = !gb.debugging
+	return rom.Header.Title, nil
 }

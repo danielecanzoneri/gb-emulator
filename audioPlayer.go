@@ -15,13 +15,7 @@ const (
 	bufferSize = 8192
 )
 
-type AudioPlayer struct {
-	gb *GameBoy
-
-	sampleBuffer chan float32
-}
-
-func newAudioPlayer(gb *GameBoy, sampleBuffer chan float32) (*oto.Player, error) {
+func (ui *UI) initAudioPlayer() error {
 	op := &oto.NewContextOptions{}
 	op.SampleRate = sampleRate
 	op.ChannelCount = channels
@@ -29,28 +23,26 @@ func newAudioPlayer(gb *GameBoy, sampleBuffer chan float32) (*oto.Player, error)
 
 	ctx, ready, err := oto.NewContext(op)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	<-ready // Context ready
 
-	a := &AudioPlayer{
-		gb:           gb,
-		sampleBuffer: sampleBuffer,
-	}
-
-	p := ctx.NewPlayer(a)
+	p := ctx.NewPlayer(ui)
 	p.SetBufferSize(bufferSize)
 
-	return p, nil
+	// Store reference to player
+	ui.audioPlayer = p
+
+	return nil
 }
 
-func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
+func (ui *UI) Read(buf []byte) (n int, err error) {
 	// If Game Boy is paused return silence and don't execute cpu instructions
-	if a.gb.paused || a.gb.debugging {
-		if a.gb.debugging && a.gb.stepInstruction {
-			a.gb.stepInstruction = false
-			a.gb.CPU.ExecuteInstruction()
+	if ui.paused || ui.debugging {
+		if ui.debugging && ui.stepInstruction {
+			ui.stepInstruction = false
+			ui.gameBoy.CPU.ExecuteInstruction()
 		}
 		for i := range len(buf) {
 			buf[i] = 0
@@ -63,7 +55,7 @@ func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
 	for bufferPosition < len(buf) {
 		// If not enough samples have been produced, keep executing CPU instructions
 		select {
-		case sample, ok := <-a.sampleBuffer:
+		case sample, ok := <-ui.audioBuffer:
 			if !ok {
 				return 0, io.EOF
 			}
@@ -72,9 +64,10 @@ func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
 			bufferPosition += 4
 
 		default:
-			a.gb.Joypad.DetectKeysPressed()
-			a.gb.CPU.ExecuteInstruction()
+			ui.gameBoy.Joypad.DetectKeysPressed()
+			ui.gameBoy.CPU.ExecuteInstruction()
 		}
 	}
+
 	return bufferPosition, nil
 }
