@@ -47,7 +47,11 @@ func newAudioPlayer(gb *GameBoy, sampleBuffer chan float32) (*oto.Player, error)
 
 func (a *AudioPlayer) Read(buf []byte) (n int, err error) {
 	// If Game Boy is paused return silence and don't execute cpu instructions
-	if a.gb.paused {
+	if a.gb.paused || a.gb.debugging {
+		if a.gb.debugging && a.gb.stepInstruction {
+			a.gb.stepInstruction = false
+			a.gb.CPU.ExecuteInstruction()
+		}
 		for i := range len(buf) {
 			buf[i] = 0
 		}

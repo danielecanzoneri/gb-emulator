@@ -21,7 +21,10 @@ type GameBoy struct {
 	Joypad *joypad.Joypad
 	APU    *audio.APU
 
-	debugger *debugger.Debugger
+	// True if we are in debug mode
+	debugging       bool
+	debugger        *debugger.Debugger
+	stepInstruction bool // Set when in debug we must execute one instruction
 
 	cycles uint
 	paused bool
@@ -113,4 +116,5 @@ func (gb *GameBoy) Pause() {
 // ToggleDebugger enables/disables visualization of I/O registers
 func (gb *GameBoy) ToggleDebugger() {
 	gb.debugger.ToggleVisibility()
+	gb.debugging = !gb.debugging
 }

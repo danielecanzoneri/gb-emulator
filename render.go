@@ -34,6 +34,10 @@ func RenderInit() {
 }
 
 func (gb *GameBoy) handleKeys() {
+	// Step next instruction
+	if gb.debugging && inpututil.IsKeyJustPressed(ebiten.KeyF3) {
+		gb.stepInstruction = true
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		gb.Pause()
 	}
