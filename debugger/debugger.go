@@ -43,6 +43,9 @@ type Debugger struct {
 	// Memory viewer
 	MemViewer *MemoryViewer
 
+	// Disassembly viewer
+	DisViewer *DisassemblyViewer
+
 	// updateHandlers is a map of functions that are called to update the contents of the panels
 	updateHandlers map[string]func()
 }
@@ -90,6 +93,7 @@ func (d *Debugger) Update() {
 
 	d.updatePanelContents()
 	d.updateMemoryViewer()
+	d.updateDisassemblyViewer()
 	d.ui.Update()
 }
 
@@ -118,8 +122,38 @@ func (d *Debugger) Layout(_, _ int) (int, int) {
 }
 
 func (d *Debugger) initUI() {
-	bg := ebitenimage.NewNineSliceColor(color.RGBA{40, 40, 40, 230})
+	screenRow := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
 
+	// Add disassembly viewer
+	screenRow.AddChild(d.initDisassemblyViewer())
+	d.updateHandlers["DisassemblyViewer"] = d.updateDisassemblyViewer
+
+	// Add an empty placeholder of size 480*432 for the gameboy screen
+	gameboyScreen := widget.NewContainer(
+		widget.ContainerOpts.WidgetOpts(
+			widget.WidgetOpts.MinSize(480, 432),
+		),
+	)
+	screenRow.AddChild(gameboyScreen)
+
+	mainCol := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+	mainCol.AddChild(screenRow)
+
+	// Add memory viewer
+	mainCol.AddChild(d.initMemoryViewer())
+	d.updateHandlers["MemoryViewer"] = d.updateMemoryViewer
+
+	bg := ebitenimage.NewNineSliceColor(color.RGBA{40, 40, 40, 230})
 	// Root container
 	d.rootCont = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -142,10 +176,6 @@ func (d *Debugger) initUI() {
 	d.createPanel(leftCol, "CPU", d.updateCPU)
 	d.createPanel(leftCol, "Interrupts", d.updateInterrupts)
 	d.createPanel(leftCol, "LCD", d.updateLCD)
-
-	// Add memory viewer
-	leftCol.AddChild(d.initMemoryViewer())
-	d.updateHandlers["MemoryViewer"] = d.updateMemoryViewer
 
 	// Right columns
 	rightCol := widget.NewContainer(
@@ -214,6 +244,7 @@ func (d *Debugger) initUI() {
 	rightCol.AddChild(opcodeTimerRow)
 
 	// Add columns to root
+	d.rootCont.AddChild(mainCol)
 	d.rootCont.AddChild(leftCol)
 	d.rootCont.AddChild(rightCol)
 
@@ -276,5 +307,49 @@ func (d *Debugger) createPanel(parent *widget.Container, title string, updateCon
 func (d *Debugger) updatePanelContents() {
 	for _, updateHandler := range d.updateHandlers {
 		updateHandler()
+	}
+}
+
+// initDisassemblyViewer initializes the disassembly viewer widget
+func (d *Debugger) initDisassemblyViewer() *widget.Container {
+	// Create container for the disassembly viewer
+	container := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Spacing(4),
+		)),
+	)
+
+	// Add title and disassembly view in a vertical container
+	viewContainer := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(2),
+		)),
+	)
+
+	titleColor := &widget.LabelColor{
+		Idle: color.RGBA{R: 255, G: 255, B: 200, A: 255},
+	}
+	titleLabel := widget.NewLabel(
+		widget.LabelOpts.Text("Disassembly", d.face, titleColor),
+	)
+	viewContainer.AddChild(titleLabel)
+
+	// Create disassembly viewer
+	d.DisViewer = NewDisassemblyViewer(d.mem, d.face)
+	viewContainer.AddChild(d.DisViewer.GetWidget())
+
+	// Add the view container and slider
+	container.AddChild(viewContainer)
+	container.AddChild(d.DisViewer.GetSlider())
+
+	return container
+}
+
+// updateDisassemblyViewer updates the disassembly viewer content
+func (d *Debugger) updateDisassemblyViewer() {
+	if d.DisViewer != nil {
+		d.DisViewer.Update()
 	}
 }
