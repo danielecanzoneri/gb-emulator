@@ -123,7 +123,7 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 				Stretch:  true,
 			}),
 			// Set minimum width for the slider
-			widget.WidgetOpts.MinSize(20, 0),
+			widget.WidgetOpts.MinSize(15, 0),
 		),
 		widget.SliderOpts.Images(
 			// Set the track images
@@ -139,7 +139,7 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 			},
 		),
 		// Set the size of the handle
-		widget.SliderOpts.FixedHandleSize(20),
+		widget.SliderOpts.FixedHandleSize(15),
 		// Set the offset to display the track
 		widget.SliderOpts.TrackOffset(0),
 		// Set the size to move the handle
