@@ -24,6 +24,10 @@ type DisassemblyViewer struct {
 	visibleRows int
 	breakpoints map[uint16]bool // Track breakpoints by address
 
+	// Track which memory addresses contain executable code vs data
+	// Updated when debugger first shown and during instruction execution
+	codeAddresses [0x10000]bool
+
 	rootContent *widget.Container
 	scrollArea  *widget.Container
 	slider      *widget.Slider
@@ -72,6 +76,11 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 		breakpoints: make(map[uint16]bool),
 	}
 
+	// Set all code addresses to true
+	for i := 0; i < 0x10000; i++ {
+		dv.codeAddresses[i] = true
+	}
+
 	// Create the container for opcode lines
 	dv.scrollArea = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -79,7 +88,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 			widget.RowLayoutOpts.Spacing(2),
 		)),
 		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.MinSize(240, 750),
+			widget.WidgetOpts.MinSize(300, 750),
 		),
 	)
 
@@ -121,9 +130,6 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 		),
 		widget.SliderOpts.FixedHandleSize(15),
 		widget.SliderOpts.TrackOffset(0),
-		widget.SliderOpts.PageSizeFunc(func() int {
-			return 24
-		}),
 	)
 
 	dv.initRootContainer()
@@ -150,24 +156,134 @@ func (dv *DisassemblyViewer) Render(screen *ebiten.Image) {
 	dv.rootContent.Render(screen)
 }
 
+// getOpcodeInfo returns information about the opcode at the given address
+func (dv *DisassemblyViewer) getOpcodeInfo(addr uint16) (name string, length int, bytes []uint8) {
+	opcode := dv.mem.DebugRead(addr)
+
+	opcodeInfo := opcodesInfo[opcode]
+	length = opcodeInfo.length
+	switch length {
+	case 0:
+		fallthrough
+	case 1:
+		name = opcodeInfo.name
+		bytes = []uint8{opcode}
+		return
+	case 2:
+		data1 := dv.mem.DebugRead(addr + 1)
+		name = opcodeInfo.format(opcodeInfo.name, data1)
+		bytes = []uint8{opcode, data1}
+		return
+	case 3:
+		data1 := dv.mem.DebugRead(addr + 1)
+		data2 := dv.mem.DebugRead(addr + 2)
+		name = opcodeInfo.format(opcodeInfo.name, data1, data2)
+		bytes = []uint8{opcode, data1, data2}
+		return
+	}
+	return
+}
+
+// formatInstruction formats an instruction with its bytes and arguments
+func (dv *DisassemblyViewer) formatInstruction(addr uint16) (string, int) {
+	name, length, bytes := dv.getOpcodeInfo(addr)
+
+	// Format the bytes part
+	bytesStr := ""
+	for _, b := range bytes {
+		bytesStr += fmt.Sprintf("%02X ", b)
+	}
+
+	// Add padding to align the instruction name
+	for len(bytesStr) < 9 { // 3 chars per byte, up to 3 bytes
+		bytesStr += "   "
+	}
+
+	return fmt.Sprintf("%s  %s", bytesStr, name), length
+}
+
+// UpdateCodeAddresses scans through memory and marks which addresses contain
+// executable code vs data bytes that are part of multi-byte instructions.
+// This is used to properly display the disassembly view.
+func (dv *DisassemblyViewer) UpdateCodeAddresses() {
+	for addr := 0; addr < 0x10000; addr++ {
+		dv.codeAddresses[addr] = true
+
+		opcode := dv.mem.DebugRead(uint16(addr))
+		opcodeLen := opcodesInfo[opcode].length
+		switch opcodeLen {
+		case 2:
+			if addr+1 < 0x10000 {
+				dv.codeAddresses[addr+1] = false
+			}
+			addr++
+		case 3:
+			if addr+1 < 0x10000 {
+				dv.codeAddresses[addr+1] = false
+			}
+			if addr+2 < 0x10000 {
+				dv.codeAddresses[addr+2] = false
+			}
+			addr += 2
+		}
+	}
+
+	// Set max slider value to the last displayable code address
+	dv.slider.Max = int(dv.lastDisplayableCodeAddress())
+}
+
+func (dv *DisassemblyViewer) firstValidCodeAddressBefore(addr uint16) uint16 {
+	for !dv.codeAddresses[addr] {
+		addr--
+	}
+	return addr
+}
+
+func (dv *DisassemblyViewer) firstValidCodeAddressAfter(addr uint16) uint16 {
+	for !dv.codeAddresses[addr] {
+		addr++
+	}
+	return addr
+}
+
+func (dv *DisassemblyViewer) lastDisplayableCodeAddress() uint16 {
+	// We count 0xFFFF as valid address
+	codeAddresses := 1
+	addr := uint16(0xFFFF)
+	for codeAddresses < dv.visibleRows {
+		addr--
+		if dv.codeAddresses[addr] {
+			codeAddresses++
+		}
+	}
+	return addr
+}
+
 // Update updates the disassembly viewer's content
 func (dv *DisassemblyViewer) Update() {
+	// Find the first displayable code address
+	for !dv.codeAddresses[dv.slider.Current] {
+		dv.slider.Current++
+	}
 	dv.startRow = dv.slider.Current
+	currentAddr := uint16(dv.startRow)
 
 	// Update each row's content
 	for i := 0; i < dv.visibleRows; i++ {
-		addr := uint16(dv.startRow + i)
-		opcode := dv.mem.DebugRead(addr)
-		opcodeName := opcodes[opcode]
-
 		// Create breakpoint indicator
 		breakpointIndicator := " "
-		if dv.HasBreakpoint(addr) {
+		if dv.HasBreakpoint(currentAddr) {
 			breakpointIndicator = "●" // Unicode bullet as breakpoint indicator
 		}
 
-		// Format the line with address, opcode value, and opcode name
-		dv.labels[i].Label = fmt.Sprintf("%04X %s %02X  %s", addr, breakpointIndicator, opcode, opcodeName)
+		// Format the instruction with its bytes
+		instruction, length := dv.formatInstruction(currentAddr)
+
+		// Format the line with address and instruction
+		dv.labels[i].Label = fmt.Sprintf("%04X %s %s", currentAddr, breakpointIndicator, instruction)
+
+		// Move to next instruction
+		currentAddr += uint16(length)
 	}
 
 	dv.rootContent.Update()
@@ -180,8 +296,16 @@ func (dv *DisassemblyViewer) Scroll(xCursor, yCursor int, yWheel float64) {
 		newStartRow := dv.startRow - int(yWheel*yWheel*yWheel)
 		if newStartRow < 0 {
 			newStartRow = 0
-		} else if newStartRow > 0x10000-rowsDisplayed {
-			newStartRow = 0x10000 - rowsDisplayed
+		} else if newStartRow > dv.slider.Max {
+			newStartRow = dv.slider.Max
+		}
+
+		// If we scroll up, we need to find the first valid code address before the current start row
+		// If we scroll down, we need to find the first valid code address after the current start row
+		if yWheel > 0 {
+			newStartRow = int(dv.firstValidCodeAddressBefore(uint16(newStartRow)))
+		} else {
+			newStartRow = int(dv.firstValidCodeAddressAfter(uint16(newStartRow)))
 		}
 		dv.startRow = newStartRow
 		dv.slider.Current = newStartRow
@@ -195,7 +319,6 @@ func (dv *DisassemblyViewer) ToggleBreakpoint(addr uint16) {
 	} else {
 		dv.breakpoints[addr] = true
 	}
-	dv.Update() // Refresh display to show/hide breakpoint indicator
 }
 
 // HasBreakpoint checks if there's a breakpoint at the specified address

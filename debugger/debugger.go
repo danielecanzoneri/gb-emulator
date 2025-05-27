@@ -80,6 +80,10 @@ func NewDebugger(mem MemoryDebugger, cpu CPUDebugger) *Debugger {
 // ToggleVisibility toggles the visibility of the debug panel
 func (d *Debugger) ToggleVisibility() {
 	d.visible = !d.visible
+
+	if d.visible {
+		d.DisViewer.UpdateCodeAddresses()
+	}
 }
 
 // IsVisible returns true if the debug panel is visible
