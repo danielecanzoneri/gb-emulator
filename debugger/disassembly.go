@@ -99,7 +99,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 	// Create slider
 	dv.slider = widget.NewSlider(
 		widget.SliderOpts.Direction(widget.DirectionVertical),
-		widget.SliderOpts.MinMax(0, 0xFFFF-dv.visibleRows), // Full address range
+		widget.SliderOpts.MinMax(0, 0x10000-dv.visibleRows), // Full address range
 		widget.SliderOpts.InitialCurrent(0),
 		widget.SliderOpts.WidgetOpts(
 			widget.WidgetOpts.LayoutData(widget.RowLayoutData{
@@ -171,6 +171,21 @@ func (dv *DisassemblyViewer) Update() {
 	}
 
 	dv.rootContent.Update()
+}
+
+// Scroll scrolls the disassembly view up/down
+func (dv *DisassemblyViewer) Scroll(xCursor, yCursor int, yWheel float64) {
+	rect := dv.scrollArea.GetWidget().Rect
+	if yWheel != 0 && image.Pt(xCursor, yCursor).In(rect) {
+		newStartRow := dv.startRow + int(yWheel*yWheel*yWheel)
+		if newStartRow < 0 {
+			newStartRow = 0
+		} else if newStartRow > 0x10000-rowsDisplayed {
+			newStartRow = 0x10000 - rowsDisplayed
+		}
+		dv.startRow = newStartRow
+		dv.slider.Current = newStartRow
+	}
 }
 
 // ToggleBreakpoint toggles a breakpoint at the specified address

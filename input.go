@@ -21,6 +21,7 @@ func (ui *UI) handleDebugInput() {
 	if scrollY != 0 {
 		x, y := ebiten.CursorPosition()
 		ui.debugger.MemViewer.Scroll(x, y, scrollY)
+		ui.debugger.DisViewer.Scroll(x, y, scrollY)
 	}
 
 	// Step next instruction
