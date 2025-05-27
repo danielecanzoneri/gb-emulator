@@ -177,7 +177,7 @@ func (dv *DisassemblyViewer) Update() {
 func (dv *DisassemblyViewer) Scroll(xCursor, yCursor int, yWheel float64) {
 	rect := dv.scrollArea.GetWidget().Rect
 	if yWheel != 0 && image.Pt(xCursor, yCursor).In(rect) {
-		newStartRow := dv.startRow + int(yWheel*yWheel*yWheel)
+		newStartRow := dv.startRow - int(yWheel*yWheel*yWheel)
 		if newStartRow < 0 {
 			newStartRow = 0
 		} else if newStartRow > 0x10000-rowsDisplayed {
