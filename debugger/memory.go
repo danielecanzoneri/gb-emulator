@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 	"image/color"
 	"strings"
@@ -12,60 +13,51 @@ import (
 )
 
 // MemoryViewer represents the memory visualization widget
+// It is a wrapper of a widget.Container
 type MemoryViewer struct {
+	labels []*widget.Label
+	face   *text.GoTextFace
+
 	mem         MemoryDebugger
-	container   *widget.Container
-	scrollCont  *widget.ScrollContainer
-	labels      []*widget.Label
 	startRow    int
 	visibleRows int
-	face        *text.GoTextFace
 
-	slider *widget.Slider // Slider for the memory viewer
+	rootContent *widget.Container
+	scrollArea  *widget.Container // Area containing the rows
+	slider      *widget.Slider    // Slider for the memory viewer
 }
 
-// initMemoryViewer initializes the memory viewer widget
-func (d *Debugger) initMemoryViewer() *widget.Container {
+// initRootContainer initializes the memory viewer widget
+func (mv *MemoryViewer) initRootContainer() {
 	// Create container for the memory viewer
-	container := widget.NewContainer(
+	mv.rootContent = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(4),
 		)),
 	)
 
-	// Add title and memory view in a vertical container
+	// Add memory view and slider in a horizontal container
 	viewContainer := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
 			widget.RowLayoutOpts.Spacing(2),
 		)),
 	)
 
+	// Add the scroll area and the slider
+	viewContainer.AddChild(mv.scrollArea)
+	viewContainer.AddChild(mv.slider)
+
+	// Add the title and the view container
 	titleColor := &widget.LabelColor{
 		Idle: color.RGBA{R: 255, G: 255, B: 200, A: 255},
 	}
 	titleLabel := widget.NewLabel(
-		widget.LabelOpts.Text("Memory", d.face, titleColor),
+		widget.LabelOpts.Text("Memory", mv.face, titleColor),
 	)
-	viewContainer.AddChild(titleLabel)
-
-	// Create memory viewer
-	d.MemViewer = NewMemoryViewer(d.mem, d.face)
-	viewContainer.AddChild(d.MemViewer.GetWidget())
-
-	// Add the view container and slider
-	container.AddChild(viewContainer)
-	container.AddChild(d.MemViewer.GetSlider())
-
-	return container
-}
-
-// updateMemoryViewer updates the memory viewer content
-func (d *Debugger) updateMemoryViewer() {
-	if d.MemViewer != nil {
-		d.MemViewer.Update()
-	}
+	mv.rootContent.AddChild(titleLabel)
+	mv.rootContent.AddChild(viewContainer)
 }
 
 // NewMemoryViewer creates a new memory viewer widget
@@ -78,21 +70,11 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 	}
 
 	// Create the container for memory lines
-	mv.container = widget.NewContainer(
+	mv.scrollArea = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(2),
 		)),
-	)
-
-	// Create the scroll container
-	mv.scrollCont = widget.NewScrollContainer(
-		widget.ScrollContainerOpts.Content(mv.container),
-		widget.ScrollContainerOpts.StretchContentWidth(),
-		widget.ScrollContainerOpts.Image(&widget.ScrollContainerImage{
-			Idle: ebitenimage.NewNineSliceColor(color.RGBA{60, 60, 60, 255}),
-			Mask: ebitenimage.NewNineSliceColor(color.RGBA{60, 60, 60, 255}),
-		}),
 	)
 
 	// Create labels for each row
@@ -105,7 +87,7 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 			widget.LabelOpts.Text("", face, textColor),
 		)
 		mv.labels[i] = label
-		mv.container.AddChild(label)
+		mv.scrollArea.AddChild(label)
 	}
 
 	// Create slider
@@ -148,20 +130,28 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 		}),
 	)
 
+	mv.initRootContainer()
+
 	// Initial update
 	mv.Update()
 
 	return mv
 }
 
-// GetWidget returns the root widget of the memory viewer
-func (mv *MemoryViewer) GetWidget() widget.PreferredSizeLocateableWidget {
-	return mv.scrollCont
+func (mv *MemoryViewer) GetWidget() *widget.Widget {
+	return mv.rootContent.GetWidget()
 }
 
-// GetSlider returns the slider widget
-func (mv *MemoryViewer) GetSlider() widget.PreferredSizeLocateableWidget {
-	return mv.slider
+func (mv *MemoryViewer) PreferredSize() (int, int) {
+	return mv.rootContent.PreferredSize()
+}
+
+func (mv *MemoryViewer) SetLocation(rect image.Rectangle) {
+	mv.rootContent.SetLocation(rect)
+}
+
+func (mv *MemoryViewer) Render(screen *ebiten.Image) {
+	mv.rootContent.Render(screen)
 }
 
 // Update updates the memory viewer's content and handles input
@@ -180,7 +170,7 @@ func (mv *MemoryViewer) Update() {
 			value := mv.mem.DebugRead(uint16(addr + j))
 			hexBytes.WriteString(fmt.Sprintf("%02X ", value))
 
-			// Add an additional space between the first 8 bytes and the last 8 bytes
+			// Add a space between the first 8 bytes and the last 8 bytes
 			if j == 7 {
 				hexBytes.WriteString(" ")
 			}
@@ -196,11 +186,13 @@ func (mv *MemoryViewer) Update() {
 		// Update label text
 		mv.labels[i].Label = fmt.Sprintf("%04X: %-48s %s", addr, hexBytes.String(), asciiChars.String())
 	}
+
+	mv.rootContent.Update()
 }
 
 // Scroll scrolls the memory view up/down
 func (mv *MemoryViewer) Scroll(xCursor, yCursor int, yWheel float64) {
-	rect := mv.container.GetWidget().Rect
+	rect := mv.scrollArea.GetWidget().Rect
 	if yWheel != 0 && image.Pt(xCursor, yCursor).In(rect) {
 		newStartRow := mv.startRow + int(yWheel*yWheel*yWheel)
 		if newStartRow < 0 {

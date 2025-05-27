@@ -48,19 +48,26 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 	// Background color
 	screen.Fill(color.RGBA{R: 40, G: 40, B: 40, A: 220})
 
-	// Draw the debugger
-	ui.debugger.Draw(screen, Scale*ppu.FrameWidth, 0)
-
 	// Draw all 144 x 160 pixels
+	gameScreen := ebiten.NewImage(Scale*ppu.FrameWidth, Scale*ppu.FrameHeight)
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(Scale*x), float64(Scale*y))
 
 			colorId := ui.gameBoy.PPU.Framebuffer[y][x]
-			screen.DrawImage(pixels[colorId], op)
+			gameScreen.DrawImage(pixels[colorId], op)
 		}
 	}
+
+	// Draw the debugger
+	ui.debugger.Draw(screen)
+
+	// Draw the game screen on the debugger
+	screenPosition := ui.debugger.GameboyScreenPosition()
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(screenPosition.Min.X), float64(screenPosition.Min.Y))
+	screen.DrawImage(gameScreen, op)
 
 	if ui.debugStringTimer > 0 {
 		ebitenutil.DebugPrint(screen, ui.debugString)

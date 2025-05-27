@@ -2,6 +2,8 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/hajimehoshi/ebiten/v2"
+	"image"
 	"image/color"
 
 	ebitenimage "github.com/ebitenui/ebitenui/image"
@@ -11,15 +13,50 @@ import (
 
 // DisassemblyViewer represents the opcode visualization widget
 type DisassemblyViewer struct {
+	labels []*widget.Label
+	face   *text.GoTextFace
+
 	mem         MemoryDebugger
-	container   *widget.Container
-	scrollCont  *widget.ScrollContainer
-	labels      []*widget.Label
 	startRow    int
 	visibleRows int
-	face        *text.GoTextFace
-	slider      *widget.Slider
 	breakpoints map[uint16]bool // Track breakpoints by address
+
+	rootContent *widget.Container
+	scrollArea  *widget.Container
+	slider      *widget.Slider
+}
+
+// initRootContainer initializes the disassembly viewer widget
+func (dv *DisassemblyViewer) initRootContainer() {
+	// Create container for the disassembly viewer
+	dv.rootContent = widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(4),
+		)),
+	)
+
+	// Add disassembly view and slider in a horizontal container
+	viewContainer := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Spacing(2),
+		)),
+	)
+
+	// Add the scroll area and the slider
+	viewContainer.AddChild(dv.scrollArea)
+	viewContainer.AddChild(dv.slider)
+
+	// Add the title and the view container
+	titleColor := &widget.LabelColor{
+		Idle: color.RGBA{R: 255, G: 255, B: 200, A: 255},
+	}
+	titleLabel := widget.NewLabel(
+		widget.LabelOpts.Text("Disassembly", dv.face, titleColor),
+	)
+	dv.rootContent.AddChild(titleLabel)
+	dv.rootContent.AddChild(viewContainer)
 }
 
 // NewDisassemblyViewer creates a new disassembly viewer widget
@@ -33,7 +70,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 	}
 
 	// Create the container for opcode lines
-	dv.container = widget.NewContainer(
+	dv.scrollArea = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(2),
@@ -41,16 +78,6 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 		widget.ContainerOpts.WidgetOpts(
 			widget.WidgetOpts.MinSize(240, 480),
 		),
-	)
-
-	// Create the scroll container
-	dv.scrollCont = widget.NewScrollContainer(
-		widget.ScrollContainerOpts.Content(dv.container),
-		widget.ScrollContainerOpts.StretchContentWidth(),
-		widget.ScrollContainerOpts.Image(&widget.ScrollContainerImage{
-			Idle: ebitenimage.NewNineSliceColor(color.RGBA{60, 60, 60, 255}),
-			Mask: ebitenimage.NewNineSliceColor(color.RGBA{60, 60, 60, 255}),
-		}),
 	)
 
 	// Create labels for each row
@@ -63,7 +90,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 			widget.LabelOpts.Text("", face, textColor),
 		)
 		dv.labels[i] = label
-		dv.container.AddChild(label)
+		dv.scrollArea.AddChild(label)
 	}
 
 	// Create slider
@@ -96,35 +123,28 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 		}),
 	)
 
+	dv.initRootContainer()
+
 	// Initial update
 	dv.Update()
 
 	return dv
 }
 
-// GetWidget returns the root widget of the disassembly viewer
-func (dv *DisassemblyViewer) GetWidget() widget.PreferredSizeLocateableWidget {
-	return dv.scrollCont
+func (dv *DisassemblyViewer) GetWidget() *widget.Widget {
+	return dv.rootContent.GetWidget()
 }
 
-// GetSlider returns the slider widget
-func (dv *DisassemblyViewer) GetSlider() widget.PreferredSizeLocateableWidget {
-	return dv.slider
+func (dv *DisassemblyViewer) PreferredSize() (int, int) {
+	return dv.rootContent.PreferredSize()
 }
 
-// ToggleBreakpoint toggles a breakpoint at the specified address
-func (dv *DisassemblyViewer) ToggleBreakpoint(addr uint16) {
-	if dv.breakpoints[addr] {
-		delete(dv.breakpoints, addr)
-	} else {
-		dv.breakpoints[addr] = true
-	}
-	dv.Update() // Refresh display to show/hide breakpoint indicator
+func (dv *DisassemblyViewer) SetLocation(rect image.Rectangle) {
+	dv.rootContent.SetLocation(rect)
 }
 
-// HasBreakpoint checks if there's a breakpoint at the specified address
-func (dv *DisassemblyViewer) HasBreakpoint(addr uint16) bool {
-	return dv.breakpoints[addr]
+func (dv *DisassemblyViewer) Render(screen *ebiten.Image) {
+	dv.rootContent.Render(screen)
 }
 
 // Update updates the disassembly viewer's content
@@ -146,4 +166,21 @@ func (dv *DisassemblyViewer) Update() {
 		// Format the line with address, opcode value, and opcode name
 		dv.labels[i].Label = fmt.Sprintf("%04X %s %02X  %s", addr, breakpointIndicator, opcode, opcodeName)
 	}
+
+	dv.rootContent.Update()
+}
+
+// ToggleBreakpoint toggles a breakpoint at the specified address
+func (dv *DisassemblyViewer) ToggleBreakpoint(addr uint16) {
+	if dv.breakpoints[addr] {
+		delete(dv.breakpoints, addr)
+	} else {
+		dv.breakpoints[addr] = true
+	}
+	dv.Update() // Refresh display to show/hide breakpoint indicator
+}
+
+// HasBreakpoint checks if there's a breakpoint at the specified address
+func (dv *DisassemblyViewer) HasBreakpoint(addr uint16) bool {
+	return dv.breakpoints[addr]
 }

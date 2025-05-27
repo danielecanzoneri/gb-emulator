@@ -10,7 +10,6 @@ import (
 	"github.com/ebitenui/ebitenui"
 	ebitenimage "github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
@@ -39,6 +38,9 @@ type Debugger struct {
 
 	ui       *ebitenui.UI
 	rootCont *widget.Container
+
+	// Gameboy screen placeholder
+	GameboyScreen *widget.Container
 
 	// Memory viewer
 	MemViewer *MemoryViewer
@@ -85,42 +87,6 @@ func (d *Debugger) IsVisible() bool {
 	return d.visible
 }
 
-// Update updates the debugger state
-func (d *Debugger) Update() {
-	if !d.visible {
-		return
-	}
-
-	d.updatePanelContents()
-	d.updateMemoryViewer()
-	d.updateDisassemblyViewer()
-	d.ui.Update()
-}
-
-// Draw renders the debug panel to the screen
-func (d *Debugger) Draw(screen *ebiten.Image, x, y int) {
-	if !d.visible {
-		return
-	}
-
-	// Create a temporary image for drawing
-	w, h := d.Layout(0, 0)
-	tempImage := ebiten.NewImage(w, h)
-
-	// Draw to temp image first
-	d.ui.Draw(tempImage)
-
-	// Draw temp image to screen at target position
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(x), float64(y))
-	screen.DrawImage(tempImage, op)
-}
-
-func (d *Debugger) Layout(_, _ int) (int, int) {
-	w, h := d.rootCont.PreferredSize()
-	return w, h
-}
-
 func (d *Debugger) initUI() {
 	screenRow := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -130,16 +96,17 @@ func (d *Debugger) initUI() {
 	)
 
 	// Add disassembly viewer
-	screenRow.AddChild(d.initDisassemblyViewer())
-	d.updateHandlers["DisassemblyViewer"] = d.updateDisassemblyViewer
+	d.DisViewer = NewDisassemblyViewer(d.mem, d.face)
+	screenRow.AddChild(d.DisViewer)
+	d.updateHandlers["DisassemblyViewer"] = d.DisViewer.Update
 
-	// Add an empty placeholder of size 480*432 for the gameboy screen
-	gameboyScreen := widget.NewContainer(
+	// Add the gameboy screen
+	d.GameboyScreen = widget.NewContainer(
 		widget.ContainerOpts.WidgetOpts(
 			widget.WidgetOpts.MinSize(480, 432),
 		),
 	)
-	screenRow.AddChild(gameboyScreen)
+	screenRow.AddChild(d.GameboyScreen)
 
 	mainCol := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -150,8 +117,9 @@ func (d *Debugger) initUI() {
 	mainCol.AddChild(screenRow)
 
 	// Add memory viewer
-	mainCol.AddChild(d.initMemoryViewer())
-	d.updateHandlers["MemoryViewer"] = d.updateMemoryViewer
+	d.MemViewer = NewMemoryViewer(d.mem, d.face)
+	mainCol.AddChild(d.MemViewer)
+	d.updateHandlers["MemoryViewer"] = d.MemViewer.Update
 
 	bg := ebitenimage.NewNineSliceColor(color.RGBA{40, 40, 40, 230})
 	// Root container
@@ -307,49 +275,5 @@ func (d *Debugger) createPanel(parent *widget.Container, title string, updateCon
 func (d *Debugger) updatePanelContents() {
 	for _, updateHandler := range d.updateHandlers {
 		updateHandler()
-	}
-}
-
-// initDisassemblyViewer initializes the disassembly viewer widget
-func (d *Debugger) initDisassemblyViewer() *widget.Container {
-	// Create container for the disassembly viewer
-	container := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(4),
-		)),
-	)
-
-	// Add title and disassembly view in a vertical container
-	viewContainer := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Spacing(2),
-		)),
-	)
-
-	titleColor := &widget.LabelColor{
-		Idle: color.RGBA{R: 255, G: 255, B: 200, A: 255},
-	}
-	titleLabel := widget.NewLabel(
-		widget.LabelOpts.Text("Disassembly", d.face, titleColor),
-	)
-	viewContainer.AddChild(titleLabel)
-
-	// Create disassembly viewer
-	d.DisViewer = NewDisassemblyViewer(d.mem, d.face)
-	viewContainer.AddChild(d.DisViewer.GetWidget())
-
-	// Add the view container and slider
-	container.AddChild(viewContainer)
-	container.AddChild(d.DisViewer.GetSlider())
-
-	return container
-}
-
-// updateDisassemblyViewer updates the disassembly viewer content
-func (d *Debugger) updateDisassemblyViewer() {
-	if d.DisViewer != nil {
-		d.DisViewer.Update()
 	}
 }
