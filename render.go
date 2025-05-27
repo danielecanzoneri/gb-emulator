@@ -78,8 +78,7 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 func (ui *UI) Layout(_, _ int) (int, int) {
 	// Adjust the layout based on whether the debugger is visible
 	if ui.debugger.IsVisible() {
-		debugWidth, debugHeight := ui.debugger.Layout(0, 0)
-		return Scale*ppu.FrameWidth + debugWidth, max(Scale*ppu.FrameHeight, debugHeight)
+		return ui.debugger.Layout(0, 0)
 	}
 	return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight
 }

@@ -2,10 +2,11 @@ package debugger
 
 import (
 	"fmt"
-	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 	"image/color"
 	"strings"
+
+	"github.com/hajimehoshi/ebiten/v2"
 
 	ebitenimage "github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
@@ -75,6 +76,9 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(2),
 		)),
+		widget.ContainerOpts.WidgetOpts(
+			widget.WidgetOpts.MinSize(800, 300),
+		),
 	)
 
 	// Create labels for each row
@@ -105,7 +109,7 @@ func NewMemoryViewer(mem MemoryDebugger, face *text.GoTextFace) *MemoryViewer {
 				Stretch:  true,
 			}),
 			// Set minimum width for the slider
-			widget.WidgetOpts.MinSize(15, 0),
+			widget.WidgetOpts.MinSize(15, 300),
 		),
 		widget.SliderOpts.Images(
 			// Set the track images

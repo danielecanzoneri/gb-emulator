@@ -2,14 +2,17 @@ package debugger
 
 import (
 	"fmt"
-	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
 
 	ebitenimage "github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
+
+const rowsDisplayed = 32
 
 // DisassemblyViewer represents the opcode visualization widget
 type DisassemblyViewer struct {
@@ -64,8 +67,8 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 	dv := &DisassemblyViewer{
 		mem:         mem,
 		face:        face,
-		visibleRows: 24,
-		labels:      make([]*widget.Label, 24),
+		visibleRows: rowsDisplayed,
+		labels:      make([]*widget.Label, rowsDisplayed),
 		breakpoints: make(map[uint16]bool),
 	}
 
@@ -76,7 +79,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 			widget.RowLayoutOpts.Spacing(2),
 		)),
 		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.MinSize(240, 480),
+			widget.WidgetOpts.MinSize(240, 750),
 		),
 	)
 
@@ -103,7 +106,7 @@ func NewDisassemblyViewer(mem MemoryDebugger, face *text.GoTextFace) *Disassembl
 				Position: widget.RowLayoutPositionEnd,
 				Stretch:  true,
 			}),
-			widget.WidgetOpts.MinSize(15, 0),
+			widget.WidgetOpts.MinSize(15, 750),
 		),
 		widget.SliderOpts.Images(
 			&widget.SliderTrackImage{

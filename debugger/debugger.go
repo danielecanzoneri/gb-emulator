@@ -88,17 +88,34 @@ func (d *Debugger) IsVisible() bool {
 }
 
 func (d *Debugger) initUI() {
-	screenRow := widget.NewContainer(
+	// Create main container with horizontal layout
+	mainRow := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
 			widget.RowLayoutOpts.Spacing(10),
 		)),
 	)
 
-	// Add disassembly viewer
+	// Left side - Disassembly viewer
 	d.DisViewer = NewDisassemblyViewer(d.mem, d.face)
-	screenRow.AddChild(d.DisViewer)
+	mainRow.AddChild(d.DisViewer)
 	d.updateHandlers["DisassemblyViewer"] = d.DisViewer.Update
+
+	// Right side container
+	rightSide := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+
+	// Top row container for game screen and panels
+	topRow := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
 
 	// Add the gameboy screen
 	d.GameboyScreen = widget.NewContainer(
@@ -106,115 +123,98 @@ func (d *Debugger) initUI() {
 			widget.WidgetOpts.MinSize(480, 432),
 		),
 	)
-	screenRow.AddChild(d.GameboyScreen)
+	topRow.AddChild(d.GameboyScreen)
 
-	mainCol := widget.NewContainer(
+	// Right panels container
+	rightPanels := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+
+	// Left panels (CPU and LCD)
+	leftPanels := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(10),
 		)),
 	)
-	mainCol.AddChild(screenRow)
 
-	// Add memory viewer
-	d.MemViewer = NewMemoryViewer(d.mem, d.face)
-	mainCol.AddChild(d.MemViewer)
-	d.updateHandlers["MemoryViewer"] = d.MemViewer.Update
+	// Create CPU and LCD panels
+	d.createPanel(leftPanels, "CPU", d.updateCPU)
+	d.createPanel(leftPanels, "LCD", d.updateLCD)
 
-	bg := ebitenimage.NewNineSliceColor(color.RGBA{40, 40, 40, 230})
-	// Root container
-	d.rootCont = widget.NewContainer(
+	// Sound panels container
+	soundPanels := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
 			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+
+	// First column of sound panels (ch1, ch3, sound control)
+	soundCol1 := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+
+	d.createPanel(soundCol1, "Square (ch1)", d.updateCh1)
+	d.createPanel(soundCol1, "Wave (ch3)", d.updateCh3)
+	d.createPanel(soundCol1, "Sound Control", d.updateSoundControl)
+
+	// Second column of sound panels (ch2, ch4, wave ram)
+	soundCol2 := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Spacing(10),
+		)),
+	)
+
+	d.createPanel(soundCol2, "Square (ch2)", d.updateCh2)
+	d.createPanel(soundCol2, "Noise (ch4)", d.updateCh4)
+	d.createPanel(soundCol2, "WaveRam", d.updateWaveRam)
+
+	// Add sound columns to sound panels
+	soundPanels.AddChild(soundCol1)
+	soundPanels.AddChild(soundCol2)
+
+	// Add left panels and sound panels to right panels container
+	rightPanels.AddChild(leftPanels)
+	rightPanels.AddChild(soundPanels)
+
+	// Add panels to top row
+	topRow.AddChild(rightPanels)
+
+	// Add top row to right side
+	rightSide.AddChild(topRow)
+
+	// Add memory viewer at the bottom of right side
+	d.MemViewer = NewMemoryViewer(d.mem, d.face)
+	rightSide.AddChild(d.MemViewer)
+	d.updateHandlers["MemoryViewer"] = d.MemViewer.Update
+
+	// Add both main columns to main row
+	mainRow.AddChild(rightSide)
+
+	// Background for the root container
+	bg := ebitenimage.NewNineSliceColor(color.RGBA{40, 40, 40, 230})
+
+	// Root container with padding
+	d.rootCont = widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(10)),
 		)),
 		widget.ContainerOpts.BackgroundImage(bg),
 	)
 
-	// Left column - CPU registers, interrupts, LCD
-	leftCol := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
+	d.rootCont.AddChild(mainRow)
 
-	// Create all panels
-	d.createPanel(leftCol, "CPU", d.updateCPU)
-	d.createPanel(leftCol, "Interrupts", d.updateInterrupts)
-	d.createPanel(leftCol, "LCD", d.updateLCD)
-
-	// Right columns
-	rightCol := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	// Sound channels
-	soundRow := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	ch12Col := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	d.createPanel(ch12Col, "Square (ch1)", d.updateCh1)
-	d.createPanel(ch12Col, "Square (ch2)", d.updateCh2)
-
-	ch34Col := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	d.createPanel(ch34Col, "Wave (ch3)", d.updateCh3)
-	d.createPanel(ch34Col, "Noise (ch4)", d.updateCh4)
-
-	soundRow.AddChild(ch12Col)
-	soundRow.AddChild(ch34Col)
-
-	// Sound control and wave ram
-	soundMiscRow := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	d.createPanel(soundMiscRow, "Sound Control", d.updateSoundControl)
-	d.createPanel(soundMiscRow, "WaveRam", d.updateWaveRam)
-
-	// Opcode and timer
-	opcodeTimerRow := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(10),
-		)),
-	)
-
-	d.createPanel(opcodeTimerRow, "Opcode", d.updateOpcode)
-	d.createPanel(opcodeTimerRow, "Timer", d.updateTimer)
-
-	// Add sound rows to right column
-	rightCol.AddChild(soundRow)
-	rightCol.AddChild(soundMiscRow)
-	rightCol.AddChild(opcodeTimerRow)
-
-	// Add columns to root
-	d.rootCont.AddChild(mainCol)
-	d.rootCont.AddChild(leftCol)
-	d.rootCont.AddChild(rightCol)
+	// TODO - modify
+	d.createPanel(soundCol2, "Timer", d.updateTimer)
 
 	// Create UI
 	d.ui = &ebitenui.UI{
