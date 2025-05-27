@@ -175,24 +175,6 @@ func (d *Debugger) updateWaveRam() string {
 	return builder.String()
 }
 
-func (d *Debugger) updateOpcode() string {
-	// Update Opcode panel
-	pc := d.cpu.ReadPC()
-	opcode := d.mem.DebugRead(pc)
-
-	var opcodeHex, opcodeName string
-	if opcode == 0xCB { // Prefix
-		suffix := d.mem.DebugRead(pc + 1)
-		opcodeHex = fmt.Sprintf("0xCB %02X", suffix)
-		opcodeName = prefixedOpcodes[suffix]
-	} else {
-		opcodeHex = fmt.Sprintf("0x%02X", opcode)
-		opcodeName = opcodes[opcode]
-	}
-
-	return opcodeHex + "\n" + opcodeName
-}
-
 func (d *Debugger) updateTimer() string {
 	// Update Timer panel
 	div := d.mem.DebugRead(0xFF04)
