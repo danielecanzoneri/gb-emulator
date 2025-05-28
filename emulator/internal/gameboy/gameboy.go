@@ -1,0 +1,88 @@
+package gameboy
+
+import (
+	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/audio"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cartridge"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cpu"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/joypad"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/timer"
+)
+
+type GameBoy struct {
+	CPU    *cpu.CPU
+	Timer  *timer.Timer
+	Memory *memory.MMU
+	PPU    *ppu.PPU
+	Joypad *joypad.Joypad
+	APU    *audio.APU
+
+	cycles uint
+}
+
+func (gb *GameBoy) Cycle() {
+	gb.cycles++
+}
+
+func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
+	p := ppu.New()
+	j := joypad.New()
+	a := audio.NewAPU(sampleRate, audioSampleBuffer)
+	t := &timer.Timer{APU: a}
+	m := &memory.MMU{Timer: t, PPU: p, Joypad: j, APU: a}
+	c := &cpu.CPU{Timer: t, MMU: m}
+	c.AddCycler(t, p, m, a)
+
+	// Set interrupt request for timer
+	t.RequestInterrupt = cpu.RequestTimerInterruptFunc(c)
+	// Set interrupt request for PPU
+	p.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(c)
+	p.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(c)
+
+	gb := &GameBoy{
+		CPU: c, Timer: t, PPU: p, Memory: m, Joypad: j,
+		APU: a,
+	}
+	c.AddCycler(gb)
+
+	return gb
+}
+
+func (gb *GameBoy) Reset() {
+	gb.CPU.A = 0x01
+	gb.CPU.F = 0xB0
+	gb.CPU.B = 0x00
+	gb.CPU.C = 0x13
+	gb.CPU.D = 0x00
+	gb.CPU.E = 0xD8
+	gb.CPU.H = 0x01
+	gb.CPU.L = 0x4D
+	gb.CPU.SP = 0xFFFE
+	gb.CPU.PC = 0x0100
+
+	// gb.Timer.DIV = 0x1E
+	gb.Timer.TAC = 0xF8
+
+	gb.Memory.Write(0xFF0F, 0xE1) // IF
+
+	gb.PPU.Write(0xFF40, 0x91) // LCDC
+	gb.PPU.Write(0xFF41, 0x81)
+	gb.PPU.Write(0xFF47, 0xFC) // BGP
+	gb.PPU.Write(0xFF48, 0x00) // OBP0
+	gb.PPU.Write(0xFF49, 0x00) // OBP1
+}
+
+func (gb *GameBoy) Load(romPath string) (string, error) {
+	rom, err := cartridge.LoadROM(romPath)
+	if err != nil {
+		return "", fmt.Errorf("error loading the cartridge: %v", err)
+	}
+
+	// Load ROM into memory
+	gb.Memory.CartridgeData = rom.Data
+	gb.Memory.SetMBC(rom.Header)
+
+	return rom.Header.Title, nil
+}
