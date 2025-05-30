@@ -11,6 +11,7 @@ type MessageType string
 // Debugger to emulator
 const (
 	MessageTypePause      MessageType = "pause"
+	MessageTypeResume     MessageType = "resume"
 	MessageTypeStep       MessageType = "step"
 	MessageTypeContinue   MessageType = "continue"
 	MessageTypeBreakpoint MessageType = "breakpoint"
