@@ -80,14 +80,14 @@ func (r *memoryRowRenderer) Refresh() {
 	r.text.Refresh()
 }
 
-type MemoryViewer struct {
+type memoryViewer struct {
 	widget.List
 	rows    int
 	entries []*memoryRow
 }
 
-func NewMemoryViewer() *MemoryViewer {
-	mv := &MemoryViewer{
+func newMemoryViewer() *memoryViewer {
+	mv := &memoryViewer{
 		rows:    0x10000 / 16,
 		entries: make([]*memoryRow, 0x10000/16),
 	}
@@ -121,7 +121,7 @@ func NewMemoryViewer() *MemoryViewer {
 // MinSize returns the minimum size for the memory viewer widget.
 // It calculates this by taking the minimum size of a single row and
 // multiplying the height by 16 to show a reasonable number of rows.
-func (mv *MemoryViewer) MinSize() fyne.Size {
+func (mv *memoryViewer) MinSize() fyne.Size {
 	baseSize := mv.entries[0].MinSize()
 	height := baseSize.Height * 16
 

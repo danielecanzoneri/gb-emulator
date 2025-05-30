@@ -126,13 +126,13 @@ func (r *disassemblyEntryRenderer) Refresh() {
 	r.text.Refresh()
 }
 
-type Disassembler struct {
+type disassembler struct {
 	widget.List
 	entries []*disassemblyEntry
 }
 
-func NewDisassembler() *Disassembler {
-	dl := &Disassembler{
+func newDisassembler() *disassembler {
+	dl := &disassembler{
 		entries: make([]*disassemblyEntry, 0x10000),
 	}
 

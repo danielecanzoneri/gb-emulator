@@ -84,7 +84,7 @@ func (r *panelRowRenderer) Refresh() {
 	r.text.Refresh()
 }
 
-type Panel struct {
+type panel struct {
 	widget.BaseWidget
 
 	title string
@@ -93,8 +93,8 @@ type Panel struct {
 	maxTitleLength int // Maximum length of the title (used for padding)
 }
 
-func NewPanel(title string) *Panel {
-	p := &Panel{
+func newPanel(title string) *panel {
+	p := &panel{
 		title: title,
 		rows:  make([]fyne.CanvasObject, 0),
 	}
@@ -102,7 +102,7 @@ func NewPanel(title string) *Panel {
 	return p
 }
 
-func (p *Panel) AddRow(title string, content string) {
+func (p *panel) AddRow(title string, content string) {
 	// Update the max title length
 	if len(title) > p.maxTitleLength {
 		p.maxTitleLength = len(title)
@@ -120,7 +120,7 @@ func (p *Panel) AddRow(title string, content string) {
 	p.rows = append(p.rows, newRow)
 }
 
-func (p *Panel) CreateRenderer() fyne.WidgetRenderer {
+func (p *panel) CreateRenderer() fyne.WidgetRenderer {
 	th := p.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 

@@ -36,9 +36,7 @@ func (c *Client) Connect() error {
 	c.connected = true
 
 	// Pause execution when connecting
-	if err := c.Pause(); err != nil {
-		return fmt.Errorf("failed to pause debug server: %v", err)
-	}
+	c.Pause()
 
 	go c.listen()
 	return nil

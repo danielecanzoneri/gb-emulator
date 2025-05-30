@@ -1,24 +1,28 @@
 package client
 
 import (
-	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/pkg/protocol"
+	"log"
 )
 
-func (c *Client) Step() error {
-	return c.sendCommand(protocol.MessageTypeStep, nil)
+func (c *Client) Step() {
+	c.sendCommand(protocol.MessageTypeStep, nil)
 }
 
-func (c *Client) Continue() error {
-	return c.sendCommand(protocol.MessageTypeContinue, nil)
+func (c *Client) Resume() {
+	c.sendCommand(protocol.MessageTypeResume, nil)
 }
 
-func (c *Client) Pause() error {
-	return c.sendCommand(protocol.MessageTypePause, nil)
+func (c *Client) Continue() {
+	c.sendCommand(protocol.MessageTypeContinue, nil)
 }
 
-func (c *Client) ToggleBreakpoint(address uint16, state bool) error {
-	return c.sendCommand(
+func (c *Client) Pause() {
+	c.sendCommand(protocol.MessageTypePause, nil)
+}
+
+func (c *Client) Breakpoint(address uint16, state bool) {
+	c.sendCommand(
 		protocol.MessageTypeBreakpoint,
 		map[string]any{
 			"address": address,
@@ -27,9 +31,10 @@ func (c *Client) ToggleBreakpoint(address uint16, state bool) error {
 	)
 }
 
-func (c *Client) sendCommand(cmdType protocol.MessageType, data map[string]any) error {
+func (c *Client) sendCommand(cmdType protocol.MessageType, data map[string]any) {
 	if !c.connected {
-		return fmt.Errorf("not connected to debug server")
+		log.Println("[WARN] not connected to debug server")
+		return
 	}
 
 	cmd := protocol.Message{
@@ -37,5 +42,7 @@ func (c *Client) sendCommand(cmdType protocol.MessageType, data map[string]any) 
 		Payload: data,
 	}
 
-	return c.conn.WriteJSON(cmd)
+	if err := c.conn.WriteJSON(cmd); err != nil {
+		log.Println("[WARN] failed to send command:", err)
+	}
 }
