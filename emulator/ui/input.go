@@ -3,13 +3,22 @@ package ui
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"log"
 )
 
-func (ui *ui) handleInput() {
+func (ui *UI) handleInput() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		if err := ui.startDebugger(); err != nil {
+			log.Println("Could not start debugger:", err)
+		} else {
+			log.Println("Debugger started")
+		}
+	}
+
 	ui.handleAudioToggle()
 }
 
-func (ui *ui) handleAudioToggle() {
+func (ui *UI) handleAudioToggle() {
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		ui.gameBoy.APU.Ch1Enabled = !ui.gameBoy.APU.Ch1Enabled
 		debugString := "Channel 1 "

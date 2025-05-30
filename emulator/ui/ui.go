@@ -4,15 +4,10 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
+	"os/exec"
 )
 
-type UI interface {
-	ebiten.Game
-
-	Load(string) error
-}
-
-type ui struct {
+type UI struct {
 	gameBoy   *gameboy.GameBoy
 	gameTitle string
 
@@ -22,10 +17,17 @@ type ui struct {
 
 	debugString      string
 	debugStringTimer uint
+
+	// Debugger
+	debuggerCmd *exec.Cmd
+
+	DebugState *DebuggerState
 }
 
-func New() (UI, error) {
-	ui := &ui{}
+func New() (*UI, error) {
+	ui := &UI{
+		DebugState: NewDebuggerState(),
+	}
 
 	// Create audio buffer
 	ui.audioBuffer = make(chan float32, bufferSize)
@@ -57,7 +59,7 @@ func New() (UI, error) {
 	return ui, nil
 }
 
-func (ui *ui) Load(romPath string) error {
+func (ui *UI) Load(romPath string) error {
 	// Load the ROM
 	gameTitle, err := ui.gameBoy.Load(romPath)
 	if err != nil {

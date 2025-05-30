@@ -1,11 +1,10 @@
 package ui
 
 import (
-	"image/color"
-
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"image/color"
 )
 
 const (
@@ -34,11 +33,17 @@ func initRenderer() {
 
 // Inherit Ebiten Game interface
 
-func (ui *ui) Update() error {
+func (ui *UI) Update() error {
 	// Start audio player the first time
 	if !ui.audioPlayer.IsPlaying() {
 		ui.audioPlayer.Play()
 	}
+
+	titleSuffix := ""
+	if ui.DebugState.active {
+		titleSuffix = " (debugging)"
+	}
+	ebiten.SetWindowTitle(ui.gameTitle + titleSuffix)
 
 	ui.handleInput()
 
@@ -46,7 +51,7 @@ func (ui *ui) Update() error {
 	return nil
 }
 
-func (ui *ui) Draw(screen *ebiten.Image) {
+func (ui *UI) Draw(screen *ebiten.Image) {
 	// Background color
 	screen.Fill(color.RGBA{R: 40, G: 40, B: 40, A: 220})
 
@@ -70,7 +75,7 @@ func (ui *ui) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (ui *ui) Layout(_, _ int) (int, int) {
+func (ui *UI) Layout(_, _ int) (int, int) {
 	// Adjust the layout based on whether the debugger is visible
 	return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight
 }

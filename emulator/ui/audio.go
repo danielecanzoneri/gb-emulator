@@ -46,7 +46,7 @@ func newAudioPlayer(r io.Reader) (*oto.Player, error) {
 }
 
 // Implements io.Reader interface for audio playback
-func (ui *ui) Read(buf []byte) (n int, err error) {
+func (ui *UI) Read(buf []byte) (n int, err error) {
 	bufferPosition := 0
 
 	for bufferPosition < len(buf) {
@@ -61,8 +61,26 @@ func (ui *ui) Read(buf []byte) (n int, err error) {
 			bufferPosition += 4
 
 		default:
+			// If paused, return silence
+			if ui.DebugState.paused {
+				if ui.DebugState.step {
+					ui.DebugState.step = false
+					ui.gameBoy.CPU.ExecuteInstruction()
+				}
+
+				binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(0))
+				bufferPosition += 4
+				continue
+			}
+
 			ui.gameBoy.Joypad.DetectKeysPressed()
 			ui.gameBoy.CPU.ExecuteInstruction()
+
+			// Check breakpoint
+			pc := ui.gameBoy.CPU.ReadPC()
+			if _, ok := ui.DebugState.breakpoints[pc]; ok {
+				ui.DebugState.Pause()
+			}
 		}
 	}
 	_, _ = AudioFile.Write(buf[:bufferPosition])
