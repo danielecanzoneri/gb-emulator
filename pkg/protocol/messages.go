@@ -1,0 +1,24 @@
+package protocol
+
+// Message represents a generic message between emulator and debugger
+type Message struct {
+	Type    MessageType    `json:"type"`
+	Payload map[string]any `json:"payload,omitempty"`
+}
+
+type MessageType string
+
+// Debugger to emulator
+const (
+	MessageTypePause      MessageType = "pause"
+	MessageTypeStep       MessageType = "step"
+	MessageTypeContinue   MessageType = "continue"
+	MessageTypeBreakpoint MessageType = "breakpoint"
+)
+
+// Emulator to debugger
+const (
+	MessageTypeMemory    MessageType = "memory"
+	MessageTypeRegisters MessageType = "registers"
+	MessageTypeControl   MessageType = "control"
+)

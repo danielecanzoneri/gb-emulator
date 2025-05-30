@@ -1,15 +1,15 @@
 package main
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/server"
+	"log"
+
 	"github.com/danielecanzoneri/gb-emulator/emulator/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/sqweek/dialog"
-	"log"
 )
 
 func main() {
-	// TODO: Init WebSocket server
-
 	romPath, err := dialog.File().
 		Filter("Game Boy ROMs", "gb", "bin").
 		Title("Choose a GameBoy ROM").
@@ -33,6 +33,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Create and start debugging server
+	debugServer := server.New(gui.DebugState)
+	debugServer.Start("8080")
+	defer debugServer.Close()
 
 	// Start the game loop
 	if err := ebiten.RunGame(gui); err != nil {
