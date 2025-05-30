@@ -2,7 +2,11 @@ module github.com/danielecanzoneri/gb-emulator/debugger
 
 go 1.24.2
 
-require fyne.io/fyne/v2 v2.6.1
+require (
+	fyne.io/fyne/v2 v2.6.1
+	github.com/danielecanzoneri/gb-emulator/pkg v0.0.0-00010101000000-000000000000
+	github.com/gorilla/websocket v1.5.3
+)
 
 require (
 	fyne.io/systray v1.11.0 // indirect
@@ -38,3 +42,5 @@ require (
 	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/danielecanzoneri/gb-emulator/pkg => ../pkg
