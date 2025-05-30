@@ -19,7 +19,5 @@ const (
 
 // Emulator to debugger
 const (
-	MessageTypeMemory    MessageType = "memory"
-	MessageTypeRegisters MessageType = "registers"
-	MessageTypeControl   MessageType = "control"
+	MessageTypeState MessageType = "state"
 )

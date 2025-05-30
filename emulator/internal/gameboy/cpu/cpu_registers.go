@@ -91,7 +91,7 @@ func (cpu *CPU) ReadSP() uint16 {
 func (cpu *CPU) ReadPC() uint16 {
 	return cpu.PC
 }
-func (cpu *CPU) InterruptEnabled() bool {
+func (cpu *CPU) InterruptsEnabled() bool {
 	return cpu.IME
 }
 

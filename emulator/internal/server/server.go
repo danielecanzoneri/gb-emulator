@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/debugger"
 	"github.com/danielecanzoneri/gb-emulator/pkg/protocol"
 	"github.com/gorilla/websocket"
 	"log"
@@ -15,12 +15,12 @@ var upgrader = websocket.Upgrader{
 }
 
 type Server struct {
-	debugger debug.Debugger
+	debugger *debugger.Debugger
 
 	client *websocket.Conn // The debugging client
 }
 
-func New(debugger debug.Debugger) *Server {
+func New(debugger *debugger.Debugger) *Server {
 	return &Server{
 		debugger: debugger,
 	}
@@ -54,7 +54,8 @@ func (s *Server) handleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	s.client = conn
 
-	// TODO - Send state
+	// Send current state to the client
+	s.sendState()
 
 	go s.clientHandler(conn)
 }

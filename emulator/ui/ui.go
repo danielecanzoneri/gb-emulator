@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/debugger"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -21,18 +22,19 @@ type UI struct {
 	// Debugger
 	debuggerCmd *exec.Cmd
 
-	DebugState *DebuggerState
+	DebugState *debugger.Debugger
 }
 
 func New() (*UI, error) {
-	ui := &UI{
-		DebugState: NewDebuggerState(),
-	}
+	ui := new(UI)
 
 	// Create audio buffer
 	ui.audioBuffer = make(chan float32, bufferSize)
 	gb := gameboy.New(ui.audioBuffer, sampleRate)
 	ui.gameBoy = gb
+
+	// Debugger
+	ui.DebugState = debugger.NewDebugger(gb.CPU, gb.Memory)
 
 	// Create audio player
 	player, err := newAudioPlayer(ui)

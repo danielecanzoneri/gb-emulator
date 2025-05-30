@@ -40,7 +40,7 @@ func (ui *UI) Update() error {
 	}
 
 	titleSuffix := ""
-	if ui.DebugState.active {
+	if ui.DebugState.IsActive() {
 		titleSuffix = " (debugging)"
 	}
 	ebiten.SetWindowTitle(ui.gameTitle + titleSuffix)

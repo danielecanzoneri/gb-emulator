@@ -62,9 +62,9 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 
 		default:
 			// If paused, return silence
-			if ui.DebugState.paused {
-				if ui.DebugState.step {
-					ui.DebugState.step = false
+			if ui.DebugState.Paused() {
+				if ui.DebugState.IsStepping() {
+					ui.DebugState.Stepped()
 					ui.gameBoy.CPU.ExecuteInstruction()
 				}
 
@@ -78,7 +78,7 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 
 			// Check breakpoint
 			pc := ui.gameBoy.CPU.ReadPC()
-			if _, ok := ui.DebugState.breakpoints[pc]; ok {
+			if ui.DebugState.IsBreakpoint(pc) {
 				ui.DebugState.Pause()
 			}
 		}
