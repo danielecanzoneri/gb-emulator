@@ -10,19 +10,22 @@ type Debugger struct {
 	active bool
 
 	paused      bool
-	step        bool
 	breakpoints map[uint16]struct{}
 
 	// Game boy memory and register
 	cpu debug.CPUDebugger
 	mem debug.MemoryDebugger
+
+	// Function to execute on step
+	onStep func()
 }
 
-func NewDebugger(cpu debug.CPUDebugger, mem debug.MemoryDebugger) *Debugger {
+func NewDebugger(cpu debug.CPUDebugger, mem debug.MemoryDebugger, onStep func()) *Debugger {
 	return &Debugger{
 		breakpoints: make(map[uint16]struct{}),
 		cpu:         cpu,
 		mem:         mem,
+		onStep:      onStep,
 	}
 }
 
@@ -44,20 +47,11 @@ func (debugger *Debugger) Paused() bool {
 func (debugger *Debugger) Resume() {
 	debugger.active = false
 	debugger.paused = false
-	debugger.step = false
 }
 
 func (debugger *Debugger) Step() {
 	log.Println("Stepping...")
-	debugger.step = true
-}
-
-func (debugger *Debugger) Stepped() {
-	debugger.step = false
-}
-
-func (debugger *Debugger) IsStepping() bool {
-	return debugger.step
+	debugger.onStep()
 }
 
 func (debugger *Debugger) Continue() {

@@ -4,6 +4,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/danielecanzoneri/gb-emulator/debugger/internal/client"
 	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 )
@@ -38,12 +40,23 @@ func New(debugger *client.Client) *UI {
 	// Create the register viewer
 	ui.registersViewer = newRegisterViewer()
 
-	// Create a split container with the disassembler on the left (40% of space)
-	// and the register/memory viewers on the right (60% of space)
+	// Debug buttons
+	stepButton := widget.NewButtonWithIcon(
+		"Step",
+		theme.Icon(theme.IconNameNavigateNext),
+		func() {
+			ui.debugger.Step()
+		},
+	)
+	buttons := container.NewHBox(stepButton)
+
+	// Create a container with the disassembler on the left
+	// and the register/memory viewers on the right
 	split := container.NewHBox(
 		ui.disassembler,
 		container.NewVBox(
 			ui.registersViewer,
+			buttons,
 			ui.memoryViewer,
 		),
 	)

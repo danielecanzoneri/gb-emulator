@@ -12,6 +12,7 @@ func (s *Server) handleCommand(cmd protocol.Message) {
 		s.sendState()
 	case protocol.MessageTypeStep:
 		s.debugger.Step()
+		s.sendState()
 	case protocol.MessageTypeContinue:
 		s.debugger.Continue()
 	case protocol.MessageTypeBreakpoint:

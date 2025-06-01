@@ -34,7 +34,10 @@ func New() (*UI, error) {
 	ui.gameBoy = gb
 
 	// Debugger
-	ui.DebugState = debugger.NewDebugger(gb.CPU, gb.Memory)
+	ui.DebugState = debugger.NewDebugger(
+		gb.CPU, gb.Memory,
+		ui.gameBoy.CPU.ExecuteInstruction,
+	)
 
 	// Create audio player
 	player, err := newAudioPlayer(ui)
