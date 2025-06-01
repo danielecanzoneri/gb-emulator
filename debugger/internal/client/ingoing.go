@@ -1,16 +1,28 @@
 package client
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/danielecanzoneri/gb-emulator/pkg/protocol"
 	"log"
 )
 
-func (c *Client) handleMessage(msg protocol.Message) {
+func (c *Client) handleMessage(message []byte) {
+	var msg protocol.Message
+	if err := json.Unmarshal(message, &msg); err != nil {
+		log.Printf("Error parsing message: %v\n", err)
+		return
+	}
+
 	switch msg.Type {
 	case protocol.MessageTypeState:
-		state := msg.Payload
-		fmt.Println(state)
+		var stateMsg protocol.StateMessage
+		if err := json.Unmarshal(message, &stateMsg); err != nil {
+			log.Printf("Error parsing state message: %v\n", err)
+		}
+		state := stateMsg.Payload
+
+		// Consume emulator state
+		c.StateConsumer(&state)
 	default:
 		log.Println("[WARN] unknown message type:", msg.Type)
 	}

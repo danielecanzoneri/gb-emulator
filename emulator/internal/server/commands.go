@@ -9,6 +9,7 @@ func (s *Server) handleCommand(cmd protocol.Message) {
 	switch cmd.Type {
 	case protocol.MessageTypePause:
 		s.debugger.Pause()
+		s.sendState()
 	case protocol.MessageTypeStep:
 		s.debugger.Step()
 	case protocol.MessageTypeContinue:
@@ -23,9 +24,9 @@ func (s *Server) handleCommand(cmd protocol.Message) {
 
 func (s *Server) sendState() {
 	state := s.debugger.GetState()
-	message := protocol.Message{
+	message := protocol.StateMessage{
 		Type:    protocol.MessageTypeState,
-		Payload: state.GetMap(),
+		Payload: *state,
 	}
 
 	if err := s.client.WriteJSON(message); err != nil {

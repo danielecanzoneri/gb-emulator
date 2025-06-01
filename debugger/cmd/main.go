@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 	"log"
 
 	"github.com/danielecanzoneri/gb-emulator/debugger/internal/client"
@@ -10,12 +11,13 @@ import (
 func main() {
 	debuggerClient := client.New("localhost", 8080)
 
+	gui := ui.New(debuggerClient)
+	debuggerClient.StateConsumer = func(s *debug.GameBoyState) { gui.Update(s) }
+
 	// Connect to the emulator
 	if err := debuggerClient.Connect(); err != nil {
 		log.Printf("Failed to connect to emulator: %v\n", err)
 	}
-
-	gui := ui.New(debuggerClient)
 	gui.Run()
 
 	// When the app is closed, disconnect from the emulator

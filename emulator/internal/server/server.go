@@ -54,9 +54,6 @@ func (s *Server) handleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	s.client = conn
 
-	// Send current state to the client
-	s.sendState()
-
 	go s.clientHandler(conn)
 }
 

@@ -1,17 +1,20 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/pkg/protocol"
-	"github.com/gorilla/websocket"
+	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 	"log"
+
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
 	conn      *websocket.Conn
 	serverURL string
 	connected bool
+
+	// Function that will consume incoming state update from emulator
+	StateConsumer func(*debug.GameBoyState)
 }
 
 func New(host string, port int) *Client {
@@ -67,12 +70,6 @@ func (c *Client) listen() {
 			break
 		}
 
-		var msg protocol.Message
-		if err := json.Unmarshal(message, &msg); err != nil {
-			log.Printf("Error parsing message: %v\n", err)
-			continue
-		}
-
-		c.handleMessage(msg)
+		c.handleMessage(message)
 	}
 }

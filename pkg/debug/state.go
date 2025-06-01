@@ -10,16 +10,3 @@ type GameBoyState struct {
 	SP     uint16         `json:"SP"`
 	IME    bool           `json:"IME"`
 }
-
-func (state *GameBoyState) GetMap() map[string]any {
-	return map[string]any{
-		"memory": state.Memory,
-		"AF":     state.AF,
-		"BC":     state.BC,
-		"DE":     state.DE,
-		"HL":     state.HL,
-		"PC":     state.PC,
-		"SP":     state.SP,
-		"IME":    state.IME,
-	}
-}
