@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -23,16 +24,17 @@ type disassemblyEntry struct {
 	widget.BaseWidget
 
 	address      uint16
-	text         string
+	name         string
+	bytes        []uint8
 	isBreakpoint bool
 
 	onTapped func(uint16)
 }
 
-func newDisassemblyEntry(address uint16, text string) *disassemblyEntry {
+func newDisassemblyEntry(address uint16, name string) *disassemblyEntry {
 	entry := &disassemblyEntry{
 		address: address,
-		text:    text,
+		name:    name,
 	}
 	entry.ExtendBaseWidget(entry)
 	return entry
@@ -111,7 +113,7 @@ func (r *disassemblyEntryRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (r *disassemblyEntryRenderer) Refresh() {
-	// Update circle visibility and background colorsbased on breakpoint status
+	// Update circle visibility and background colors based on breakpoint status
 	if r.entry.isBreakpoint {
 		r.background.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 64}
 		r.circle.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
@@ -122,12 +124,24 @@ func (r *disassemblyEntryRenderer) Refresh() {
 	r.background.Refresh()
 	r.circle.Refresh()
 
-	r.text.Text = r.entry.text
+	// Format the bytes part
+	bytesStr := ""
+	for _, b := range r.entry.bytes {
+		bytesStr += fmt.Sprintf("%02X ", b)
+	}
+
+	// Add padding to align the instruction name
+	for len(bytesStr) < 9 { // 3 chars per byte, up to 3 bytes
+		bytesStr += "   "
+	}
+	r.text.Text = fmt.Sprintf("%04X: %s  %s", r.entry.address, bytesStr, r.entry.name)
 	r.text.Refresh()
 }
 
 type disassembler struct {
 	widget.List
+
+	length  int
 	entries []*disassemblyEntry
 }
 
@@ -147,7 +161,7 @@ func newDisassembler() *disassembler {
 
 	dl.List = widget.List{
 		Length: func() int {
-			return len(dl.entries)
+			return dl.length
 		},
 		CreateItem: func() fyne.CanvasObject {
 			return newDisassemblyEntry(0, "")
@@ -157,12 +171,32 @@ func newDisassembler() *disassembler {
 			currentEntry := item.(*disassemblyEntry)
 
 			currentEntry.address = entry.address
-			currentEntry.text = entry.text
+			currentEntry.name = entry.name
 			currentEntry.isBreakpoint = entry.isBreakpoint
+			currentEntry.bytes = entry.bytes
 			currentEntry.onTapped = entry.onTapped
 			currentEntry.Refresh()
 		},
 	}
 
 	return dl
+}
+
+// Update scans through memory and marks which addresses contain
+// executable code vs data bytes that are part of multibyte instructions.
+// This is used to properly display the disassembly view.
+func (dl *disassembler) Update(state *debug.GameBoyState) {
+	counter := 0
+
+	for addr := 0; addr < 0x10000; {
+		name, length, bytes := getOpcodeInfo(state, uint16(addr))
+		dl.entries[counter].name = name
+		dl.entries[counter].address = uint16(addr)
+		dl.entries[counter].bytes = bytes
+		counter++
+
+		addr += length
+	}
+
+	dl.length = counter
 }

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -35,7 +36,7 @@ func (r *memoryRow) CreateRenderer() fyne.WidgetRenderer {
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
 	// Text placeholder
-	text := canvas.NewText("0000  00 00 00 00 00 00 00 00|00 00 00 00 00 00 00 00", th.Color(theme.ColorNameForeground, v))
+	text := canvas.NewText("0000  00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00", th.Color(theme.ColorNameForeground, v))
 	text.TextStyle = fyne.TextStyle{Monospace: true}
 	background := canvas.NewRectangle(th.Color(theme.ColorNameBackground, v))
 
@@ -71,7 +72,7 @@ func (r *memoryRowRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (r *memoryRowRenderer) Refresh() {
-	r.text.Text = fmt.Sprintf("%04X  %02X %02X %02X %02X %02X %02X %02X %02X|%02X %02X %02X %02X %02X %02X %02X %02X",
+	r.text.Text = fmt.Sprintf("%04X  %02X %02X %02X %02X %02X %02X %02X %02X | %02X %02X %02X %02X %02X %02X %02X %02X",
 		r.entry.baseAddress,
 		r.entry.data[0], r.entry.data[1], r.entry.data[2], r.entry.data[3],
 		r.entry.data[4], r.entry.data[5], r.entry.data[6], r.entry.data[7],
@@ -81,7 +82,10 @@ func (r *memoryRowRenderer) Refresh() {
 }
 
 type memoryViewer struct {
-	widget.List
+	widget.BaseWidget
+
+	list *widget.List
+
 	rows    int
 	entries []*memoryRow
 }
@@ -91,6 +95,7 @@ func newMemoryViewer() *memoryViewer {
 		rows:    0x10000 / 16,
 		entries: make([]*memoryRow, 0x10000/16),
 	}
+	mv.ExtendBaseWidget(mv)
 
 	// Initialize the list with dummy data
 	for i := range mv.rows {
@@ -98,7 +103,7 @@ func newMemoryViewer() *memoryViewer {
 	}
 	mv.entries[1].data[0] = 0x12
 
-	mv.List = widget.List{
+	mv.list = &widget.List{
 		Length: func() int {
 			return len(mv.entries)
 		},
@@ -118,6 +123,10 @@ func newMemoryViewer() *memoryViewer {
 	return mv
 }
 
+func (mv *memoryViewer) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(mv.list)
+}
+
 // MinSize returns the minimum size for the memory viewer widget.
 // It calculates this by taking the minimum size of a single row and
 // multiplying the height by 16 to show a reasonable number of rows.
@@ -126,4 +135,10 @@ func (mv *memoryViewer) MinSize() fyne.Size {
 	height := baseSize.Height * 16
 
 	return fyne.NewSize(baseSize.Width, height)
+}
+
+func (mv *memoryViewer) Update(state *debug.GameBoyState) {
+	for i, entry := range mv.entries {
+		copy(entry.data[:], state.Memory[i*16:])
+	}
 }
