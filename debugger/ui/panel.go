@@ -1,206 +1,89 @@
 package ui
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	panelRowTextPadding = 2
+	panelTitleMargin    = 1
+	panelBorderPadding  = 4
+	panelColumnsPadding = 8
 )
 
-type panelRowTitle interface {
-	Title() string
-	Display() bool
+type panelRenderer struct {
+	title       *canvas.Text
+	titleColumn fyne.CanvasObject
+	valueColumn fyne.CanvasObject
 }
 
-type panelRowValue interface {
-	Value() string
+func (p panelRenderer) Destroy() {
 }
 
-type namedAddress struct {
-	addr uint16
-	name string
+func (p panelRenderer) Layout(_ fyne.Size) {
+	titleW, titleH := p.title.MinSize().Components()
+	c1W, c1H := p.titleColumn.MinSize().Components()
+	c2W, c2H := p.valueColumn.MinSize().Components()
+
+	// Add padding on the left and on top of title
+	p.title.Resize(fyne.NewSize(titleW, titleH))
+	p.title.Move(fyne.NewPos(panelBorderPadding, panelBorderPadding))
+
+	// Position columns with padding from title
+	p.titleColumn.Resize(fyne.NewSize(c1W, c1H))
+	p.titleColumn.Move(fyne.NewPos(panelBorderPadding, panelBorderPadding+titleH+panelTitleMargin))
+	p.valueColumn.Resize(fyne.NewSize(c2W, c2H))
+	p.valueColumn.Move(fyne.NewPos(panelBorderPadding+c1W+panelColumnsPadding, panelBorderPadding+titleH+panelTitleMargin))
 }
 
-func (r *namedAddress) Title() string {
-	return fmt.Sprintf("%04X %s", r.addr, r.name)
+func (p panelRenderer) MinSize() fyne.Size {
+	c1Size := p.titleColumn.MinSize()
+	c2Size := p.valueColumn.MinSize()
+	columnsHeight := max(c1Size.Height, c2Size.Height)
+	columnsWidth := c1Size.Width + c2Size.Width + panelColumnsPadding
+
+	titleSize := p.title.Size()
+	return fyne.NewSize(
+		max(titleSize.Width, columnsWidth)+2*panelBorderPadding,
+		titleSize.Height+panelTitleMargin+columnsHeight+2*panelBorderPadding,
+	)
 }
 
-func (r *namedAddress) Display() bool {
-	return true
+func (p panelRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{p.title, p.valueColumn, p.titleColumn}
 }
 
-type register struct {
-	name string
+func (p panelRenderer) Refresh() {
+	p.title.Refresh()
+	p.titleColumn.Refresh()
+	p.valueColumn.Refresh()
 }
 
-func (r *register) Title() string {
-	return r.name
-}
-
-func (r *register) Display() bool {
-	return true
-}
-
-type unnamedRegister struct {
-}
-
-func (r *unnamedRegister) Title() string {
-	return ""
-}
-
-func (r *unnamedRegister) Display() bool {
-	return false
-}
-
-type uint8Value struct {
-	value uint8
-}
-
-func (v *uint8Value) Value() string {
-	return fmt.Sprintf("%02X", v.value)
-}
-
-type uint16Value struct {
-	value uint16
-}
-
-func (v *uint16Value) Value() string {
-	return fmt.Sprintf("%04X", v.value)
-}
-
-type flagValue struct {
-	value bool
-}
-
-func (v *flagValue) Value() string {
-	if v.value {
-		return "enabled"
-	}
-	return "disabled"
-}
-
-type arrayValue struct {
-	values [16]uint8
-}
-
-func (v *arrayValue) Value() string {
-	return fmt.Sprintf("%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-		v.values[0], v.values[1], v.values[2], v.values[3], v.values[4], v.values[5], v.values[6], v.values[7],
-		v.values[8], v.values[9], v.values[10], v.values[11], v.values[12], v.values[13], v.values[14], v.values[15])
-}
-
-type panelRow struct {
-	title panelRowTitle
-	value panelRowValue
-}
-
-func newPanelRow(title panelRowTitle, value panelRowValue) *panelRow {
-	return &panelRow{
-		title: title,
-		value: value,
-	}
-}
-
-func (r *panelRow) Title() string {
-	return r.title.Title()
-}
-
-func (r *panelRow) Value() string {
-	return r.value.Value()
-}
-
-type panel struct {
-	widget.BaseWidget
-
-	title string
-	rows  []*panelRow
-}
-
-func newPanel(title string) *panel {
-	p := &panel{
-		title: title,
-		rows:  make([]*panelRow, 0),
-	}
-	p.ExtendBaseWidget(p)
-	return p
-}
-
-func (p *panel) AddRow(title panelRowTitle, value panelRowValue) {
-	// Add the new row
-	newRow := newPanelRow(title, value)
-	p.rows = append(p.rows, newRow)
-}
-
-func (p *panel) CreateRenderer() fyne.WidgetRenderer {
-	th := p.Theme()
+func newPanelRenderer(th fyne.Theme, title string, names []string, data []binding.String) fyne.WidgetRenderer {
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
 	// Panel title
-	title := canvas.NewText(p.title, th.Color(theme.ColorYellow, v))
-	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 12
+	titleText := canvas.NewText(title, th.Color(theme.ColorYellow, v))
+	titleText.TextStyle = fyne.TextStyle{Bold: true}
+	titleText.TextSize = 12
 
 	// Create two vertical containers, one for titles and one for values
-	titles := make([]fyne.CanvasObject, len(p.rows))
-	values := make([]fyne.CanvasObject, len(p.rows))
-	for i, row := range p.rows {
-		titles[i] = widget.NewLabel(row.Title())
-		values[i] = widget.NewLabel(row.Value())
+	titles := make([]fyne.CanvasObject, len(names))
+	for i, name := range names {
+		titles[i] = widget.NewLabel(name + " ")
+	}
+	values := make([]fyne.CanvasObject, len(data))
+	for i, d := range data {
+		values[i] = widget.NewLabelWithData(d)
 	}
 
-	c := container.NewBorder(
-		title,
-		nil,
-		container.NewVBox(titles...),
-		container.NewVBox(values...),
-	)
-	return widget.NewSimpleRenderer(c)
-}
-
-type panelOnlyValue struct {
-	widget.BaseWidget
-
-	title string
-	rows  []panelRowValue
-}
-
-func newPanelOnlyValue(title string) *panelOnlyValue {
-	p := &panelOnlyValue{
-		title: title,
-		rows:  make([]panelRowValue, 0),
+	return &panelRenderer{
+		title:       titleText,
+		titleColumn: container.NewVBox(titles...),
+		valueColumn: container.NewVBox(values...),
 	}
-	p.ExtendBaseWidget(p)
-	return p
-}
-
-func (p *panelOnlyValue) AddRow(value panelRowValue) {
-	// Add the new row
-	p.rows = append(p.rows, value)
-}
-
-func (p *panelOnlyValue) CreateRenderer() fyne.WidgetRenderer {
-	th := p.Theme()
-	v := fyne.CurrentApp().Settings().ThemeVariant()
-
-	// Panel title
-	title := canvas.NewText(p.title, th.Color(theme.ColorYellow, v))
-	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 12
-
-	// Create a vertical container for the rows
-	items := make([]fyne.CanvasObject, len(p.rows)+1)
-	items[0] = title
-	for i, row := range p.rows {
-		items[i+1] = widget.NewLabel(row.Value())
-	}
-
-	vBox := container.NewVBox(items...)
-	return widget.NewSimpleRenderer(vBox)
 }

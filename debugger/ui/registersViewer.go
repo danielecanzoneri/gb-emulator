@@ -556,16 +556,20 @@ func (p *waveRamPanel) CreateRenderer() fyne.WidgetRenderer {
 	title.TextSize = 12
 
 	// Create two vertical containers, one for titles and one for values
-	waveRamString := binding.NewSprintf("%02X %02X %02X %02X %02X %02X %02X %02X  %02X %02X %02X %02X %02X %02X %02X %02X",
+	waveRamString07 := binding.NewSprintf("%02X %02X %02X %02X %02X %02X %02X %02X",
 		p.values[0], p.values[1], p.values[2], p.values[3],
 		p.values[4], p.values[5], p.values[6], p.values[7],
+	)
+	waveRamString8F := binding.NewSprintf("%02X %02X %02X %02X %02X %02X %02X %02X",
 		p.values[8], p.values[9], p.values[10], p.values[11],
 		p.values[12], p.values[13], p.values[14], p.values[15],
 	)
-	label := widget.NewLabelWithData(waveRamString)
 
-	c := container.NewVBox(title, label)
-	return widget.NewSimpleRenderer(c)
+	return &panelRenderer{
+		title:       title,
+		titleColumn: widget.NewLabelWithData(waveRamString07),
+		valueColumn: widget.NewLabelWithData(waveRamString8F),
+	}
 }
 
 type timerPanel struct {
@@ -615,31 +619,4 @@ func (p *timerPanel) CreateRenderer() fyne.WidgetRenderer {
 		"Timer",
 		titles, values,
 	)
-}
-
-func newPanelRenderer(th fyne.Theme, title string, names []string, data []binding.String) fyne.WidgetRenderer {
-	v := fyne.CurrentApp().Settings().ThemeVariant()
-
-	// Panel title
-	titleText := canvas.NewText(title, th.Color(theme.ColorYellow, v))
-	titleText.TextStyle = fyne.TextStyle{Bold: true}
-	titleText.TextSize = 12
-
-	// Create two vertical containers, one for titles and one for values
-	titles := make([]fyne.CanvasObject, len(names))
-	for i, name := range names {
-		titles[i] = widget.NewLabel(name + " ")
-	}
-	values := make([]fyne.CanvasObject, len(data))
-	for i, d := range data {
-		values[i] = widget.NewLabelWithData(d)
-	}
-
-	c := container.NewBorder(
-		titleText,
-		nil,
-		container.NewVBox(titles...),
-		container.NewVBox(values...),
-	)
-	return widget.NewSimpleRenderer(c)
 }

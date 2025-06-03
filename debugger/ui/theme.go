@@ -28,9 +28,10 @@ func (m *gameBoyTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 }
 
 func (m *gameBoyTheme) Size(name fyne.ThemeSizeName) float32 {
-	if name == theme.SizeNamePadding {
+	switch name {
+	case theme.SizeNamePadding, theme.SizeNameInnerPadding:
 		return 0
+	default:
+		return theme.DefaultTheme().Size(name)
 	}
-
-	return theme.DefaultTheme().Size(name)
 }
