@@ -68,6 +68,8 @@ func New(debugger *client.Client) *UI {
 }
 
 func (ui *UI) Update(state *debug.GameBoyState) {
+	ui.disassembler.Update(state)
+	ui.memoryViewer.Update(state)
 	ui.registersViewer.Update(state)
 }
 
