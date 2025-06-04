@@ -139,7 +139,9 @@ func (r *disassemblyEntryRenderer) Refresh() {
 }
 
 type disassembler struct {
-	widget.List
+	widget.BaseWidget
+
+	list *widget.List
 
 	length  int
 	entries []*disassemblyEntry
@@ -149,6 +151,7 @@ func newDisassembler() *disassembler {
 	dl := &disassembler{
 		entries: make([]*disassemblyEntry, 0x10000),
 	}
+	dl.ExtendBaseWidget(dl)
 
 	// Initialize the list with dummy data
 	for i := range 0x10000 {
@@ -159,7 +162,7 @@ func newDisassembler() *disassembler {
 		}
 	}
 
-	dl.List = widget.List{
+	dl.list = &widget.List{
 		Length: func() int {
 			return dl.length
 		},
@@ -182,13 +185,22 @@ func newDisassembler() *disassembler {
 	return dl
 }
 
+func (dl *disassembler) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(dl.list)
+}
+
 // Update scans through memory and marks which addresses contain
 // executable code vs data bytes that are part of multibyte instructions.
 // This is used to properly display the disassembly view.
 func (dl *disassembler) Update(state *debug.GameBoyState) {
 	counter := 0
+	var scrollTo int
 
 	for addr := 0; addr < 0x10000; {
+		if uint16(addr) == state.PC {
+			scrollTo = counter
+		}
+
 		name, length, bytes := getOpcodeInfo(state, uint16(addr))
 		dl.entries[counter].name = name
 		dl.entries[counter].address = uint16(addr)
@@ -199,4 +211,10 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 	}
 
 	dl.length = counter
+
+	// Scroll to current PC
+	fyne.Do(func() {
+		dl.list.ScrollTo(scrollTo)
+		dl.Refresh()
+	})
 }
