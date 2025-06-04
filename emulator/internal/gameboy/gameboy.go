@@ -19,6 +19,9 @@ type GameBoy struct {
 	Joypad *joypad.Joypad
 	APU    *audio.APU
 
+	sampleRate float64
+	sampleBuff chan float32
+
 	cycles uint
 }
 
@@ -27,51 +30,34 @@ func (gb *GameBoy) Cycle() {
 }
 
 func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
-	p := ppu.New()
-	j := joypad.New()
-	a := audio.NewAPU(sampleRate, audioSampleBuffer)
-	t := &timer.Timer{APU: a}
-	m := &memory.MMU{Timer: t, PPU: p, Joypad: j, APU: a}
-	c := &cpu.CPU{Timer: t, MMU: m}
-	c.AddCycler(t, p, m, a)
-
-	// Set interrupt request for timer
-	t.RequestInterrupt = cpu.RequestTimerInterruptFunc(c)
-	// Set interrupt request for PPU
-	p.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(c)
-	p.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(c)
-
 	gb := &GameBoy{
-		CPU: c, Timer: t, PPU: p, Memory: m, Joypad: j,
-		APU: a,
+		sampleRate: sampleRate,
+		sampleBuff: audioSampleBuffer,
 	}
-	c.AddCycler(gb)
+	gb.Reset()
 
 	return gb
 }
 
 func (gb *GameBoy) Reset() {
-	gb.CPU.A = 0x01
-	gb.CPU.F = 0xB0
-	gb.CPU.B = 0x00
-	gb.CPU.C = 0x13
-	gb.CPU.D = 0x00
-	gb.CPU.E = 0xD8
-	gb.CPU.H = 0x01
-	gb.CPU.L = 0x4D
-	gb.CPU.SP = 0xFFFE
-	gb.CPU.PC = 0x0100
+	gb.PPU = ppu.New()
+	gb.Joypad = joypad.New()
+	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
+	gb.Timer = &timer.Timer{APU: gb.APU}
+	gb.Memory = &memory.MMU{Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
+	gb.CPU = &cpu.CPU{Timer: gb.Timer, MMU: gb.Memory}
+	gb.CPU.AddCycler(gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
-	// gb.Timer.DIV = 0x1E
-	gb.Timer.TAC = 0xF8
+	// Set interrupt request for timer
+	gb.Timer.RequestInterrupt = cpu.RequestTimerInterruptFunc(gb.CPU)
+	// Set interrupt request for PPU
+	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
+	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
 
-	gb.Memory.Write(0xFF0F, 0xE1) // IF
+	gb.CPU.AddCycler(gb)
 
-	gb.PPU.Write(0xFF40, 0x91) // LCDC
-	gb.PPU.Write(0xFF41, 0x81)
-	gb.PPU.Write(0xFF47, 0xFC) // BGP
-	gb.PPU.Write(0xFF48, 0x00) // OBP0
-	gb.PPU.Write(0xFF49, 0x00) // OBP1
+	gb.CPU.Reset()
+	gb.Memory.Reset()
 }
 
 func (gb *GameBoy) Load(romPath string) (string, error) {

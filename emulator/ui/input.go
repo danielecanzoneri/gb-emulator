@@ -15,6 +15,20 @@ func (ui *UI) handleInput() {
 		}
 	}
 
+	// Ctrl+L to load a new game
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) && ebiten.IsKeyPressed(ebiten.KeyControl) {
+		// Stop running
+		ui.DebugState.Pause()
+		ui.audioPlayer.Pause()
+
+		ui.gameBoy.Reset()
+		ui.LoadNewGame()
+
+		// Start running
+		ui.DebugState.Resume()
+		ui.audioPlayer.Play()
+	}
+
 	ui.handleAudioToggle()
 }
 

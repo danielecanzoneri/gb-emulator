@@ -34,6 +34,13 @@ type MMU struct {
 	dmaValue      uint8
 }
 
+func (mmu *MMU) Reset() {
+	mmu.Write(0xFF0F, 0xE1) // IF
+	mmu.Write(0xFF40, 0x91) // LCDC
+	mmu.Write(0xFF41, 0x81) // STAT
+	mmu.Write(0xFF47, 0xFC) // BGP
+}
+
 func (mmu *MMU) Cycle() {
 	if mmu.dmaTransfer {
 		addr := uint16(mmu.read(dmaAddress)) << 8

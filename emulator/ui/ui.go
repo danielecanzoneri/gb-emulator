@@ -5,6 +5,8 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/server"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/sqweek/dialog"
+	"log"
 	"os/exec"
 )
 
@@ -59,19 +61,28 @@ func New(s *server.Server) (*UI, error) {
 	screenWidth, screenHeight := ui.Layout(0, 0)
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 
-	// Initialize CPU
-	ui.gameBoy.Reset()
-
 	return ui, nil
 }
 
-func (ui *UI) Load(romPath string) error {
+func (ui *UI) LoadNewGame() {
+	romPath, err := dialog.File().
+		Filter("Game Boy ROMs", "gb", "bin").
+		Title("Choose a GameBoy ROM").
+		Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Check if the ROM path is provided
+	if romPath == "" {
+		log.Fatal("Error: ROM file path is required")
+	}
+
 	// Load the ROM
 	gameTitle, err := ui.gameBoy.Load(romPath)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	ui.gameTitle = gameTitle
-	return nil
 }

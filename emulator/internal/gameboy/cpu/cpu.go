@@ -42,6 +42,19 @@ type CPU struct {
 	steps   uint
 }
 
+func (cpu *CPU) Reset() {
+	cpu.A = 0x01
+	cpu.F = 0xB0
+	cpu.B = 0x00
+	cpu.C = 0x13
+	cpu.D = 0x00
+	cpu.E = 0xD8
+	cpu.H = 0x01
+	cpu.L = 0x4D
+	cpu.SP = 0xFFFE
+	cpu.PC = 0x0100
+}
+
 func (cpu *CPU) AddCycler(cyclers ...Cycler) {
 	for _, c := range cyclers {
 		cpu.cyclers = append(cpu.cyclers, c)
@@ -702,9 +715,4 @@ func (cpu *CPU) prefixedOpcode() {
 	case SET_7_R8_OPCODE:
 		cpu.SET_B3_R8(7, opcode)
 	}
-}
-
-func (cpu *CPU) String() string {
-	return fmt.Sprintf("A: %02X, F: %02X, B: %02X, C: %02X, D: %02X, E: %02X, H: %02X, L: %02X, SP: %04X, PC: %04X",
-		cpu.A, cpu.F, cpu.B, cpu.C, cpu.D, cpu.E, cpu.H, cpu.L, cpu.SP, cpu.PC)
 }
