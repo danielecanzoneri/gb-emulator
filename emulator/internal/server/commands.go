@@ -20,6 +20,9 @@ func (s *Server) handleCommand(cmd protocol.Message) {
 		addr := uint16(payload["address"].(float64))
 		set := payload["set"].(bool)
 		s.Breakpoint(addr, set)
+	case protocol.MessageTypeReset:
+		s.Reset()
+		s.sendState()
 	}
 }
 

@@ -56,6 +56,39 @@ type PPU struct {
 	RequestSTATInterrupt   func()
 }
 
+func (ppu *PPU) Reset() {
+	ppu.Mode = 0
+	ppu.Dots = 0
+	ppu.mode3ExtraDots = 0
+	ppu.vRAM.Data = [vRAMSize]uint8{}
+	ppu.OAM.Data = [OAMSize]uint8{}
+	ppu.objsLY = [objsLimit]*Object{}
+	ppu.numObjs = 0
+	ppu.Framebuffer = [FrameHeight][FrameWidth]uint8{}
+	ppu.LCDC = 0
+	ppu.STAT = 0
+	ppu.SCY = 0
+	ppu.SCX = 0
+	ppu.LY = 0
+	ppu.LYC = 0
+	ppu.BGP = 0
+	ppu.OBP0 = 0
+	ppu.OBP1 = 0
+	ppu.WY = 0
+	ppu.WX = 0
+	ppu.wyCounter = 0
+	ppu.active = false
+	ppu.windowTileMapAddr = 0
+	ppu.windowEnabled = false
+	ppu.bgWindowTileDataArea = 0
+	ppu.bgTileMapAddr = 0
+	ppu.obj8x16Size = false
+	ppu.objEnabled = false
+	ppu.bgWindowEnabled = false
+	ppu.lcdJustEnabled = false
+	ppu.STATInterruptState = false
+}
+
 const (
 	oamScan = 2
 	drawing = 3

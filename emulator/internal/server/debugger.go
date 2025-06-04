@@ -75,6 +75,11 @@ func (s *Server) BreakpointHit() {
 	s.sendState()
 }
 
+func (s *Server) Reset() {
+	log.Println("Resetting...")
+	s.OnReset()
+}
+
 func (s *Server) GetState() *debug.GameBoyState {
 	state := new(debug.GameBoyState)
 	for i := range 0x10000 {

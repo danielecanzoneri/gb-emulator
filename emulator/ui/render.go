@@ -34,11 +34,6 @@ func initRenderer() {
 // Inherit Ebiten Game interface
 
 func (ui *UI) Update() error {
-	// Start audio player the first time
-	if !ui.audioPlayer.IsPlaying() {
-		ui.audioPlayer.Play()
-	}
-
 	titleSuffix := ""
 	if ui.DebugState.IsActive() {
 		titleSuffix = " (debugging)"

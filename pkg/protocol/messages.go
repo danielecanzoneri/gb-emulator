@@ -22,6 +22,7 @@ const (
 	MessageTypeStep       MessageType = "step"
 	MessageTypeContinue   MessageType = "continue"
 	MessageTypeBreakpoint MessageType = "breakpoint"
+	MessageTypeReset      MessageType = "reset"
 )
 
 // Emulator to debugger

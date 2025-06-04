@@ -53,6 +53,14 @@ func (cpu *CPU) Reset() {
 	cpu.L = 0x4D
 	cpu.SP = 0xFFFE
 	cpu.PC = 0x0100
+
+	cpu.IME = false
+	cpu._EIDelayed = false
+	cpu.interruptMaskRequested = 0
+	cpu.writeIEHasCancelledInterrupt = false
+	cpu.interruptCancelled = false
+	cpu.halted = false
+	cpu.steps = 0
 }
 
 func (cpu *CPU) AddCycler(cyclers ...Cycler) {

@@ -35,10 +35,20 @@ type MMU struct {
 }
 
 func (mmu *MMU) Reset() {
+	mmu.Data = [Size]uint8{}
 	mmu.Write(0xFF0F, 0xE1) // IF
 	mmu.Write(0xFF40, 0x91) // LCDC
 	mmu.Write(0xFF41, 0x81) // STAT
 	mmu.Write(0xFF47, 0xFC) // BGP
+
+	mmu.dmaReg = 0
+	mmu.ifReg = 0
+	mmu.ieReg = 0
+	mmu.dmaStart = false
+	mmu.dmaWaitCycles = 0
+	mmu.dmaTransfer = false
+	mmu.dmaOffset = 0
+	mmu.dmaValue = 0
 }
 
 func (mmu *MMU) Cycle() {

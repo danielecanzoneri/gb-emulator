@@ -17,7 +17,8 @@ type Server struct {
 	debugger *Debugger
 
 	// Functions invoked by UI
-	OnStep func()
+	OnStep  func()
+	OnReset func()
 
 	client *websocket.Conn // The debugging client
 }

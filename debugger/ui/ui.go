@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/danielecanzoneri/gb-emulator/debugger/internal/client"
@@ -22,6 +23,7 @@ type UI struct {
 	active         bool
 	stepButton     *widget.Button
 	continueButton *widget.Button
+	resetButton    *widget.Button
 
 	debugger *client.Client
 }
@@ -67,7 +69,14 @@ func New(debugger *client.Client) *UI {
 			ui.SetActive(false)
 		},
 	)
-	buttons := container.NewHBox(ui.stepButton, ui.continueButton)
+	ui.resetButton = widget.NewButtonWithIcon(
+		"Reset",
+		theme.Icon(theme.IconNameContentClear),
+		func() {
+			ui.debugger.Reset()
+		},
+	)
+	buttons := container.NewHBox(ui.stepButton, ui.continueButton, layout.NewSpacer(), ui.resetButton)
 
 	// Create a container with the disassembler on the left
 	// and the register/memory viewers on the right

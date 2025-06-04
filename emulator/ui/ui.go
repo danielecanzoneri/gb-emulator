@@ -41,6 +41,7 @@ func New(s *server.Server) (*UI, error) {
 		gb.CPU, gb.Memory,
 	)
 	s.OnStep = ui.gameBoy.CPU.ExecuteInstruction
+	s.OnReset = ui.gameBoy.Reset
 
 	// Create audio player
 	player, err := newAudioPlayer(ui)
@@ -85,4 +86,14 @@ func (ui *UI) LoadNewGame() {
 	}
 
 	ui.gameTitle = gameTitle
+}
+
+func (ui *UI) Run() {
+	// Start audio player the first time
+	ui.audioPlayer.Play()
+
+	// Start the game loop
+	if err := ebiten.RunGame(ui); err != nil {
+		log.Fatal(err)
+	}
 }

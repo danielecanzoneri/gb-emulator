@@ -21,6 +21,10 @@ func (c *Client) Pause() {
 	c.sendCommand(protocol.MessageTypePause, nil)
 }
 
+func (c *Client) Reset() {
+	c.sendCommand(protocol.MessageTypeReset, nil)
+}
+
 func (c *Client) Breakpoint(address uint16, state bool) {
 	c.sendCommand(
 		protocol.MessageTypeBreakpoint,

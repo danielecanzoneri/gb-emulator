@@ -1,7 +1,6 @@
 package timer
 
 import (
-	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/audio"
 )
 
@@ -29,11 +28,15 @@ type Timer struct {
 	RequestInterrupt func()
 }
 
-func (t *Timer) String() string {
-	return fmt.Sprintf(
-		"DIV:%02X, TIMA:%02X, TMA:%02X, TAC:%02X, counter:%04X",
-		t.Read(divAddr), t.TIMA, t.TMA, t.TAC, t.systemCounter,
-	)
+func (t *Timer) Reset() {
+	t.TIMA = 0
+	t.TMA = 0
+	t.TAC = 0
+	t.systemCounter = 0
+	t.prevState = 0
+	t.prevBit13 = 0
+	t.timaOverflow = false
+	t.timaReloaded = false
 }
 
 func (t *Timer) Cycle() {

@@ -26,6 +26,27 @@ type APU struct {
 	Ch4Enabled bool
 }
 
+func (apu *APU) Reset() {
+	apu.channel1.Reset()
+	apu.channel2.Reset()
+	apu.channel3.Reset()
+	apu.channel4.Reset()
+
+	apu.nr50 = 0
+	apu.nr51 = 0
+	apu.active = false
+
+	apu.audioCounter = 0
+	apu.sampleCounter = 0
+	for {
+		select {
+		case <-apu.sampleBuffer:
+		default:
+			return
+		}
+	}
+}
+
 func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 	return &APU{
 		sampleRate:   sampleRate,
@@ -123,25 +144,4 @@ func (apu *APU) disable() {
 	apu.channel2.Reset()
 	apu.channel3.Reset()
 	apu.channel4.Reset()
-}
-
-func (apu *APU) Reset() {
-	apu.channel1.Reset()
-	apu.channel2.Reset()
-	apu.channel3.Reset()
-	apu.channel4.Reset()
-
-	apu.nr50 = 0
-	apu.nr51 = 0
-	apu.active = false
-
-	apu.audioCounter = 0
-	apu.sampleCounter = 0
-	for {
-		select {
-		case <-apu.sampleBuffer:
-		default:
-			break
-		}
-	}
 }

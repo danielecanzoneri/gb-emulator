@@ -34,12 +34,7 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 		sampleRate: sampleRate,
 		sampleBuff: audioSampleBuffer,
 	}
-	gb.Reset()
 
-	return gb
-}
-
-func (gb *GameBoy) Reset() {
 	gb.PPU = ppu.New()
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
@@ -58,6 +53,17 @@ func (gb *GameBoy) Reset() {
 
 	gb.CPU.Reset()
 	gb.Memory.Reset()
+
+	return gb
+}
+
+func (gb *GameBoy) Reset() {
+	gb.CPU.Reset()
+	gb.Timer.Reset()
+	gb.Memory.Reset()
+	gb.PPU.Reset()
+	gb.Joypad.Reset()
+	gb.APU.Reset()
 }
 
 func (gb *GameBoy) Load(romPath string) (string, error) {
