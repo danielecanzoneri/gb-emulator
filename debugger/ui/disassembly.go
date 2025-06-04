@@ -2,13 +2,12 @@ package ui
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
-	"image/color"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
+	"image/color"
 )
 
 const (
@@ -23,11 +22,16 @@ const (
 type disassemblyEntry struct {
 	widget.BaseWidget
 
+	parentEntry *disassemblyEntry
+
 	address            uint16
 	name               string
 	bytes              []uint8
 	isBreakpoint       bool
 	currentInstruction bool
+
+	// Prevent breakpoint selection when inactive
+	active bool
 
 	onTapped func(uint16, bool)
 }
@@ -36,18 +40,22 @@ func newDisassemblyEntry(address uint16, name string) *disassemblyEntry {
 	entry := &disassemblyEntry{
 		address: address,
 		name:    name,
+		active:  true,
 	}
 	entry.ExtendBaseWidget(entry)
 	return entry
 }
 
 func (e *disassemblyEntry) Tapped(_ *fyne.PointEvent) {
-	e.isBreakpoint = !e.isBreakpoint
-	if e.onTapped != nil {
-		e.onTapped(e.address, e.isBreakpoint)
-	}
+	if e.active {
+		e.isBreakpoint = !e.isBreakpoint
+		e.parentEntry.isBreakpoint = e.isBreakpoint
+		if e.onTapped != nil {
+			e.onTapped(e.address, e.isBreakpoint)
+		}
 
-	e.Refresh()
+		e.Refresh()
+	}
 }
 
 func (e *disassemblyEntry) CreateRenderer() fyne.WidgetRenderer {
@@ -188,12 +196,13 @@ func newDisassembler(onEntryTapped func(uint16, bool)) *disassembler {
 		UpdateItem: func(id widget.ListItemID, item fyne.CanvasObject) {
 			entry := dl.entries[id]
 			currentEntry := item.(*disassemblyEntry)
+			currentEntry.parentEntry = entry
 
 			currentEntry.address = entry.address
 			currentEntry.name = entry.name
-			currentEntry.isBreakpoint = entry.isBreakpoint
 			currentEntry.currentInstruction = entry.currentInstruction
 			currentEntry.bytes = entry.bytes
+			currentEntry.active = entry.active
 			currentEntry.onTapped = entry.onTapped
 			currentEntry.Refresh()
 		},
@@ -240,4 +249,16 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 		dl.list.ScrollTo(scrollTo)
 		dl.Refresh()
 	})
+}
+
+func (dl *disassembler) Enable() {
+	for i := range dl.length {
+		dl.entries[i].active = true
+	}
+}
+
+func (dl *disassembler) Disable() {
+	for i := range dl.length {
+		dl.entries[i].active = false
+	}
 }

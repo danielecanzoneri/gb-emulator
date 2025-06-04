@@ -26,5 +26,6 @@ const (
 
 // Emulator to debugger
 const (
-	MessageTypeState MessageType = "state"
+	MessageTypeBreakpointHit MessageType = "breakpoint_hit"
+	MessageTypeState         MessageType = "state"
 )

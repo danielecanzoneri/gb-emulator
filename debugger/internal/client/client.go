@@ -14,7 +14,8 @@ type Client struct {
 	connected bool
 
 	// Function that will consume incoming state update from emulator
-	StateConsumer func(*debug.GameBoyState)
+	OnState         func(*debug.GameBoyState)
+	OnBreakpointHit func()
 }
 
 func New(host string, port int) *Client {

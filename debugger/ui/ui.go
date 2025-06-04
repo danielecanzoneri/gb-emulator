@@ -19,6 +19,10 @@ type UI struct {
 	memoryViewer    *memoryViewer
 	registersViewer *registersViewer
 
+	active         bool
+	stepButton     *widget.Button
+	continueButton *widget.Button
+
 	debugger *client.Client
 }
 
@@ -43,14 +47,27 @@ func New(debugger *client.Client) *UI {
 	ui.registersViewer = newRegisterViewer()
 
 	// Debug buttons
-	stepButton := widget.NewButtonWithIcon(
+	ui.stepButton = widget.NewButtonWithIcon(
 		"Step",
 		theme.Icon(theme.IconNameNavigateNext),
 		func() {
 			ui.debugger.Step()
 		},
 	)
-	buttons := container.NewHBox(stepButton)
+	ui.continueButton = widget.NewButtonWithIcon(
+		"Continue",
+		theme.Icon(theme.IconNameMediaSkipNext),
+		func() {
+			ui.debugger.Continue()
+
+			// Remove highlight from current instruction
+			ui.disassembler.previousEntry.currentInstruction = false
+			fyne.Do(ui.disassembler.Refresh)
+
+			ui.SetActive(false)
+		},
+	)
+	buttons := container.NewHBox(ui.stepButton, ui.continueButton)
 
 	// Create a container with the disassembler on the left
 	// and the register/memory viewers on the right
@@ -67,6 +84,23 @@ func New(debugger *client.Client) *UI {
 	ui.window.SetFixedSize(true)
 
 	return ui
+}
+
+func (ui *UI) BreakpointHit() {
+	ui.SetActive(true)
+}
+
+func (ui *UI) SetActive(active bool) {
+	ui.active = active
+	if active {
+		ui.stepButton.Enable()
+		ui.continueButton.Enable()
+		ui.disassembler.Enable()
+	} else {
+		ui.stepButton.Disable()
+		ui.continueButton.Disable()
+		ui.disassembler.Disable()
+	}
 }
 
 func (ui *UI) Update(state *debug.GameBoyState) {

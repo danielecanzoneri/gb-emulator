@@ -12,7 +12,8 @@ func main() {
 	debuggerClient := client.New("localhost", 8080)
 
 	gui := ui.New(debuggerClient)
-	debuggerClient.StateConsumer = func(s *debug.GameBoyState) { gui.Update(s) }
+	debuggerClient.OnState = func(s *debug.GameBoyState) { gui.Update(s) }
+	debuggerClient.OnBreakpointHit = func() { gui.BreakpointHit() }
 
 	// Connect to the emulator
 	if err := debuggerClient.Connect(); err != nil {

@@ -22,7 +22,9 @@ func (c *Client) handleMessage(message []byte) {
 		state := stateMsg.Payload
 
 		// Consume emulator state
-		c.StateConsumer(&state)
+		c.OnState(&state)
+	case protocol.MessageTypeBreakpointHit:
+		c.OnBreakpointHit()
 	default:
 		log.Println("[WARN] unknown message type:", msg.Type)
 	}

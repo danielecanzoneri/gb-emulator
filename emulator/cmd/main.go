@@ -23,8 +23,10 @@ func main() {
 		log.Fatal("Error: ROM file path is required")
 	}
 
+	debugServer := new(server.Server)
+
 	// Init emulator
-	gui, err := ui.New()
+	gui, err := ui.New(debugServer)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,8 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create and start debugging server
-	debugServer := server.New(gui.DebugState)
+	// Start debugging server
 	debugServer.Start("8080")
 	defer debugServer.Close()
 
