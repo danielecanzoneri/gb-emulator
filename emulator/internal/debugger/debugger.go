@@ -60,7 +60,7 @@ func (debugger *Debugger) Continue() {
 }
 
 func (debugger *Debugger) Breakpoint(addr uint16, set bool) {
-	log.Println("Breakpoint:", addr, "set:", set)
+	log.Printf("Breakpoint: %04X, set: %v\n", addr, set)
 	if set {
 		debugger.breakpoints[addr] = struct{}{}
 	} else {

@@ -29,7 +29,7 @@ type disassemblyEntry struct {
 	isBreakpoint       bool
 	currentInstruction bool
 
-	onTapped func(uint16)
+	onTapped func(uint16, bool)
 }
 
 func newDisassemblyEntry(address uint16, name string) *disassemblyEntry {
@@ -44,7 +44,7 @@ func newDisassemblyEntry(address uint16, name string) *disassemblyEntry {
 func (e *disassemblyEntry) Tapped(_ *fyne.PointEvent) {
 	e.isBreakpoint = !e.isBreakpoint
 	if e.onTapped != nil {
-		e.onTapped(e.address)
+		e.onTapped(e.address, e.isBreakpoint)
 	}
 
 	e.Refresh()
@@ -166,7 +166,7 @@ type disassembler struct {
 	previousEntry *disassemblyEntry
 }
 
-func newDisassembler() *disassembler {
+func newDisassembler(onEntryTapped func(uint16, bool)) *disassembler {
 	dl := &disassembler{
 		entries: make([]*disassemblyEntry, 0x10000),
 	}
@@ -175,10 +175,7 @@ func newDisassembler() *disassembler {
 	// Initialize the list with dummy data
 	for i := range 0x10000 {
 		dl.entries[i] = newDisassemblyEntry(uint16(i), fmt.Sprintf("%04X    NOP    ; No operation", i))
-		dl.entries[i].onTapped = func(addr uint16) {
-			dl.entries[i].isBreakpoint = !dl.entries[i].isBreakpoint
-			fmt.Println(addr)
-		}
+		dl.entries[i].onTapped = onEntryTapped
 	}
 
 	dl.list = &widget.List{

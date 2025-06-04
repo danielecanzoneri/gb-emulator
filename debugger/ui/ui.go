@@ -32,7 +32,9 @@ func New(debugger *client.Client) *UI {
 	ui.window = ui.app.NewWindow("GameBoy Disassembler")
 
 	// Create the disassembler
-	ui.disassembler = newDisassembler()
+	ui.disassembler = newDisassembler(func(addr uint16, breakpointState bool) {
+		debugger.Breakpoint(addr, breakpointState)
+	})
 
 	// Create the memory viewer list
 	ui.memoryViewer = newMemoryViewer()

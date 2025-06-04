@@ -17,7 +17,7 @@ func (s *Server) handleCommand(cmd protocol.Message) {
 		s.debugger.Continue()
 	case protocol.MessageTypeBreakpoint:
 		payload := cmd.Payload
-		addr := payload["address"].(uint16)
+		addr := uint16(payload["address"].(float64))
 		set := payload["set"].(bool)
 		s.debugger.Breakpoint(addr, set)
 	}
