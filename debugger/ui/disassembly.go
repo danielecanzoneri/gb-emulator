@@ -23,10 +23,11 @@ const (
 type disassemblyEntry struct {
 	widget.BaseWidget
 
-	address      uint16
-	name         string
-	bytes        []uint8
-	isBreakpoint bool
+	address            uint16
+	name               string
+	bytes              []uint8
+	isBreakpoint       bool
+	currentInstruction bool
 
 	onTapped func(uint16)
 }
@@ -56,24 +57,28 @@ func (e *disassemblyEntry) CreateRenderer() fyne.WidgetRenderer {
 	// Text placeholder
 	text := canvas.NewText("0000    NOP    ; No operation", th.Color(theme.ColorNameForeground, v))
 	text.TextStyle = fyne.TextStyle{Monospace: true}
-	background := canvas.NewRectangle(color.Transparent)
+
+	breakBackground := canvas.NewRectangle(color.Transparent)
+	currentBackground := canvas.NewRectangle(color.Transparent)
 
 	// Create the breakpoint circle
 	circle := canvas.NewCircle(color.RGBA{R: 255, G: 0, B: 0, A: 255})
 
 	return &disassemblyEntryRenderer{
-		entry:      e,
-		text:       text,
-		background: background,
-		circle:     circle,
+		entry:             e,
+		text:              text,
+		breakBackground:   breakBackground,
+		currentBackground: currentBackground,
+		circle:            circle,
 	}
 }
 
 type disassemblyEntryRenderer struct {
-	entry      *disassemblyEntry
-	text       *canvas.Text
-	background *canvas.Rectangle
-	circle     *canvas.Circle
+	entry             *disassemblyEntry
+	text              *canvas.Text
+	breakBackground   *canvas.Rectangle
+	currentBackground *canvas.Rectangle
+	circle            *canvas.Circle
 }
 
 func (r *disassemblyEntryRenderer) Destroy() {}
@@ -85,10 +90,14 @@ func (r *disassemblyEntryRenderer) Layout(size fyne.Size) {
 	r.circle.Resize(fyne.NewSize(circleSize, circleSize))
 	r.circle.Move(fyne.NewPos(circleMargin, circleMargin))
 
+	// Position "current instruction" background
+	r.currentBackground.Resize(fyne.NewSize(size.Width, size.Height))
+	r.currentBackground.Move(fyne.NewPos(0, 0))
+
 	// Position text and background after the circle with some padding
 	circlePadding := circleSize + 2*circleMargin
-	r.background.Resize(fyne.NewSize(size.Width-circlePadding, size.Height))
-	r.background.Move(fyne.NewPos(circlePadding, 0))
+	r.breakBackground.Resize(fyne.NewSize(size.Width-circlePadding, size.Height))
+	r.breakBackground.Move(fyne.NewPos(circlePadding, 0))
 	r.text.Resize(fyne.NewSize(size.Width-circlePadding-disassemblyEntryTextLeftPadding, size.Height))
 	r.text.Move(fyne.NewPos(circlePadding+disassemblyEntryTextLeftPadding, 0))
 }
@@ -109,20 +118,27 @@ func (r *disassemblyEntryRenderer) MinSize() fyne.Size {
 }
 
 func (r *disassemblyEntryRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{r.background, r.circle, r.text}
+	return []fyne.CanvasObject{r.breakBackground, r.currentBackground, r.circle, r.text}
 }
 
 func (r *disassemblyEntryRenderer) Refresh() {
 	// Update circle visibility and background colors based on breakpoint status
 	if r.entry.isBreakpoint {
-		r.background.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 64}
+		r.breakBackground.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 191}
 		r.circle.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
 	} else {
-		r.background.FillColor = color.Transparent
+		r.breakBackground.FillColor = color.Transparent
 		r.circle.FillColor = color.Transparent
 	}
-	r.background.Refresh()
+	r.breakBackground.Refresh()
 	r.circle.Refresh()
+
+	if r.entry.currentInstruction {
+		r.currentBackground.FillColor = color.RGBA{R: 0, G: 127, B: 255, A: 63}
+	} else {
+		r.currentBackground.FillColor = color.Transparent
+	}
+	r.currentBackground.Refresh()
 
 	// Format the bytes part
 	bytesStr := ""
@@ -145,6 +161,9 @@ type disassembler struct {
 
 	length  int
 	entries []*disassemblyEntry
+
+	// Keep track to unselect when stepping
+	previousEntry *disassemblyEntry
 }
 
 func newDisassembler() *disassembler {
@@ -176,6 +195,7 @@ func newDisassembler() *disassembler {
 			currentEntry.address = entry.address
 			currentEntry.name = entry.name
 			currentEntry.isBreakpoint = entry.isBreakpoint
+			currentEntry.currentInstruction = entry.currentInstruction
 			currentEntry.bytes = entry.bytes
 			currentEntry.onTapped = entry.onTapped
 			currentEntry.Refresh()
@@ -198,7 +218,13 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 
 	for addr := 0; addr < 0x10000; {
 		if uint16(addr) == state.PC {
+			if dl.previousEntry != nil {
+				dl.previousEntry.currentInstruction = false
+			}
 			scrollTo = counter
+
+			dl.entries[counter].currentInstruction = true
+			dl.previousEntry = dl.entries[counter]
 		}
 
 		name, length, bytes := getOpcodeInfo(state, uint16(addr))
