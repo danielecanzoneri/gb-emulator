@@ -201,6 +201,7 @@ func newDisassembler(onEntryTapped func(uint16, bool)) *disassembler {
 			currentEntry.address = entry.address
 			currentEntry.name = entry.name
 			currentEntry.currentInstruction = entry.currentInstruction
+			currentEntry.isBreakpoint = entry.isBreakpoint
 			currentEntry.bytes = entry.bytes
 			currentEntry.active = entry.active
 			currentEntry.onTapped = entry.onTapped
@@ -224,6 +225,7 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 
 	for addr := 0; addr < 0x10000; {
 		if uint16(addr) == state.PC {
+			// Clear previous instruction background
 			if dl.previousEntry != nil {
 				dl.previousEntry.currentInstruction = false
 			}

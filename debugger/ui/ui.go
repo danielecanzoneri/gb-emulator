@@ -96,7 +96,7 @@ func New(debugger *client.Client) *UI {
 }
 
 func (ui *UI) BreakpointHit() {
-	ui.SetActive(true)
+	fyne.Do(func() { ui.SetActive(true) })
 }
 
 func (ui *UI) SetActive(active bool) {
