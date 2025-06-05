@@ -127,6 +127,9 @@ func (apu *APU) enable() {
 		return
 	}
 
+	// When powered on, the frame sequencer is reset so that the next step will be 0
+	apu.frameSequencer.position = 7
+
 	// Set bit 7 of NR52
 	apu.active = true
 }
