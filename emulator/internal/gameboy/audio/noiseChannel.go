@@ -26,7 +26,7 @@ type NoiseChannel struct {
 
 func NewNoiseChannel() *NoiseChannel {
 	ch := new(NoiseChannel)
-	ch.lengthTimer.channel = ch
+	ch.lengthTimer.channelEnabled = &ch.active
 
 	ch.resetFrequency()
 	return ch
@@ -45,10 +45,6 @@ func (ch *NoiseChannel) resetFrequency() {
 		ch.frequencyCounter *= uint16(ch.clockDivider)
 	}
 	ch.frequencyCounter <<= ch.clockShift
-}
-
-func (ch *NoiseChannel) Disable() {
-	ch.active = false
 }
 
 func (ch *NoiseChannel) IsActive() bool {
@@ -153,6 +149,6 @@ func (ch *NoiseChannel) trigger() {
 	// Reset LFSR bits
 	ch.lfsr = 0
 
-	ch.lengthTimer.Trigger()
+	ch.lengthTimer.Trigger(64)
 	ch.envelope.Trigger()
 }

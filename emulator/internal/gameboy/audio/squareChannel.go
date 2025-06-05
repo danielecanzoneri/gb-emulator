@@ -40,13 +40,9 @@ func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *
 	}
 
 	ch.sweep.channel = ch
-	ch.lengthTimer.channel = ch
+	ch.lengthTimer.channelEnabled = &ch.active
 
 	return ch
-}
-
-func (ch *SquareChannel) Disable() {
-	ch.active = false
 }
 
 func (ch *SquareChannel) IsActive() bool {
@@ -159,6 +155,6 @@ func (ch *SquareChannel) trigger() {
 	ch.active = true
 
 	ch.sweep.Trigger()
-	ch.lengthTimer.Trigger()
+	ch.lengthTimer.Trigger(64)
 	ch.envelope.Trigger()
 }

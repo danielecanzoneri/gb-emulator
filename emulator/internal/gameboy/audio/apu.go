@@ -12,7 +12,8 @@ type APU struct {
 	active bool  // Bit 7 of NR52
 
 	// Counter
-	audioCounter uint8
+	frameSequencerClock    uint
+	frameSequencerPosition uint8
 
 	// Buffer to store samples
 	sampleRate    float64
@@ -36,7 +37,8 @@ func (apu *APU) Reset() {
 	apu.nr51 = 0
 	apu.active = false
 
-	apu.audioCounter = 0
+	apu.frameSequencerClock = 0
+	apu.frameSequencerPosition = 0
 	apu.sampleCounter = 0
 	for {
 		select {
@@ -63,6 +65,8 @@ func (apu *APU) Cycle() {
 	if !apu.active {
 		return
 	}
+
+	apu.StepCounter()
 
 	apu.channel1.Cycle()
 	apu.channel2.Cycle()

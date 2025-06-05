@@ -28,13 +28,9 @@ type WaveChannel struct {
 
 func NewWaveChannel() *WaveChannel {
 	ch := new(WaveChannel)
-	ch.lengthTimer.channel = ch
+	ch.lengthTimer.channelEnabled = &ch.active
 
 	return ch
-}
-
-func (ch *WaveChannel) Disable() {
-	ch.active = false
 }
 
 func (ch *WaveChannel) IsActive() bool {
@@ -176,5 +172,5 @@ func (ch *WaveChannel) trigger() {
 	ch.active = true
 
 	ch.periodCounter = ch.period
-	ch.lengthTimer.Trigger()
+	ch.lengthTimer.Trigger(256)
 }
