@@ -11,8 +11,7 @@ type APU struct {
 	nr51   uint8 // bits 7-4 left panning, bits 3-0 right panning
 	active bool  // Bit 7 of NR52
 
-	// Counter
-	frameSequencerClock    uint
+	// Frame sequencer
 	frameSequencerPosition uint8
 
 	// Buffer to store samples
@@ -37,7 +36,6 @@ func (apu *APU) Reset() {
 	apu.nr51 = 0
 	apu.active = false
 
-	apu.frameSequencerClock = 0
 	apu.frameSequencerPosition = 0
 	apu.sampleCounter = 0
 	for {
@@ -65,8 +63,6 @@ func (apu *APU) Cycle() {
 	if !apu.active {
 		return
 	}
-
-	apu.StepCounter()
 
 	apu.channel1.Cycle()
 	apu.channel2.Cycle()

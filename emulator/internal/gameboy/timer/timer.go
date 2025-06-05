@@ -2,6 +2,7 @@ package timer
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/audio"
+	"github.com/danielecanzoneri/gb-emulator/pkg/util"
 )
 
 type Timer struct {
@@ -18,7 +19,7 @@ type Timer struct {
 
 	// Falling edge detector to detect when to update APU counter
 	APU       *audio.APU
-	prevBit13 uint8
+	prevBit12 uint8
 
 	// Flag to request interrupt at next step
 	timaOverflow bool
@@ -34,7 +35,7 @@ func (t *Timer) Reset() {
 	t.TAC = 0
 	t.systemCounter = 0
 	t.prevState = 0
-	t.prevBit13 = 0
+	t.prevBit12 = 0
 	t.timaOverflow = false
 	t.timaReloaded = false
 }
@@ -87,12 +88,12 @@ func (t *Timer) detectFallingEdge() {
 
 func (t *Timer) detectAPUFallingEdge() {
 	// APU frame sequencer runs at 512Hz
-	// DIV bit 13 toggles at 512Hz (4194304/2^13)
-	currBit := (t.systemCounter >> 13) & 1
+	// DIV bit 12 toggles at 512Hz (4194304/2^13)
+	currBit := util.ReadBit(t.systemCounter, 12)
 
 	// Detect falling edge
-	if t.prevBit13 == 1 && currBit == 0 {
+	if t.prevBit12 == 1 && currBit == 0 {
 		t.APU.StepCounter()
 	}
-	t.prevBit13 = uint8(currBit)
+	t.prevBit12 = uint8(currBit)
 }
