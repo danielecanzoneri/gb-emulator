@@ -99,12 +99,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimer.Enable(v)
-
-		// Bit 7 is trigger
-		if v&0x80 > 0 {
-			ch.trigger()
-		}
+		ch.Trigger(v)
 
 	default:
 		panic("SquareChannel: invalid address")
@@ -148,13 +143,18 @@ func (ch *SquareChannel) Reset() {
 	ch.WriteRegister(ch.addrNRx4, 0)
 }
 
-func (ch *SquareChannel) trigger() {
+func (ch *SquareChannel) Trigger(value uint8) {
+	// Active channel only if DAC is enabled
 	if !ch.dacEnabled {
 		return
 	}
-	ch.active = true
 
+	ch.lengthTimer.Trigger(value)
 	ch.sweep.Trigger()
-	ch.lengthTimer.Trigger()
 	ch.envelope.Trigger()
+
+	// Bit 7 is trigger
+	if util.ReadBit(value, 7) > 0 {
+		ch.active = true
+	}
 }

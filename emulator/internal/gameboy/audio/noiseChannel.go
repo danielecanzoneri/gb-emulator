@@ -97,12 +97,7 @@ func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 		ch.clockDivider = v & 0b111
 
 	case nr44Addr:
-		ch.lengthTimer.Enable(v)
-
-		// Bit 7 is trigger
-		if v&0x80 > 0 {
-			ch.trigger()
-		}
+		ch.Trigger(v)
 
 	default:
 		panic("NoiseChannel: invalid address")
@@ -141,14 +136,18 @@ func (ch *NoiseChannel) Reset() {
 	ch.WriteRegister(nr44Addr, 0)
 }
 
-func (ch *NoiseChannel) trigger() {
-	if ch.dacEnabled {
-		ch.active = true
+func (ch *NoiseChannel) Trigger(value uint8) {
+	// Active channel only if DAC is enabled
+	if !ch.dacEnabled {
+		return
 	}
 
-	// Reset LFSR bits
+	ch.lengthTimer.Trigger(value)
+	ch.envelope.Trigger()
 	ch.lfsr = 0
 
-	ch.lengthTimer.Trigger()
-	ch.envelope.Trigger()
+	// Bit 7 is trigger
+	if util.ReadBit(value, 7) > 0 {
+		ch.active = true
+	}
 }

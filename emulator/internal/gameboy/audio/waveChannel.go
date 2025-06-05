@@ -99,12 +99,7 @@ func (ch *WaveChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimer.Enable(v)
-
-		// Bit 7 is trigger
-		if v&0x80 > 0 {
-			ch.trigger()
-		}
+		ch.Trigger(v)
 
 	default:
 		panic("WaveChannel: invalid address")
@@ -165,12 +160,17 @@ func (ch *WaveChannel) Reset() {
 	ch.WriteRegister(nr34Addr, 0)
 }
 
-func (ch *WaveChannel) trigger() {
+func (ch *WaveChannel) Trigger(value uint8) {
+	// Active channel only if DAC is enabled
 	if !ch.dacEnabled {
 		return
 	}
-	ch.active = true
 
 	ch.periodCounter = ch.period
-	ch.lengthTimer.Trigger()
+	ch.lengthTimer.Trigger(value)
+
+	// Bit 7 is trigger
+	if util.ReadBit(value, 7) > 0 {
+		ch.active = true
+	}
 }
