@@ -137,17 +137,12 @@ func (ch *NoiseChannel) Reset() {
 }
 
 func (ch *NoiseChannel) Trigger(value uint8) {
-	// Active channel only if DAC is enabled
-	if !ch.dacEnabled {
-		return
-	}
-
 	ch.lengthTimer.Trigger(value)
 	ch.envelope.Trigger()
 	ch.lfsr = 0
 
-	// Bit 7 is trigger
-	if util.ReadBit(value, 7) > 0 {
+	// Active channel only if DAC is enabled
+	if ch.dacEnabled && util.ReadBit(value, 7) > 0 {
 		ch.active = true
 	}
 }

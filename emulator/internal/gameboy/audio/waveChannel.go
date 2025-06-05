@@ -161,16 +161,11 @@ func (ch *WaveChannel) Reset() {
 }
 
 func (ch *WaveChannel) Trigger(value uint8) {
-	// Active channel only if DAC is enabled
-	if !ch.dacEnabled {
-		return
-	}
-
 	ch.periodCounter = ch.period
 	ch.lengthTimer.Trigger(value)
 
-	// Bit 7 is trigger
-	if util.ReadBit(value, 7) > 0 {
+	// Active channel only if DAC is enabled
+	if ch.dacEnabled && util.ReadBit(value, 7) > 0 {
 		ch.active = true
 	}
 }
