@@ -15,7 +15,7 @@ type SquareChannel struct {
 	// Wave duty and length timer (NRx1)
 	addrNRx1    uint16
 	waveDuty    uint8 // Bits 7-6
-	lengthTimer LengthTimer
+	lengthTimer *LengthTimer
 
 	// Volume and Envelope (NRx2)
 	addrNRx2 uint16
@@ -30,7 +30,7 @@ type SquareChannel struct {
 	wavePosition  uint8 // Varies from 0 to 7
 }
 
-func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *SquareChannel {
+func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16, fs *frameSequencer) *SquareChannel {
 	ch := &SquareChannel{
 		addrNRx0: addrNRx0,
 		addrNRx1: addrNRx1,
@@ -40,7 +40,7 @@ func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16) *
 	}
 
 	ch.sweep.channel = ch
-	ch.lengthTimer.channelEnabled = &ch.active
+	ch.lengthTimer = NewLengthTimer(&ch.active, fs, 64)
 
 	return ch
 }
@@ -99,7 +99,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 		ch.period = ch.period & 0xFF
 		ch.period = ch.period | (uint16(v&0x7) << 8)
 
-		ch.lengthTimer.Enable(v&0x40 > 0)
+		ch.lengthTimer.Enable(v)
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
@@ -155,6 +155,6 @@ func (ch *SquareChannel) trigger() {
 	ch.active = true
 
 	ch.sweep.Trigger()
-	ch.lengthTimer.Trigger(64)
+	ch.lengthTimer.Trigger()
 	ch.envelope.Trigger()
 }

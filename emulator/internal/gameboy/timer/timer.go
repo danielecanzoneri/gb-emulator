@@ -93,7 +93,7 @@ func (t *Timer) detectAPUFallingEdge() {
 
 	// Detect falling edge
 	if t.prevBit12 == 1 && currBit == 0 {
-		t.APU.StepCounter()
+		t.APU.StepFrameSequencer()
 	}
 	t.prevBit12 = uint8(currBit)
 }

@@ -13,7 +13,7 @@ type NoiseChannel struct {
 	frequencyCounter uint16 // It steps LFSR when 0
 
 	// Length timer (NR41)
-	lengthTimer LengthTimer
+	lengthTimer *LengthTimer
 
 	// Volume and Envelope (NR42)
 	envelope Envelope
@@ -24,9 +24,9 @@ type NoiseChannel struct {
 	clockDivider uint8 // Bits 2-0
 }
 
-func NewNoiseChannel() *NoiseChannel {
+func NewNoiseChannel(fs *frameSequencer) *NoiseChannel {
 	ch := new(NoiseChannel)
-	ch.lengthTimer.channelEnabled = &ch.active
+	ch.lengthTimer = NewLengthTimer(&ch.active, fs, 64)
 
 	ch.resetFrequency()
 	return ch
@@ -97,7 +97,7 @@ func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 		ch.clockDivider = v & 0b111
 
 	case nr44Addr:
-		ch.lengthTimer.Enable(v&0x40 > 0)
+		ch.lengthTimer.Enable(v)
 
 		// Bit 7 is trigger
 		if v&0x80 > 0 {
@@ -149,6 +149,6 @@ func (ch *NoiseChannel) trigger() {
 	// Reset LFSR bits
 	ch.lfsr = 0
 
-	ch.lengthTimer.Trigger(64)
+	ch.lengthTimer.Trigger()
 	ch.envelope.Trigger()
 }

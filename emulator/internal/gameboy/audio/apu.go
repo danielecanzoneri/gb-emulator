@@ -11,8 +11,8 @@ type APU struct {
 	nr51   uint8 // bits 7-4 left panning, bits 3-0 right panning
 	active bool  // Bit 7 of NR52
 
-	// Frame sequencer
-	frameSequencerPosition uint8
+	// FrameSequencer
+	frameSequencer frameSequencer
 
 	// Buffer to store samples
 	sampleRate    float64
@@ -36,7 +36,7 @@ func (apu *APU) Reset() {
 	apu.nr51 = 0
 	apu.active = false
 
-	apu.frameSequencerPosition = 0
+	apu.frameSequencer.Reset()
 	apu.sampleCounter = 0
 	for {
 		select {
@@ -48,15 +48,17 @@ func (apu *APU) Reset() {
 }
 
 func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
-	return &APU{
+	apu := &APU{
 		sampleRate:   sampleRate,
-		channel1:     NewSquareChannel(nr10Addr, nr11Addr, nr12Addr, nr13Addr, nr14Addr),
-		channel2:     NewSquareChannel(0, nr21Addr, nr22Addr, nr23Addr, nr24Addr),
-		channel3:     NewWaveChannel(),
-		channel4:     NewNoiseChannel(),
 		sampleBuffer: sampleBuffer,
 		Ch1Enabled:   true, Ch2Enabled: true, Ch3Enabled: true, Ch4Enabled: true,
 	}
+	apu.channel1 = NewSquareChannel(nr10Addr, nr11Addr, nr12Addr, nr13Addr, nr14Addr, &apu.frameSequencer)
+	apu.channel2 = NewSquareChannel(0, nr21Addr, nr22Addr, nr23Addr, nr24Addr, &apu.frameSequencer)
+	apu.channel3 = NewWaveChannel(&apu.frameSequencer)
+	apu.channel4 = NewNoiseChannel(&apu.frameSequencer)
+
+	return apu
 }
 
 func (apu *APU) Cycle() {
