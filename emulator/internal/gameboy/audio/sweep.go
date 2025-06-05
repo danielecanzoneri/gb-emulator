@@ -1,5 +1,7 @@
 package audio
 
+import "github.com/danielecanzoneri/gb-emulator/pkg/util"
+
 // Sweep manages the NRx0 register
 type Sweep struct {
 	channel *SquareChannel
@@ -7,7 +9,7 @@ type Sweep struct {
 	// How many times sweep must be ticked before frequency increasing/decreasing
 	pace uint8 // Bits 6-4
 	// If frequency will increase or decrease
-	isDecreasing uint8 // Bit 3
+	isDecreasing bool // Bit 3
 	// Quantity that modify the frequency at each step
 	step uint8 // Bits 2-0
 
@@ -18,12 +20,16 @@ type Sweep struct {
 
 	// Current output period (inverse of frequency)
 	shadow uint16
+	// Check if at least one sweep calculation has been made using the negate mode since the last trigger
+	calculationPerformed bool
 }
 
 func (sw *Sweep) checkOverflow() uint16 {
+	sw.calculationPerformed = true
+
 	step := sw.shadow >> sw.step
 	newFrequency := sw.shadow
-	if sw.isDecreasing > 0 {
+	if sw.isDecreasing {
 		newFrequency -= step
 	} else {
 		newFrequency += step
@@ -65,17 +71,31 @@ func (sw *Sweep) Step() {
 }
 
 func (sw *Sweep) WriteRegister(v uint8) {
+	isDecreasing := util.ReadBit(v, 3) > 0
+
+	// Clearing the sweep negate mode bit in NR10 after at least one sweep calculation has been made
+	// using the negate mode since the last trigger causes the channel to be immediately disabled.
+	// This prevents you from having the sweep lower the frequency then raise the frequency without a trigger in between.
+	if !isDecreasing && sw.isDecreasing && sw.calculationPerformed {
+		sw.channel.active = false
+	}
+
 	sw.pace = (v >> 4) & 0b111
-	sw.isDecreasing = (v >> 3) & 0b1
+	sw.isDecreasing = isDecreasing
 	sw.step = v & 0b111
 }
 
 func (sw *Sweep) ReadRegister() uint8 {
-	return 0x80 | sw.pace<<4 | sw.isDecreasing<<3 | sw.step
+	out := 0x80 | sw.pace<<4 | sw.step
+	if sw.isDecreasing {
+		util.SetBit(&out, 3, 1)
+	}
+	return out
 }
 
 func (sw *Sweep) Trigger() {
 	sw.shadow = sw.channel.period
+	sw.calculationPerformed = false
 	sw.resetTimer()
 	sw.enabled = sw.pace != 0 || sw.step != 0
 
