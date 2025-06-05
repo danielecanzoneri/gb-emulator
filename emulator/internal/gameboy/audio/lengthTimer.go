@@ -52,12 +52,9 @@ func (lt *LengthTimer) Trigger(nrx4 uint8) {
 		// If this decrement makes it zero and trigger is clear, the channel is disabled.
 		if enabled && !lt.enabled && lt.length > 0 {
 			lt.length--
-			if lt.length == 0 {
-				if !trigger {
-					*lt.channelEnabled = false
-				} else {
-					lt.length = lt.max
-				}
+			if lt.length == 0 && !trigger {
+				// If triggered length counter is reset below
+				*lt.channelEnabled = false
 			}
 		}
 	}
