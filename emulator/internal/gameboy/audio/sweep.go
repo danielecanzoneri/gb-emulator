@@ -21,11 +21,12 @@ type Sweep struct {
 	// Current output period (inverse of frequency)
 	shadow uint16
 	// Check if at least one sweep calculation has been made using the negate mode since the last trigger
-	calculationPerformed bool
+	negativeFreqCalcPerformed bool
 }
 
 func (sw *Sweep) checkOverflow() uint16 {
-	sw.calculationPerformed = true
+	// Set flag only if negative step
+	sw.negativeFreqCalcPerformed = sw.isDecreasing
 
 	step := sw.shadow >> sw.step
 	newFrequency := sw.shadow
@@ -76,7 +77,7 @@ func (sw *Sweep) WriteRegister(v uint8) {
 	// Clearing the sweep negate mode bit in NR10 after at least one sweep calculation has been made
 	// using the negate mode since the last trigger causes the channel to be immediately disabled.
 	// This prevents you from having the sweep lower the frequency then raise the frequency without a trigger in between.
-	if !isDecreasing && sw.isDecreasing && sw.calculationPerformed {
+	if !isDecreasing && sw.isDecreasing && sw.negativeFreqCalcPerformed {
 		sw.channel.active = false
 	}
 
@@ -95,7 +96,7 @@ func (sw *Sweep) ReadRegister() uint8 {
 
 func (sw *Sweep) Trigger() {
 	sw.shadow = sw.channel.period
-	sw.calculationPerformed = false
+	sw.negativeFreqCalcPerformed = false
 	sw.resetTimer()
 	sw.enabled = sw.pace != 0 || sw.step != 0
 
