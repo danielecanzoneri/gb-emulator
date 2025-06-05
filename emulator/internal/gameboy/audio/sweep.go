@@ -36,22 +36,31 @@ func (sw *Sweep) checkOverflow() uint16 {
 	return newFrequency
 }
 
-func (sw *Sweep) Step() {
-	if !sw.enabled || sw.pace == 0 {
-		return
+func (sw *Sweep) resetTimer() {
+	// Sweep timers treat a period of 0 as 8
+	if sw.pace == 0 {
+		sw.timer = 8
+	} else {
+		sw.timer = sw.pace
 	}
+}
 
+func (sw *Sweep) Step() {
 	sw.timer--
 	if sw.timer == 0 {
-		newFrequency := sw.checkOverflow()
+		sw.resetTimer()
 
-		sw.timer = sw.pace
+		if sw.enabled && sw.pace != 0 {
+			newFrequency := sw.checkOverflow()
 
-		sw.shadow = newFrequency
-		sw.channel.period = newFrequency
+			if newFrequency <= 0x7FF && sw.step != 0 {
+				sw.shadow = newFrequency
+				sw.channel.period = newFrequency
 
-		// Perform another overflow check without writing it back
-		sw.checkOverflow()
+				// Perform another overflow check without writing it back
+				sw.checkOverflow()
+			}
+		}
 	}
 }
 
@@ -67,7 +76,7 @@ func (sw *Sweep) ReadRegister() uint8 {
 
 func (sw *Sweep) Trigger() {
 	sw.shadow = sw.channel.period
-	sw.timer = 0
+	sw.resetTimer()
 	sw.enabled = sw.pace != 0 || sw.step != 0
 
 	if sw.step != 0 {

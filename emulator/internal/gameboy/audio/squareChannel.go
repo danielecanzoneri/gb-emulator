@@ -145,11 +145,13 @@ func (ch *SquareChannel) Reset() {
 
 func (ch *SquareChannel) Trigger(value uint8) {
 	ch.lengthTimer.Trigger(value)
-	ch.sweep.Trigger()
-	ch.envelope.Trigger()
 
-	// Active channel only if DAC is enabled
-	if ch.dacEnabled && util.ReadBit(value, 7) > 0 {
+	trigger := util.ReadBit(value, 7) > 0
+	if trigger && ch.dacEnabled {
+		// Active channel only if DAC is enabled
 		ch.active = true
+
+		ch.sweep.Trigger()
+		ch.envelope.Trigger()
 	}
 }
