@@ -7,14 +7,15 @@ import (
 	"os"
 )
 
-type Rom struct {
+type Cartridge struct {
 	// Struct containing cartridge information
 	Header *Header
+	MBC    *MBC
 
 	Data []byte
 }
 
-func LoadROM(path string) (*Rom, error) {
+func LoadROM(path string) (*Cartridge, error) {
 	// Check if the ROM exists
 	stat, err := os.Stat(path)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -38,5 +39,11 @@ func LoadROM(path string) (*Rom, error) {
 		return nil, err
 	}
 
-	return &Rom{Header: header, Data: data}, nil
+	cartridge := &Cartridge{
+		Header: header,
+		MBC:    NewMBC(header),
+		Data:   data,
+	}
+
+	return cartridge, nil
 }

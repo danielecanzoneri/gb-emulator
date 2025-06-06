@@ -7,8 +7,7 @@ import (
 )
 
 func TestDMA(t *testing.T) {
-	mmu := &MMU{PPU: &ppu.PPU{}}
-	mmu.SetMBC(&cartridge.Header{})
+	mmu := &MMU{Cartridge: &cartridge.Cartridge{}, PPU: &ppu.PPU{}}
 
 	// Write data to RAM
 	startAddr := 0xA000

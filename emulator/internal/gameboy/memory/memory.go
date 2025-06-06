@@ -2,6 +2,7 @@ package memory
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/audio"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/joypad"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/timer"
@@ -10,13 +11,11 @@ import (
 const Size = 0x10000 // 64KB
 
 type MMU struct {
-	CartridgeData []uint8
-
 	wRAM [0x2000]uint8 // Work RAM
 	hRAM [0x7F]uint8   // High RAM
 
-	// Memory Bank Controller
-	mbc MBC
+	// Cartridge (with MBC and data)
+	Cartridge *cartridge.Cartridge
 
 	Timer  *timer.Timer
 	PPU    *ppu.PPU
@@ -96,13 +95,11 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	switch {
 	// MBC addresses
 	case addr < 0x8000:
-		cartridgeAddress := mmu.mbc.computeROMAddress(addr)
-		return mmu.CartridgeData[cartridgeAddress]
+		return mmu.Cartridge.Read(addr)
 	case addr < 0xA000: // vRAM
 		return mmu.PPU.ReadVRAM(addr)
 	case addr < 0xC000:
-		RAMAddress := mmu.mbc.computeRAMAddress(addr)
-		return mmu.mbc.RAM[RAMAddress]
+		return mmu.Cartridge.Read(addr)
 	case addr < 0xE000: // wRAM
 		return mmu.wRAM[addr-0xC000]
 	case addr < 0xFE00: // Echo RAM
@@ -135,19 +132,12 @@ func (mmu *MMU) Write(addr uint16, value uint8) {
 func (mmu *MMU) write(addr uint16, value uint8) {
 	switch {
 	// MBC addresses
-	case addr < 0x2000:
-		mmu.mbc.enableRAM(value)
-	case addr < 0x4000:
-		mmu.mbc.SetROMBank(value)
-	case addr < 0x6000:
-		mmu.mbc.SetRAMBank(value)
 	case addr < 0x8000:
-		mmu.mbc.SetMode(value)
+		mmu.Cartridge.Write(addr, value)
 	case addr < 0xA000: // vRAM
 		mmu.PPU.WriteVRAM(addr, value)
 	case addr < 0xC000:
-		RAMAddress := mmu.mbc.computeRAMAddress(addr)
-		mmu.mbc.RAM[RAMAddress] = value
+		mmu.Cartridge.Write(addr, value)
 	case addr < 0xE000: // wRAM
 		mmu.wRAM[addr-0xC000] = value
 	case addr < 0xFE00: // Echo RAM

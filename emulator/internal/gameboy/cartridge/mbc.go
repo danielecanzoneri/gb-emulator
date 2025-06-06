@@ -1,6 +1,4 @@
-package memory
-
-import "github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cartridge"
+package cartridge
 
 // MBC (Memory Bank Controller)
 type MBC struct {
@@ -19,21 +17,21 @@ type MBC struct {
 	useRAMRegisterAsHighROMRegister bool
 }
 
-func (mmu *MMU) SetMBC(header *cartridge.Header) {
-	mmu.mbc.Type = header.MBC
-	mmu.mbc.ROMBanks = header.ROMBanks
-	mmu.mbc.currentROMBank = 1
-	mmu.mbc.RAMBanks = header.RAMBanks
-	mmu.mbc.currentRAMBank = 0
-	mmu.mbc.useRAMRegisterAsHighROMRegister = header.ROMBanks > 32
-
-	if mmu.mbc.RAMBanks == 0 {
-		mmu.mbc.RAMBanks = 1
+func NewMBC(header *Header) *MBC {
+	mbc := &MBC{
+		Type:                            header.MBC,
+		ROMBanks:                        header.ROMBanks,
+		currentROMBank:                  1,
+		RAMBanks:                        header.RAMBanks,
+		useRAMRegisterAsHighROMRegister: header.ROMBanks > 32,
 	}
-	mmu.mbc.RAMEnabled = false
-	mmu.mbc.mode = 0
+	// Always have a RAM bank
+	if mbc.RAMBanks == 0 {
+		mbc.RAMBanks = 1
+	}
+	mbc.RAM = make([]uint8, mbc.RAMBanks*0x2000)
 
-	mmu.mbc.RAM = make([]uint8, mmu.mbc.RAMBanks*0x2000)
+	return mbc
 }
 
 func (mbc *MBC) enableRAM(value uint8) {
