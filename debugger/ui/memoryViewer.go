@@ -141,4 +141,8 @@ func (mv *memoryViewer) Update(state *debug.GameBoyState) {
 	for i, entry := range mv.entries {
 		copy(entry.data[:], state.Memory[i*16:])
 	}
+
+	fyne.Do(func() {
+		mv.Refresh()
+	})
 }
