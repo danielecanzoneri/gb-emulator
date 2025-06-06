@@ -8,43 +8,29 @@ const (
 	TMAAddr  = 0xFF06
 	TACAddr  = 0xFF07
 
-	NR10Addr     = 0xFF10
-	NR11Addr     = 0xFF11
-	NR12Addr     = 0xFF12
-	NR13Addr     = 0xFF13
-	NR14Addr     = 0xFF14
-	NR21Addr     = 0xFF16
-	NR22Addr     = 0xFF17
-	NR23Addr     = 0xFF18
-	NR24Addr     = 0xFF19
-	NR30Addr     = 0xFF1A
-	NR31Addr     = 0xFF1B
-	NR32Addr     = 0xFF1C
-	NR33Addr     = 0xFF1D
-	NR34Addr     = 0xFF1E
-	NR41Addr     = 0xFF20
-	NR42Addr     = 0xFF21
-	NR43Addr     = 0xFF22
-	NR44Addr     = 0xFF23
-	NR50Addr     = 0xFF24
-	NR51Addr     = 0xFF25
-	NR52Addr     = 0xFF26
-	WaveRAMAddr0 = 0xFF30
-	WaveRAMAddr1 = 0xFF31
-	WaveRAMAddr2 = 0xFF32
-	WaveRAMAddr3 = 0xFF33
-	WaveRAMAddr4 = 0xFF34
-	WaveRAMAddr5 = 0xFF35
-	WaveRAMAddr6 = 0xFF36
-	WaveRAMAddr7 = 0xFF37
-	WaveRAMAddr8 = 0xFF38
-	WaveRAMAddr9 = 0xFF39
-	WaveRAMAddrA = 0xFF3A
-	WaveRAMAddrB = 0xFF3B
-	WaveRAMAddrC = 0xFF3C
-	WaveRAMAddrD = 0xFF3D
-	WaveRAMAddrE = 0xFF3E
-	WaveRAMAddrF = 0xFF3F
+	NR10Addr         = 0xFF10
+	NR11Addr         = 0xFF11
+	NR12Addr         = 0xFF12
+	NR13Addr         = 0xFF13
+	NR14Addr         = 0xFF14
+	NR21Addr         = 0xFF16
+	NR22Addr         = 0xFF17
+	NR23Addr         = 0xFF18
+	NR24Addr         = 0xFF19
+	NR30Addr         = 0xFF1A
+	NR31Addr         = 0xFF1B
+	NR32Addr         = 0xFF1C
+	NR33Addr         = 0xFF1D
+	NR34Addr         = 0xFF1E
+	NR41Addr         = 0xFF20
+	NR42Addr         = 0xFF21
+	NR43Addr         = 0xFF22
+	NR44Addr         = 0xFF23
+	NR50Addr         = 0xFF24
+	NR51Addr         = 0xFF25
+	NR52Addr         = 0xFF26
+	waveRAMStartAddr = 0xFF30
+	waveRAMLength    = 16
 
 	LCDCAddr = 0xFF40
 	STATAddr = 0xFF41
@@ -71,113 +57,19 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		mmu.Joypad.Write(v)
 
 	// Audio I/O
-	case NR10Addr:
-		fallthrough
-	case NR11Addr:
-		fallthrough
-	case NR12Addr:
-		fallthrough
-	case NR13Addr:
-		fallthrough
-	case NR14Addr:
-		fallthrough
-	case NR21Addr:
-		fallthrough
-	case NR22Addr:
-		fallthrough
-	case NR23Addr:
-		fallthrough
-	case NR24Addr:
-		fallthrough
-	case NR30Addr:
-		fallthrough
-	case NR31Addr:
-		fallthrough
-	case NR32Addr:
-		fallthrough
-	case NR33Addr:
-		fallthrough
-	case NR34Addr:
-		fallthrough
-	case NR41Addr:
-		fallthrough
-	case NR42Addr:
-		fallthrough
-	case NR43Addr:
-		fallthrough
-	case NR44Addr:
-		fallthrough
-	case NR50Addr:
-		fallthrough
-	case NR51Addr:
-		fallthrough
-	case NR52Addr:
-		fallthrough
-	case WaveRAMAddr0:
-		fallthrough
-	case WaveRAMAddr1:
-		fallthrough
-	case WaveRAMAddr2:
-		fallthrough
-	case WaveRAMAddr3:
-		fallthrough
-	case WaveRAMAddr4:
-		fallthrough
-	case WaveRAMAddr5:
-		fallthrough
-	case WaveRAMAddr6:
-		fallthrough
-	case WaveRAMAddr7:
-		fallthrough
-	case WaveRAMAddr8:
-		fallthrough
-	case WaveRAMAddr9:
-		fallthrough
-	case WaveRAMAddrA:
-		fallthrough
-	case WaveRAMAddrB:
-		fallthrough
-	case WaveRAMAddrC:
-		fallthrough
-	case WaveRAMAddrD:
-		fallthrough
-	case WaveRAMAddrE:
-		fallthrough
-	case WaveRAMAddrF:
+	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
+		NR21Addr, NR22Addr, NR23Addr, NR24Addr,
+		NR30Addr, NR31Addr, NR32Addr, NR33Addr, NR34Addr,
+		NR41Addr, NR42Addr, NR43Addr, NR44Addr,
+		NR50Addr, NR51Addr, NR52Addr:
 		mmu.APU.IOWrite(addr, v)
 
 	// Timer I/O
-	case DIVAddr:
-		fallthrough
-	case TIMAAddr:
-		fallthrough
-	case TMAAddr:
-		fallthrough
-	case TACAddr:
+	case DIVAddr, TIMAAddr, TMAAddr, TACAddr:
 		mmu.Timer.Write(addr, v)
 
 	// PPU I/O
-	case LCDCAddr:
-		fallthrough
-	case STATAddr:
-		fallthrough
-	case SCYAddr:
-		fallthrough
-	case SCXAddr:
-		fallthrough
-	case LYAddr:
-		fallthrough
-	case LYCAddr:
-		fallthrough
-	case BGPAddr:
-		fallthrough
-	case OBP0Addr:
-		fallthrough
-	case OBP1Addr:
-		fallthrough
-	case WYAddr:
-		fallthrough
-	case WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
 		mmu.PPU.Write(addr, v)
 
 	// DMA transfer
@@ -191,7 +83,10 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		mmu.ieReg = v
 
 	default:
-		mmu.Data[addr] = v
+		// Wave RAM
+		if waveRAMStartAddr <= addr && addr < waveRAMStartAddr+waveRAMLength {
+			mmu.APU.IOWrite(addr, v)
+		}
 	}
 }
 
@@ -202,113 +97,19 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		return mmu.Joypad.Read()
 
 	// Audio I/O
-	case NR10Addr:
-		fallthrough
-	case NR11Addr:
-		fallthrough
-	case NR12Addr:
-		fallthrough
-	case NR13Addr:
-		fallthrough
-	case NR14Addr:
-		fallthrough
-	case NR21Addr:
-		fallthrough
-	case NR22Addr:
-		fallthrough
-	case NR23Addr:
-		fallthrough
-	case NR24Addr:
-		fallthrough
-	case NR30Addr:
-		fallthrough
-	case NR31Addr:
-		fallthrough
-	case NR32Addr:
-		fallthrough
-	case NR33Addr:
-		fallthrough
-	case NR34Addr:
-		fallthrough
-	case NR41Addr:
-		fallthrough
-	case NR42Addr:
-		fallthrough
-	case NR43Addr:
-		fallthrough
-	case NR44Addr:
-		fallthrough
-	case NR50Addr:
-		fallthrough
-	case NR51Addr:
-		fallthrough
-	case NR52Addr:
-		fallthrough
-	case WaveRAMAddr0:
-		fallthrough
-	case WaveRAMAddr1:
-		fallthrough
-	case WaveRAMAddr2:
-		fallthrough
-	case WaveRAMAddr3:
-		fallthrough
-	case WaveRAMAddr4:
-		fallthrough
-	case WaveRAMAddr5:
-		fallthrough
-	case WaveRAMAddr6:
-		fallthrough
-	case WaveRAMAddr7:
-		fallthrough
-	case WaveRAMAddr8:
-		fallthrough
-	case WaveRAMAddr9:
-		fallthrough
-	case WaveRAMAddrA:
-		fallthrough
-	case WaveRAMAddrB:
-		fallthrough
-	case WaveRAMAddrC:
-		fallthrough
-	case WaveRAMAddrD:
-		fallthrough
-	case WaveRAMAddrE:
-		fallthrough
-	case WaveRAMAddrF:
+	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
+		NR21Addr, NR22Addr, NR23Addr, NR24Addr,
+		NR30Addr, NR31Addr, NR32Addr, NR33Addr, NR34Addr,
+		NR41Addr, NR42Addr, NR43Addr, NR44Addr,
+		NR50Addr, NR51Addr, NR52Addr:
 		return mmu.APU.IORead(addr)
 
 	// Timer I/O
-	case DIVAddr:
-		fallthrough
-	case TIMAAddr:
-		fallthrough
-	case TMAAddr:
-		fallthrough
-	case TACAddr:
+	case DIVAddr, TIMAAddr, TMAAddr, TACAddr:
 		return mmu.Timer.Read(addr)
 
 	// PPU I/O
-	case LCDCAddr:
-		fallthrough
-	case STATAddr:
-		fallthrough
-	case SCYAddr:
-		fallthrough
-	case SCXAddr:
-		fallthrough
-	case LYAddr:
-		fallthrough
-	case LYCAddr:
-		fallthrough
-	case BGPAddr:
-		fallthrough
-	case OBP0Addr:
-		fallthrough
-	case OBP1Addr:
-		fallthrough
-	case WYAddr:
-		fallthrough
-	case WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
 		return mmu.PPU.Read(addr)
 
 	// DMA transfer
@@ -321,7 +122,13 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	case IEAddr:
 		return ^interruptMask | (mmu.ieReg & interruptMask)
 
-	default: // Unused I/O return 1
+	default:
+		// Wave RAM
+		if waveRAMStartAddr <= addr && addr < waveRAMStartAddr+waveRAMLength {
+			return mmu.APU.IORead(addr)
+		}
+
+		// Unused I/O return bits 1
 		return 0xFF
 	}
 }

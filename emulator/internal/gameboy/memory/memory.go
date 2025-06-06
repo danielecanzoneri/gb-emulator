@@ -10,8 +10,10 @@ import (
 const Size = 0x10000 // 64KB
 
 type MMU struct {
-	Data          [Size]uint8
 	CartridgeData []uint8
+
+	wRAM [0x2000]uint8 // Work RAM
+	hRAM [0x7F]uint8   // High RAM
 
 	// Memory Bank Controller
 	mbc MBC
@@ -35,7 +37,9 @@ type MMU struct {
 }
 
 func (mmu *MMU) Reset() {
-	mmu.Data = [Size]uint8{}
+	mmu.wRAM = [0x2000]uint8{}
+	mmu.hRAM = [0x7F]uint8{}
+
 	mmu.Write(0xFF0F, 0xE1) // IF
 	mmu.Write(0xFF40, 0x91) // LCDC
 	mmu.Write(0xFF41, 0x81) // STAT
@@ -99,18 +103,19 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	case addr < 0xC000:
 		RAMAddress := mmu.mbc.computeRAMAddress(addr)
 		return mmu.mbc.RAM[RAMAddress]
-	// case addr < 0xE000 // wRAM
-	case 0xE000 <= addr && addr < 0xFE00: // Echo RAM
+	case addr < 0xE000: // wRAM
+		return mmu.wRAM[addr-0xC000]
+	case addr < 0xFE00: // Echo RAM
 		return mmu.read(addr - 0x2000)
-	case 0xFE00 <= addr && addr < 0xFEA0: // OAM
+	case addr < 0xFEA0: // OAM
 		return mmu.PPU.ReadOAM(addr)
-	case 0xFEA0 <= addr && addr < 0xFF00:
+	case addr < 0xFF00:
 		//panic("Can't read reserved memory: " + strconv.FormatUint(uint64(addr), 16))
-		return 0
-	case 0xFF00 <= addr && addr < 0xFF80 || addr == 0xFFFF: // I/O registers
+		return 0xFF
+	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		return mmu.readIO(addr)
-	default:
-		return mmu.Data[addr]
+	default: // hRAM
+		return mmu.hRAM[addr-0xFF80]
 	}
 }
 
@@ -143,17 +148,18 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 	case addr < 0xC000:
 		RAMAddress := mmu.mbc.computeRAMAddress(addr)
 		mmu.mbc.RAM[RAMAddress] = value
-	// case addr < 0xE000 // wRAM
-	case 0xE000 <= addr && addr < 0xFE00: // Echo RAM
+	case addr < 0xE000: // wRAM
+		mmu.wRAM[addr-0xC000] = value
+	case addr < 0xFE00: // Echo RAM
 		mmu.Write(addr-0x2000, value)
-	case 0xFE00 <= addr && addr < 0xFEA0: // OAM
+	case addr < 0xFEA0: // OAM
 		mmu.PPU.WriteOAM(addr, value)
-	case 0xFEA0 <= addr && addr < 0xFF00:
+	case addr < 0xFF00:
 		//panic("Can't write reserved memory: " + strconv.FormatUint(uint64(addr), 16))
-	case 0xFF00 <= addr && addr < 0xFF80 || addr == 0xFFFF: // I/O registers
+	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		mmu.writeIO(addr, value)
-	default:
-		mmu.Data[addr] = value
+	default: // hRAM
+		mmu.hRAM[addr-0xFF80] = value
 	}
 }
 
