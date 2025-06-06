@@ -1,6 +1,8 @@
 package audio
 
 type APU struct {
+	// TODO - Pass blargg dmg_sound 9/10/12 (wave ram)
+
 	channel1 *SquareChannel
 	channel2 *SquareChannel
 	channel3 *WaveChannel
