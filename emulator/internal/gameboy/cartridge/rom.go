@@ -4,18 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 )
 
-type Cartridge struct {
-	// Struct containing cartridge information
-	Header *Header
-	MBC    *MBC
+type Cartridge interface {
+	Read(uint16) uint8
+	Write(uint16, uint8)
 
-	Data []byte
+	Header() *Header
 }
 
-func LoadROM(path string) (*Cartridge, error) {
+func LoadROM(path string) (Cartridge, error) {
 	// Check if the ROM exists
 	stat, err := os.Stat(path)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -34,16 +34,19 @@ func LoadROM(path string) (*Cartridge, error) {
 		return nil, err
 	}
 
-	header, err := parseHeader(data)
-	if err != nil {
-		return nil, err
-	}
+	return NewCartridge(data), nil
+}
 
-	cartridge := &Cartridge{
-		Header: header,
-		MBC:    NewMBC(header),
-		Data:   data,
-	}
+func NewCartridge(data []byte) Cartridge {
+	header := parseHeader(data)
 
-	return cartridge, nil
+	switch data[cartridgeType] {
+	case 0:
+		return NewMBC0(data, header)
+	case 1, 2, 3:
+		return NewMBC1(data, header)
+	default:
+		log.Panicf("cartridge type %02X not supported", data[cartridgeType])
+		return nil
+	}
 }

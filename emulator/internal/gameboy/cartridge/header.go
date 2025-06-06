@@ -1,8 +1,8 @@
 package cartridge
 
 import (
-	"errors"
 	"fmt"
+	"log"
 )
 
 const (
@@ -19,15 +19,7 @@ const (
 	gameVersion     = 0x014C
 )
 
-const (
-	NoMBC = iota
-	MBC1
-)
-
 type Header struct {
-	// Memory Bank Controller (MBC)
-	MBC int
-
 	// ROMSize = 16 KiB * ROMBanks
 	ROMBanks uint
 
@@ -46,13 +38,13 @@ type Header struct {
 
 func (h *Header) String() string {
 	return fmt.Sprintf(
-		"MBC: %x, ROM banks = %d (%d KiB), RAM banks = %d (%d KiB) \nGame title: %v, version %x, licensee: %v, destination: %x",
-		h.MBC, h.ROMBanks, h.ROMBanks*16, h.RAMBanks, h.RAMBanks*8,
+		"ROM banks = %d (%d KiB), RAM banks = %d (%d KiB) \nGame title: %v, version %x, licensee: %v, destination: %x",
+		h.ROMBanks, h.ROMBanks*16, h.RAMBanks, h.RAMBanks*8,
 		h.Title, h.GameVersion, h.Licensee, h.Destination,
 	)
 }
 
-func parseHeader(data []byte) (*Header, error) {
+func parseHeader(data []byte) *Header {
 	// Parse title
 	Title := parseTitle(data[title : title+titleLen])
 
@@ -64,34 +56,16 @@ func parseHeader(data []byte) (*Header, error) {
 		LicenseeCode = string(data[newLicenseeCode : newLicenseeCode+2])
 	}
 
-	RAMBanks, err := computeRAMSize(data[ramSize])
-	if err != nil {
-		return nil, err
-	}
-
-	var mbc int
-	switch data[cartridgeType] {
-	case 0:
-		mbc = NoMBC
-	case 1:
-		fallthrough
-	case 2:
-		fallthrough
-	case 3:
-		mbc = MBC1
-	default:
-		return nil, fmt.Errorf("cartridge type %02X not supported", data[cartridgeType])
-	}
+	RAMBanks := computeRAMSize(data[ramSize])
 
 	return &Header{
-		MBC:         mbc,
 		ROMBanks:    computeROMBanks(data[romSize]),
 		RAMBanks:    RAMBanks,
 		Title:       Title,
 		Licensee:    LicenseeCode,
 		Destination: data[destinationCode],
 		GameVersion: data[gameVersion],
-	}, nil
+	}
 }
 
 func parseTitle(titleData []byte) string {
@@ -109,19 +83,20 @@ func computeROMBanks(v uint8) uint {
 	return 1 << (v + 1)
 }
 
-func computeRAMSize(v uint8) (uint, error) {
+func computeRAMSize(v uint8) uint {
 	switch v {
 	case 0x00:
-		return 0, nil
+		return 0
 	case 0x02:
-		return 1, nil
+		return 1
 	case 0x03:
-		return 4, nil
+		return 4
 	case 0x04:
-		return 16, nil
+		return 16
 	case 0x05:
-		return 8, nil
+		return 8
 	default:
-		return 0, errors.New("unsupported RAM size")
+		log.Fatalf("Unsupported RAM size: %02X\n", v)
+		return 0
 	}
 }

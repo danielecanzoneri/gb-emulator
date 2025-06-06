@@ -6,7 +6,7 @@ import (
 )
 
 func TestMemoryReadWrite(t *testing.T) {
-	mem := &MMU{Cartridge: &cartridge.Cartridge{}}
+	mem := &MMU{Cartridge: &cartridge.MBC0{ROM: make([]uint8, 0x8000)}}
 
 	// Test writing and reading a byte
 	addr := uint16(0xA034)

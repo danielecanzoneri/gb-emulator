@@ -8,14 +8,12 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/timer"
 )
 
-const Size = 0x10000 // 64KB
-
 type MMU struct {
 	wRAM [0x2000]uint8 // Work RAM
 	hRAM [0x7F]uint8   // High RAM
 
 	// Cartridge (with MBC and data)
-	Cartridge *cartridge.Cartridge
+	Cartridge cartridge.Cartridge
 
 	Timer  *timer.Timer
 	PPU    *ppu.PPU

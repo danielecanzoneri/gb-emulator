@@ -75,5 +75,5 @@ func (gb *GameBoy) Load(romPath string) (string, error) {
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
 
-	return rom.Header.Title, nil
+	return rom.Header().Title, nil
 }

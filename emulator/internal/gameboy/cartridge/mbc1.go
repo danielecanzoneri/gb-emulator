@@ -1,13 +1,16 @@
 package cartridge
 
-// MBC (Memory Bank Controller)
-type MBC struct {
-	Type int
+import "log"
+
+type MBC1 struct {
+	header *Header
 
 	ROMBanks uint
 	RAMBanks uint
 
+	ROM []uint8
 	RAM []uint8
+
 	// Registers
 	RAMEnabled     bool
 	currentROMBank uint  // 5 bit register
@@ -17,12 +20,17 @@ type MBC struct {
 	useRAMRegisterAsHighROMRegister bool
 }
 
-func NewMBC(header *Header) *MBC {
-	mbc := &MBC{
-		Type:                            header.MBC,
+func (mbc *MBC1) Header() *Header {
+	return mbc.header
+}
+
+func NewMBC1(data []uint8, header *Header) *MBC1 {
+	mbc := &MBC1{
+		header:                          header,
 		ROMBanks:                        header.ROMBanks,
-		currentROMBank:                  1,
 		RAMBanks:                        header.RAMBanks,
+		ROM:                             data,
+		currentROMBank:                  1,
 		useRAMRegisterAsHighROMRegister: header.ROMBanks > 32,
 	}
 	// Always have a RAM bank
@@ -34,12 +42,48 @@ func NewMBC(header *Header) *MBC {
 	return mbc
 }
 
-func (mbc *MBC) enableRAM(value uint8) {
+func (mbc *MBC1) Write(addr uint16, value uint8) {
+	switch {
+	case addr < 0x2000:
+		mbc.enableRAM(value)
+	case addr < 0x4000:
+		mbc.SetROMBank(value)
+	case addr < 0x6000:
+		mbc.SetRAMBank(value)
+	case addr < 0x8000:
+		mbc.SetMode(value)
+
+	case 0xA000 <= addr && addr < 0xC000:
+		RAMAddress := mbc.computeRAMAddress(addr)
+		mbc.RAM[RAMAddress] = value
+
+	default:
+		log.Printf("[WARN] MBC1 Write address is out of range: %04X\n", addr)
+	}
+}
+
+func (mbc *MBC1) Read(addr uint16) uint8 {
+	switch {
+	case addr < 0x8000:
+		cartridgeAddress := mbc.computeROMAddress(addr)
+		return mbc.ROM[cartridgeAddress]
+
+	case 0xA000 <= addr && addr < 0xC000:
+		RAMAddress := mbc.computeRAMAddress(addr)
+		return mbc.RAM[RAMAddress]
+
+	default:
+		log.Printf("[WARN] Cartridge Read address is out of range: %04X\n", addr)
+		return 0xFF
+	}
+}
+
+func (mbc *MBC1) enableRAM(value uint8) {
 	// Low nibble = 0xA enables RAM
 	mbc.RAMEnabled = value&0x0F == 0xA
 }
 
-func (mbc *MBC) SetROMBank(value uint8) {
+func (mbc *MBC1) SetROMBank(value uint8) {
 	// Only lower 5 bits are used
 	value = value & 0x1F
 
@@ -52,7 +96,7 @@ func (mbc *MBC) SetROMBank(value uint8) {
 	mbc.currentROMBank = uint(value) % mbc.ROMBanks
 }
 
-func (mbc *MBC) SetRAMBank(value uint8) {
+func (mbc *MBC1) SetRAMBank(value uint8) {
 	// Only lower 2 bits are used
 	value = value & 0x3
 
@@ -62,12 +106,12 @@ func (mbc *MBC) SetRAMBank(value uint8) {
 	}
 }
 
-func (mbc *MBC) SetMode(value uint8) {
+func (mbc *MBC1) SetMode(value uint8) {
 	// 1 bit register
 	mbc.mode = value & 1
 }
 
-func (mbc *MBC) computeROMAddress(cpuAddress uint16) uint {
+func (mbc *MBC1) computeROMAddress(cpuAddress uint16) uint {
 	// bank number: 2 bits - 5 bits, cpuAddress: 14 bits
 	var bankNumber uint = 0
 	switch {
@@ -89,7 +133,7 @@ func (mbc *MBC) computeROMAddress(cpuAddress uint16) uint {
 	return bankNumber<<14 | uint(cpuAddress)
 }
 
-func (mbc *MBC) computeRAMAddress(cpuAddress uint16) uint {
+func (mbc *MBC1) computeRAMAddress(cpuAddress uint16) uint {
 	// bank number: 2 bits, cpuAddress: 13 bits
 	switch {
 	case 0xA000 <= cpuAddress && cpuAddress < 0xC000:
