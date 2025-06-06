@@ -130,7 +130,8 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 }
 
 func (ch *NoiseChannel) Reset() {
-	ch.WriteRegister(nr41Addr, 0)
+	// On the DMG, length counters are unaffected by power
+	// ch.WriteRegister(nr41Addr, 0)
 	ch.WriteRegister(nr42Addr, 0)
 	ch.WriteRegister(nr43Addr, 0)
 	ch.WriteRegister(nr44Addr, 0)

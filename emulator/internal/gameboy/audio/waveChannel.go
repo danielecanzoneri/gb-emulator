@@ -154,7 +154,8 @@ func (ch *WaveChannel) ReadWRAM(addr uint16) uint8 {
 
 func (ch *WaveChannel) Reset() {
 	ch.WriteRegister(nr30Addr, 0)
-	ch.WriteRegister(nr31Addr, 0)
+	// On the DMG, length counters are unaffected by power
+	// ch.WriteRegister(nr31Addr, 0)
 	ch.WriteRegister(nr32Addr, 0)
 	ch.WriteRegister(nr33Addr, 0)
 	ch.WriteRegister(nr34Addr, 0)

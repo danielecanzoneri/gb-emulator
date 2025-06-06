@@ -137,7 +137,9 @@ func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 
 func (ch *SquareChannel) Reset() {
 	ch.WriteRegister(ch.addrNRx0, 0)
-	ch.WriteRegister(ch.addrNRx1, 0)
+	// On the DMG, length counters are unaffected by power
+	// ch.WriteRegister(ch.addrNRx1, 0)
+	ch.waveDuty = 0
 	ch.WriteRegister(ch.addrNRx2, 0)
 	ch.WriteRegister(ch.addrNRx3, 0)
 	ch.WriteRegister(ch.addrNRx4, 0)
