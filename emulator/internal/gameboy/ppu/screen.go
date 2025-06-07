@@ -85,6 +85,11 @@ func (ppu *PPU) drawLine() uint {
 			if obj.x > 8 {
 				thePixel = int(obj.x) - 8
 			}
+
+			if thePixel >= FrameWidth {
+				continue
+			}
+
 			tile := tilesUnderPixels[thePixel]
 			// 2. If that tile has not been considered by a previous OBJ yet:
 			if tile != previousTile {
