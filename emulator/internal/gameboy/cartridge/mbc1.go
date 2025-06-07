@@ -60,8 +60,7 @@ func (mbc *MBC1) Write(addr uint16, value uint8) {
 			value = 1
 		}
 
-		// Bank number is masked to the required number of bits
-		mbc.romBankNumber = value % mbc.ROMBanks
+		mbc.romBankNumber = value
 
 	case addr < 0x6000:
 		// Only lower 2 bits are used
@@ -121,7 +120,10 @@ func (mbc *MBC1) computeRomAddress(cpuAddress uint16) uint {
 		panic("should never happen")
 	}
 
-	return uint(bankNumber)<<14 | uint(cpuAddress)
+	// Bank number is masked to the required number of bits
+	bankNumber %= mbc.ROMBanks
+
+	return uint(bankNumber)<<14 | uint(cpuAddress&0x3FFF)
 }
 
 func (mbc *MBC1) computeRamAddress(cpuAddress uint16) uint {
