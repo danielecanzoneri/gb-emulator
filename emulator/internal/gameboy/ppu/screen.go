@@ -68,6 +68,9 @@ func (ppu *PPU) drawLine() uint {
 
 	if ppu.objEnabled {
 		var pixelLine = [FrameWidth]uint8{}
+		for x := 0; x < FrameWidth; x++ {
+			pixelLine[x] = 0xFF // To not confuse with value 0 (0xFF means transparent)
+		}
 		var pixelBGPriority = [FrameWidth]bool{} // Pixel priority for BG/Window over obj
 
 		// Indexes of the previous tile considered in the OBJ penalty algorithm
@@ -117,11 +120,14 @@ func (ppu *PPU) drawLine() uint {
 
 			// Draw pixels on the line if no other pixel with higher priority was drawn
 			for i, px := range rowPixels {
-				x := uint8(i) + obj.x
-				if xOffset <= x && x < FrameWidth+xOffset {
-					if pixelLine[x-xOffset] == 0 {
-						pixelLine[x-xOffset] = obj.palette.getColor(px)
-						pixelBGPriority[x-xOffset] = obj.bgPriority
+				// Pixel is transparent if color id is 0 (not if the color itself is 0)
+				if px > 0 {
+					x := uint8(i) + obj.x
+					if xOffset <= x && x < FrameWidth+xOffset {
+						if pixelLine[x-xOffset] == 0xFF {
+							pixelLine[x-xOffset] = obj.palette.getColor(px)
+							pixelBGPriority[x-xOffset] = obj.bgPriority
+						}
 					}
 				}
 			}
@@ -130,7 +136,7 @@ func (ppu *PPU) drawLine() uint {
 		// Write objects pixel on the line
 		for i, b := range pixelLine {
 			// Draw if pixel is not transparent and if no BG pixel has higher priority
-			if b > 0 && (frameLine[i] == 0 || !pixelBGPriority[i]) {
+			if b != 0xFF && (frameLine[i] == 0 || !pixelBGPriority[i]) {
 				frameLine[i] = b
 			}
 		}
