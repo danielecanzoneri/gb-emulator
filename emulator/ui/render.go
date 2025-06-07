@@ -41,6 +41,12 @@ func initRenderer() {
 // Inherit Ebiten Game interface
 
 func (ui *UI) Update() error {
+	// If closing, save game
+	if ebiten.IsWindowBeingClosed() {
+		ui.Save()
+		return ebiten.Termination
+	}
+
 	titleSuffix := ""
 	if ui.DebugState.IsActive() {
 		titleSuffix = " (debugging)"

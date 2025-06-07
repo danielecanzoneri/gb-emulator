@@ -1,7 +1,6 @@
 package gameboy
 
 import (
-	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/audio"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/cpu"
@@ -66,14 +65,7 @@ func (gb *GameBoy) Reset() {
 	gb.APU.Reset()
 }
 
-func (gb *GameBoy) Load(romPath string) (string, error) {
-	rom, err := cartridge.LoadROM(romPath)
-	if err != nil {
-		return "", fmt.Errorf("error loading the cartridge: %v", err)
-	}
-
+func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
-
-	return rom.Header().Title, nil
 }

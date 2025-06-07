@@ -34,14 +34,14 @@ func (mbc *MBC1) Header() *Header {
 	return mbc.header
 }
 
-func NewMBC1(data []uint8, header *Header, battery bool) *MBC1 {
+func NewMBC1(rom []uint8, ram []uint8, header *Header, battery bool) *MBC1 {
 	// TODO - Detect and handle MBC1M (Multi-Game carts)
 	mbc := &MBC1{
 		header:                              header,
 		battery:                             battery,
 		ROMBanks:                            uint8(header.ROMBanks),
 		RAMBanks:                            uint8(header.RAMBanks),
-		ROM:                                 data,
+		ROM:                                 rom,
 		romBankNumber:                       1,
 		useRamBankNumberAsHighRomBankNumber: header.ROMBanks > 32,
 	}
@@ -49,7 +49,15 @@ func NewMBC1(data []uint8, header *Header, battery bool) *MBC1 {
 	if mbc.RAMBanks == 0 {
 		mbc.RAMBanks = 1
 	}
-	mbc.RAM = make([]uint8, header.RAMBanks*0x2000)
+
+	switch {
+	case len(ram) != int(header.RAMBanks*0x2000):
+		log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
+		fallthrough
+	case ram == nil:
+		ram = make([]uint8, header.RAMBanks*0x2000)
+	}
+	mbc.RAM = ram
 
 	return mbc
 }

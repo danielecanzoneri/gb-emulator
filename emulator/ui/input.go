@@ -21,6 +21,9 @@ func (ui *UI) handleInput() {
 		ui.DebugState.Pause()
 		ui.audioPlayer.Pause()
 
+		// Save game before switching
+		ui.Save()
+
 		ui.gameBoy.Reset()
 		ui.LoadNewGame()
 
