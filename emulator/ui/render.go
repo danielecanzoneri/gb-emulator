@@ -12,11 +12,18 @@ const (
 )
 
 var (
+	//colors = [4]color.Color{
+	//	color.Gray{Y: 0xFF}, // White
+	//	color.Gray{Y: 0xAA}, // Light gray
+	//	color.Gray{Y: 0x55}, // Dark gray
+	//	color.Gray{Y: 0},    // Black
+	//}
+	// Original palette
 	colors = [4]color.Color{
-		color.Gray{Y: 0xFF}, // White
-		color.Gray{Y: 0xAA}, // Light gray
-		color.Gray{Y: 0x55}, // Dark gray
-		color.Gray{Y: 0},    // Black
+		color.RGBA{R: 198, G: 222, B: 140, A: 255},
+		color.RGBA{R: 132, G: 165, B: 99, A: 255},
+		color.RGBA{R: 57, G: 97, B: 57, A: 255},
+		color.RGBA{R: 8, G: 24, B: 16, A: 255},
 	}
 	pixels [4]*ebiten.Image
 )
