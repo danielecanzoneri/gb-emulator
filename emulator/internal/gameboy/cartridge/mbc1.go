@@ -131,7 +131,9 @@ func (mbc *MBC1) computeRamAddress(cpuAddress uint16) uint {
 		cpuAddress = cpuAddress & 0x1FFF
 
 		if mbc.bankingMode == 1 && !mbc.useRamBankNumberAsHighRomBankNumber {
-			return uint(mbc.ramBankNumber)<<13 | uint(cpuAddress)
+			// Bank number is masked to the required number of bits
+			bank := mbc.ramBankNumber % mbc.RAMBanks
+			return uint(bank)<<13 | uint(cpuAddress)
 		}
 		return uint(cpuAddress)
 
