@@ -12,6 +12,7 @@ func mockCPU() *CPU {
 	p := &ppu.PPU{}
 	c := &cartridge.MBC1{ROM: make([]uint8, 0x8000), RAM: make([]uint8, 0x2000)}
 	mem := &memory.MMU{PPU: p, Cartridge: c, Joypad: &joypad.Joypad{}, Timer: &timer.Timer{}}
+	mem.Write(0, 0x0A) // Enable RAM
 	return &CPU{SP: 0xFFFE, MMU: mem}
 }
 
