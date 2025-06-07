@@ -12,6 +12,7 @@ type Cartridge interface {
 	Read(uint16) uint8
 	Write(uint16, uint8)
 
+	RAMDump() []uint8
 	Header() *Header
 }
 
@@ -43,8 +44,10 @@ func NewCartridge(data []byte) Cartridge {
 	switch data[cartridgeType] {
 	case 0:
 		return NewMBC0(data, header)
-	case 1, 2, 3:
-		return NewMBC1(data, header)
+	case 1, 2:
+		return NewMBC1(data, header, false)
+	case 3:
+		return NewMBC1(data, header, true)
 	default:
 		log.Panicf("cartridge type %02X not supported", data[cartridgeType])
 		return nil

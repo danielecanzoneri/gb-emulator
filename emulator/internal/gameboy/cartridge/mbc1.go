@@ -3,7 +3,8 @@ package cartridge
 import "log"
 
 type MBC1 struct {
-	header *Header
+	header  *Header
+	battery bool // If battery is present RAM should be stored
 
 	ROMBanks uint8
 	RAMBanks uint8
@@ -21,14 +22,23 @@ type MBC1 struct {
 	useRamBankNumberAsHighRomBankNumber bool
 }
 
+func (mbc *MBC1) RAMDump() []uint8 {
+	if mbc.battery {
+		return mbc.RAM
+	}
+
+	return nil
+}
+
 func (mbc *MBC1) Header() *Header {
 	return mbc.header
 }
 
-func NewMBC1(data []uint8, header *Header) *MBC1 {
+func NewMBC1(data []uint8, header *Header, battery bool) *MBC1 {
 	// TODO - Detect and handle MBC1M (Multi-Game carts)
 	mbc := &MBC1{
 		header:                              header,
+		battery:                             battery,
 		ROMBanks:                            uint8(header.ROMBanks),
 		RAMBanks:                            uint8(header.RAMBanks),
 		ROM:                                 data,

@@ -8,6 +8,10 @@ type MBC0 struct {
 	ROM []uint8
 }
 
+func (mbc *MBC0) RAMDump() []uint8 {
+	return nil
+}
+
 func (mbc *MBC0) Header() *Header {
 	return mbc.header
 }
