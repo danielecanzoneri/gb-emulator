@@ -25,13 +25,7 @@ type MBC2 struct {
 
 func (mbc *MBC2) RAMDump() []uint8 {
 	if mbc.battery {
-		// Save only low bytes
-		dump := make([]uint8, mbc2Len/2)
-		for i := 0; i < mbc2Len; i += 2 {
-			dump[i/2] |= mbc.RAM[i] & 0xF  // Low nibble: bytes 0, 2, 4, 6, ...
-			dump[i/2] |= mbc.RAM[i+1] << 4 // High nibble: bytes 1, 3, 5, 7, ...
-		}
-		return dump
+		return mbc.RAM[:]
 	}
 
 	return nil
@@ -51,13 +45,10 @@ func NewMBC2(rom []uint8, ram []uint8, header *Header, battery bool) *MBC2 {
 	}
 
 	if ram != nil {
-		if len(ram) != mbc2Len/2 {
+		if len(ram) != mbc2Len {
 			log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
 		} else {
-			for i := 0; i < mbc2Len; i += 2 {
-				mbc.RAM[i] = ram[i/2] & 0xF  // Low nibble: bytes 0, 2, 4, 6, ...
-				mbc.RAM[i+1] = ram[i/2] >> 4 // High nibble: bytes 1, 3, 5, 7, ...
-			}
+			copy(mbc.RAM[:], ram)
 		}
 	}
 	return mbc
