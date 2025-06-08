@@ -26,6 +26,12 @@ func NewCartridge(romData []uint8, savData []uint8) Cartridge {
 		return NewMBC2(romData, nil, header, false)
 	case 6:
 		return NewMBC2(romData, savData, header, true)
+	case 0x0F, 0x10:
+		return NewMBC3(romData, savData, header, true, true)
+	case 0x11, 0x12:
+		return NewMBC3(romData, nil, header, false, false)
+	case 0x13:
+		return NewMBC3(romData, savData, header, true, false)
 	default:
 		log.Panicf("cartridge type %02X not supported", romData[cartridgeType])
 		return nil
