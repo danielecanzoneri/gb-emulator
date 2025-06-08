@@ -108,21 +108,25 @@ func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc boo
 	// Start go routine that updates RTC every second
 	go func() {
 		for range time.Tick(time.Second) {
-			mbc.rtcS++
-			if mbc.rtcS == 60 {
-				mbc.rtcS = 0
-				mbc.rtcM++
-				if mbc.rtcM == 60 {
-					mbc.rtcM = 0
-					mbc.rtcH++
-					if mbc.rtcH == 24 {
-						mbc.rtcH = 0
-						mbc.rtcDL++
-						if mbc.rtcDL == 0 { // rtcDH bit 0 is bit 9 of day counter
-							if util.ReadBit(mbc.rtcDH, 0) == 0 {
-								util.SetBit(&mbc.rtcDH, 0, 1)
-							} else { // Set carry bit
-								util.SetBit(&mbc.rtcDH, 7, 1)
+			// Check if RTC is enabled
+			if util.ReadBit(mbc.rtcDH, 6) == 0 {
+				mbc.rtcS++
+				if mbc.rtcS == 60 {
+					mbc.rtcS = 0
+					mbc.rtcM++
+					if mbc.rtcM == 60 {
+						mbc.rtcM = 0
+						mbc.rtcH++
+						if mbc.rtcH == 24 {
+							mbc.rtcH = 0
+							mbc.rtcDL++
+							if mbc.rtcDL == 0 { // rtcDH bit 0 is bit 9 of day counter
+								if util.ReadBit(mbc.rtcDH, 0) == 0 {
+									util.SetBit(&mbc.rtcDH, 0, 1)
+								} else { // Set carry bit
+									util.SetBit(&mbc.rtcDH, 0, 0)
+									util.SetBit(&mbc.rtcDH, 7, 1)
+								}
 							}
 						}
 					}
@@ -292,37 +296,41 @@ func (mbc *MBC3) parseRTCData(data []uint8) {
 	mbc.lthRtcH = data[28]
 	mbc.lthRtcDL = data[32]
 	mbc.lthRtcDH = data[36]
-	timestamp := binary.LittleEndian.Uint64(data[40:])
 
-	// Compute how much time has passed and update the registers accordingly
-	saveTime := time.Unix(int64(timestamp), 0)
-	elapsed := time.Since(saveTime)
+	// If RTC was enabled, advance registers for the time elapsed
+	if util.ReadBit(mbc.rtcDH, 6) == 0 {
+		timestamp := binary.LittleEndian.Uint64(data[40:])
 
-	// Update seconds
-	seconds := int(elapsed.Seconds()) % 60
-	mbc.rtcS += uint8(seconds)
-	extraMin := mbc.rtcS / 60
-	mbc.rtcS %= 60
+		// Compute how much time has passed and update the registers accordingly
+		saveTime := time.Unix(int64(timestamp), 0)
+		elapsed := time.Since(saveTime)
 
-	// Update minutes
-	minutes := int(elapsed.Minutes()) % 60
-	mbc.rtcM += uint8(minutes) + extraMin
-	extraHour := mbc.rtcM / 60
-	mbc.rtcM %= 60
+		// Update seconds
+		seconds := int(elapsed.Seconds()) % 60
+		mbc.rtcS += uint8(seconds)
+		extraMin := mbc.rtcS / 60
+		mbc.rtcS %= 60
 
-	// Update hours
-	hours := int(elapsed.Hours()) % 24
-	mbc.rtcH += uint8(hours) + extraHour
-	extraDay := mbc.rtcH / 60
-	mbc.rtcH %= 60
+		// Update minutes
+		minutes := int(elapsed.Minutes()) % 60
+		mbc.rtcM += uint8(minutes) + extraMin
+		extraHour := mbc.rtcM / 60
+		mbc.rtcM %= 60
 
-	// Update days
-	days := int(elapsed.Hours()) / 24
-	rtcDays := int(mbc.rtcDL) | (int(mbc.rtcDH&1) << 8)
-	totalDays := days + rtcDays + int(extraDay)
-	mbc.rtcDL = uint8(totalDays)
-	mbc.rtcDH = uint8(totalDays>>8) & 1
-	if totalDays > 0x1FF { // Overflow
-		util.SetBit(&mbc.rtcDH, 7, 1)
+		// Update hours
+		hours := int(elapsed.Hours()) % 24
+		mbc.rtcH += uint8(hours) + extraHour
+		extraDay := mbc.rtcH / 60
+		mbc.rtcH %= 60
+
+		// Update days
+		days := int(elapsed.Hours()) / 24
+		rtcDays := int(mbc.rtcDL) | (int(mbc.rtcDH&1) << 8)
+		totalDays := days + rtcDays + int(extraDay)
+		mbc.rtcDL = uint8(totalDays)
+		mbc.rtcDH = uint8(totalDays>>8) & 1
+		if totalDays > 0x1FF { // Overflow
+			util.SetBit(&mbc.rtcDH, 7, 1)
+		}
 	}
 }
