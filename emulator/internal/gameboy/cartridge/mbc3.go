@@ -130,13 +130,13 @@ func (mbc *MBC3) Cycle() {
 	if mbc.rtcClockCounter == 1<<20 {
 		mbc.rtcClockCounter = 0
 
-		mbc.rtcS++
+		mbc.rtcS = (mbc.rtcS + 1) & rtcSecondsMask
 		if mbc.rtcS == 60 {
 			mbc.rtcS = 0
-			mbc.rtcM++
+			mbc.rtcM = (mbc.rtcM + 1) & rtcMinutesMask
 			if mbc.rtcM == 60 {
 				mbc.rtcM = 0
-				mbc.rtcH++
+				mbc.rtcH = (mbc.rtcH + 1) & rtcHoursMask
 				if mbc.rtcH == 24 {
 					mbc.rtcH = 0
 					mbc.rtcDL++
