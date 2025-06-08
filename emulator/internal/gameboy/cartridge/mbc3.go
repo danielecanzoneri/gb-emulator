@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+const (
+	// Range 0-59 (00-3B, bits 7-6 should always be 0)
+	rtcSecondsMask = 0x3F
+	rtcMinutesMask = 0x3F
+	// Range 0-24 (00-18, bits 7-6-5 should always be 0)
+	rtcHoursMask = 0x1F
+	// Bit 7: carry bit, bit 6: RTC active, bit 0: bit 9 of day counter
+	rtcControlMask = 0b11000001
+)
+
 type MBC3 struct {
 	header  *Header
 	battery bool // If battery is present RAM should be stored
@@ -186,15 +196,15 @@ func (mbc *MBC3) Write(addr uint16, value uint8) {
 			// Access RTC registers
 			switch mbc.ramBankNumber {
 			case 0x8:
-				mbc.rtcS = value
+				mbc.rtcS = value & rtcSecondsMask
 			case 0x9:
-				mbc.rtcM = value
+				mbc.rtcM = value & rtcMinutesMask
 			case 0xA:
-				mbc.rtcH = value
+				mbc.rtcH = value & rtcHoursMask
 			case 0xB:
 				mbc.rtcDL = value
 			case 0xC:
-				mbc.rtcDH = value
+				mbc.rtcDH = value & rtcControlMask
 			default:
 				// Access RAM
 				RAMAddress := mbc.computeRamAddress(addr)
