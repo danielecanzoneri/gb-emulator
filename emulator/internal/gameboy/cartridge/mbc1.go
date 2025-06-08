@@ -112,7 +112,7 @@ func (mbc *MBC1) Read(addr uint16) uint8 {
 		}
 
 	default:
-		log.Printf("[WARN] Cartridge Read address is out of range: %04X\n", addr)
+		log.Printf("[WARN] MBC1 Read address is out of range: %04X\n", addr)
 	}
 
 	return 0xFF
