@@ -338,17 +338,17 @@ func (mbc *MBC3) parseRTCData(data []uint8) {
 		// Update hours
 		hours := int(elapsed.Hours()) % 24
 		mbc.rtcH += uint8(hours) + extraHour
-		extraDay := mbc.rtcH / 60
-		mbc.rtcH %= 60
+		extraDay := mbc.rtcH / 24
+		mbc.rtcH %= 24
 
 		// Update days
 		days := int(elapsed.Hours()) / 24
 		rtcDays := int(mbc.rtcDL) | (int(mbc.rtcDH&1) << 8)
 		totalDays := days + rtcDays + int(extraDay)
-		mbc.rtcDL = uint8(totalDays)
-		mbc.rtcDH = uint8(totalDays>>8) & 1
-		if totalDays > 0x1FF { // Overflow
-			util.SetBit(&mbc.rtcDH, 7, 1)
+		mbc.rtcDL = uint8(totalDays)                      // Set Day low
+		util.SetBit(&mbc.rtcDH, 0, uint8(totalDays>>8)&1) // Set Day high
+		if totalDays > 0x1FF {
+			util.SetBit(&mbc.rtcDH, 7, 1) // Set Overflow
 		}
 	}
 }
