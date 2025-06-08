@@ -105,6 +105,31 @@ func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc boo
 		}
 	}
 
+	// Start go routine that updates RTC every second
+	go func() {
+		for range time.Tick(time.Second) {
+			mbc.rtcS++
+			if mbc.rtcS == 60 {
+				mbc.rtcS = 0
+				mbc.rtcM++
+				if mbc.rtcM == 60 {
+					mbc.rtcM = 0
+					mbc.rtcH++
+					if mbc.rtcH == 24 {
+						mbc.rtcH = 0
+						mbc.rtcDL++
+						if mbc.rtcDL == 0 { // rtcDH bit 0 is bit 9 of day counter
+							if util.ReadBit(mbc.rtcDH, 0) == 0 {
+								util.SetBit(&mbc.rtcDH, 0, 1)
+							} else { // Set carry bit
+								util.SetBit(&mbc.rtcDH, 7, 1)
+							}
+						}
+					}
+				}
+			}
+		}
+	}()
 	return mbc
 }
 
