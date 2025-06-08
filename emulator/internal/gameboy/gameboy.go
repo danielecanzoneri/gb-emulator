@@ -68,4 +68,9 @@ func (gb *GameBoy) Reset() {
 func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
+
+	// MBC3 RTC clocking
+	if c, ok := rom.(interface{ Cycle() }); ok {
+		gb.CPU.AddCycler(c)
+	}
 }

@@ -34,6 +34,8 @@ type MBC3 struct {
 	rtcDL, lthRtcDL uint8
 	rtcDH, lthRtcDH uint8
 	lastWriteWas00  bool
+
+	rtcClockCounter uint
 }
 
 func (mbc *MBC3) RAMDump() []uint8 {
@@ -105,36 +107,41 @@ func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc boo
 		}
 	}
 
-	// Start go routine that updates RTC every second
-	go func() {
-		for range time.Tick(time.Second) {
-			// Check if RTC is enabled
-			if util.ReadBit(mbc.rtcDH, 6) == 0 {
-				mbc.rtcS++
-				if mbc.rtcS == 60 {
-					mbc.rtcS = 0
-					mbc.rtcM++
-					if mbc.rtcM == 60 {
-						mbc.rtcM = 0
-						mbc.rtcH++
-						if mbc.rtcH == 24 {
-							mbc.rtcH = 0
-							mbc.rtcDL++
-							if mbc.rtcDL == 0 { // rtcDH bit 0 is bit 9 of day counter
-								if util.ReadBit(mbc.rtcDH, 0) == 0 {
-									util.SetBit(&mbc.rtcDH, 0, 1)
-								} else { // Set carry bit
-									util.SetBit(&mbc.rtcDH, 0, 0)
-									util.SetBit(&mbc.rtcDH, 7, 1)
-								}
-							}
+	return mbc
+}
+func (mbc *MBC3) Cycle() {
+	// Check if RTC is enabled
+	if util.ReadBit(mbc.rtcDH, 6) != 0 {
+		return
+	}
+
+	// RTC clocking: Game Boy runs at 2^22 Hz and a cycle happens every 4 Hz
+	mbc.rtcClockCounter++
+	if mbc.rtcClockCounter == 1<<20 {
+		mbc.rtcClockCounter = 0
+
+		mbc.rtcS++
+		if mbc.rtcS == 60 {
+			mbc.rtcS = 0
+			mbc.rtcM++
+			if mbc.rtcM == 60 {
+				mbc.rtcM = 0
+				mbc.rtcH++
+				if mbc.rtcH == 24 {
+					mbc.rtcH = 0
+					mbc.rtcDL++
+					if mbc.rtcDL == 0 { // rtcDH bit 0 is bit 9 of day counter
+						if util.ReadBit(mbc.rtcDH, 0) == 0 {
+							util.SetBit(&mbc.rtcDH, 0, 1)
+						} else { // Set carry bit
+							util.SetBit(&mbc.rtcDH, 0, 0)
+							util.SetBit(&mbc.rtcDH, 7, 1)
 						}
 					}
 				}
 			}
 		}
-	}()
-	return mbc
+	}
 }
 
 func (mbc *MBC3) Write(addr uint16, value uint8) {
