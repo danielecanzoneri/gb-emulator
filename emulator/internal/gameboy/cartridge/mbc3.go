@@ -197,6 +197,7 @@ func (mbc *MBC3) Write(addr uint16, value uint8) {
 			switch mbc.ramBankNumber {
 			case 0x8:
 				mbc.rtcS = value & rtcSecondsMask
+				mbc.rtcClockCounter = 0
 			case 0x9:
 				mbc.rtcM = value & rtcMinutesMask
 			case 0xA:
