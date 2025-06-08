@@ -54,9 +54,9 @@ func NewMBC2(rom []uint8, ram []uint8, header *Header, battery bool) *MBC2 {
 		if len(ram) != mbc2Len/2 {
 			log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
 		} else {
-			for i := 0; i < mbc2Len/2; i += 2 {
-				mbc.RAM[i] = ram[i] & 0xF  // Low nibble: bytes 0, 2, 4, 6, ...
-				mbc.RAM[i+1] = ram[i] >> 4 // High nibble: bytes 1, 3, 5, 7, ...
+			for i := 0; i < mbc2Len; i += 2 {
+				mbc.RAM[i] = ram[i/2] & 0xF  // Low nibble: bytes 0, 2, 4, 6, ...
+				mbc.RAM[i+1] = ram[i/2] >> 4 // High nibble: bytes 1, 3, 5, 7, ...
 			}
 		}
 	}
@@ -93,7 +93,7 @@ func (mbc *MBC2) Write(addr uint16, value uint8) {
 	case 0xA000 <= addr && addr < 0xC000:
 		if mbc.ramEnabled {
 			RAMAddress := mbc.computeRamAddress(addr)
-			mbc.RAM[RAMAddress] = value
+			mbc.RAM[RAMAddress] = 0xF0 | (value & 0x0F)
 		}
 
 	default:
