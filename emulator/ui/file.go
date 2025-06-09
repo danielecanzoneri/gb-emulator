@@ -11,7 +11,7 @@ import (
 
 func (ui *UI) LoadNewGame() {
 	romPath, err := dialog.File().
-		Filter("Game Boy ROMs", "gb", "bin").
+		Filter("Game Boy ROMs", "gb", "gbc").
 		Title("Choose a GameBoy ROM").
 		Load()
 	if err != nil {
