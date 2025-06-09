@@ -43,7 +43,7 @@ func TestReadTile(t *testing.T) {
 }
 
 func TestReadTileBGWindow(t *testing.T) {
-	ppu := &PPU{}
+	ppu := New()
 
 	tileId := uint16(300)
 	// Write tileData in vRAM

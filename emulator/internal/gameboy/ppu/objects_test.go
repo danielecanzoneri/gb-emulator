@@ -5,7 +5,7 @@ import (
 )
 
 func TestObjectSelection8x8(t *testing.T) {
-	ppu := &PPU{}
+	ppu := New()
 	ppu.obj8x16Size = false
 	ppu.LY = 2 // 3rd line
 
@@ -62,7 +62,7 @@ func TestObjectSelection8x8(t *testing.T) {
 }
 
 func TestObjectSelection8x16(t *testing.T) {
-	ppu := &PPU{}
+	ppu := New()
 	ppu.obj8x16Size = true
 	ppu.LY = 2 // 3rd line
 
@@ -125,7 +125,7 @@ func writeObjectsOAM(o *OAM, objs []Object) {
 }
 
 func TestObjectParsing8x8(t *testing.T) {
-	ppu := &PPU{}
+	ppu := New()
 	ppu.OBP0 = 0
 	ppu.OBP1 = 0xFF
 	ppu.obj8x16Size = false
@@ -172,7 +172,7 @@ func TestObjectParsing8x8(t *testing.T) {
 }
 
 func TestObjectParsing8x16(t *testing.T) {
-	ppu := &PPU{}
+	ppu := New()
 	ppu.OBP0 = 0
 	ppu.OBP1 = 0xFF
 	ppu.obj8x16Size = true

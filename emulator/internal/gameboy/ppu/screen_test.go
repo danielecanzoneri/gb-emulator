@@ -5,12 +5,11 @@ import (
 )
 
 func TestDrawLineObj(t *testing.T) {
-	ppu := &PPU{
-		obj8x16Size:     false,
-		bgWindowEnabled: false,
-		objEnabled:      true,
-		LY:              10,
-	}
+	ppu := New()
+	ppu.obj8x16Size = false
+	ppu.bgWindowEnabled = false
+	ppu.objEnabled = true
+	ppu.LY = 10
 
 	tile := &Tile{
 		data: [8]uint16{
@@ -46,7 +45,7 @@ func TestDrawLineObj(t *testing.T) {
 	// Call drawLine
 	ppu.drawLine()
 
-	frameLine := ppu.Framebuffer[ppu.LY]
+	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {
 		if frameLine[x] != expectedFrameLine[x] {
 			t.Errorf("pixel[%d]: got %02b, expected %02b", x, frameLine[x], expectedFrameLine[x])
@@ -55,17 +54,16 @@ func TestDrawLineObj(t *testing.T) {
 }
 
 func TestDrawLineBG(t *testing.T) {
-	ppu := &PPU{
-		BGP:                  Palette(0b11100100),
-		windowEnabled:        false,
-		bgWindowTileDataArea: 0,
-		bgTileMapAddr:        0x9C00,
-		objEnabled:           false,
-		bgWindowEnabled:      true,
-		LY:                   12,
-		SCY:                  254,
-		SCX:                  205,
-	}
+	ppu := New()
+	ppu.BGP = Palette(0b11100100)
+	ppu.windowEnabled = false
+	ppu.bgWindowTileDataArea = 0
+	ppu.bgTileMapAddr = 0x9C00
+	ppu.objEnabled = false
+	ppu.bgWindowEnabled = true
+	ppu.LY = 12
+	ppu.SCY = 254
+	ppu.SCX = 205
 
 	var tileId uint8 = 1
 	var tileAddr uint16 = 0x9010 - vRAMStartAddr
@@ -89,7 +87,7 @@ func TestDrawLineBG(t *testing.T) {
 	// Call drawLine
 	ppu.drawLine()
 
-	frameLine := ppu.Framebuffer[ppu.LY]
+	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {
 		if frameLine[x] != expectedFrameLine[x] {
 			t.Errorf("pixel[%d]: got %02b, expected %02b", x, frameLine[x], expectedFrameLine[x])
@@ -98,20 +96,19 @@ func TestDrawLineBG(t *testing.T) {
 }
 
 func TestDrawLineWindow(t *testing.T) {
-	ppu := &PPU{
-		BGP:                  Palette(0b11100100),
-		windowTileMapAddr:    0x9800,
-		windowEnabled:        true,
-		bgWindowTileDataArea: 0,
-		bgTileMapAddr:        0x9C00,
-		objEnabled:           false,
-		bgWindowEnabled:      true,
-		LY:                   2,
-		SCY:                  0,
-		SCX:                  0,
-		WY:                   2,
-		WX:                   17,
-	}
+	ppu := New()
+	ppu.BGP = Palette(0b11100100)
+	ppu.windowTileMapAddr = 0x9800
+	ppu.windowEnabled = true
+	ppu.bgWindowTileDataArea = 0
+	ppu.bgTileMapAddr = 0x9C00
+	ppu.objEnabled = false
+	ppu.bgWindowEnabled = true
+	ppu.LY = 2
+	ppu.SCY = 0
+	ppu.SCX = 0
+	ppu.WY = 2
+	ppu.WX = 17
 
 	var tileBGId uint8 = 1
 	var tileBGAddr uint16 = 0x9010 - vRAMStartAddr
@@ -146,7 +143,7 @@ func TestDrawLineWindow(t *testing.T) {
 	// Call drawLine
 	ppu.drawLine()
 
-	frameLine := ppu.Framebuffer[ppu.LY]
+	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {
 		if frameLine[x] != expectedFrameLine[x] {
 			t.Errorf("pixel[%d]: got %02b, expected %02b", x, frameLine[x], expectedFrameLine[x])

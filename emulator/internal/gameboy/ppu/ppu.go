@@ -17,8 +17,9 @@ type PPU struct {
 	objsLY  [objsLimit]*Object
 	numObjs int
 
-	// frameBuffer contains data to be displayed
-	Framebuffer [FrameHeight][FrameWidth]uint8
+	// Double buffering to avoid screen tearing
+	frontBuffer *[FrameHeight][FrameWidth]uint8
+	backBuffer  *[FrameHeight][FrameWidth]uint8
 
 	LCDC uint8 // LCD control
 	STAT uint8 // STAT interrupt
@@ -64,7 +65,8 @@ func (ppu *PPU) Reset() {
 	ppu.OAM.Data = [OAMSize]uint8{}
 	ppu.objsLY = [objsLimit]*Object{}
 	ppu.numObjs = 0
-	ppu.Framebuffer = [FrameHeight][FrameWidth]uint8{}
+	ppu.frontBuffer = &[FrameHeight][FrameWidth]uint8{}
+	ppu.backBuffer = &[FrameHeight][FrameWidth]uint8{}
 	ppu.LCDC = 0
 	ppu.STAT = 0
 	ppu.SCY = 0
@@ -149,6 +151,10 @@ func New() *PPU {
 	ppu.setMode(oamScan)
 	ppu.checkLYLYC()
 
+	// Init buffers
+	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
 	return ppu
 }
 
@@ -166,8 +172,11 @@ func (ppu *PPU) setMode(mode uint8) {
 	case hBlank:
 	case vBlank:
 		ppu.wyCounter = 0
-		// ppu.FrameComplete = true
 		ppu.RequestVBlankInterrupt()
+
+		// Frame complete, switch buffers
+		ppu.frontBuffer = ppu.backBuffer
+		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
 	}
 }
 

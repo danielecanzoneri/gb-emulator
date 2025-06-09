@@ -5,12 +5,20 @@ const (
 	FrameHeight = 144
 )
 
+func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint8 {
+	return ppu.frontBuffer
+}
+
 func (ppu *PPU) emptyFrame() {
 	for x := range FrameWidth {
 		for y := range FrameHeight {
-			ppu.Framebuffer[y][x] = 0
+			ppu.backBuffer[y][x] = 0
 		}
 	}
+
+	// Swap buffers
+	ppu.frontBuffer = ppu.backBuffer
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
 }
 
 // drawLine returns the number of penalty dots incurred to draw this line
@@ -142,8 +150,8 @@ func (ppu *PPU) drawLine() uint {
 		}
 	}
 
-	// Set current line
-	ppu.Framebuffer[ppu.LY] = frameLine
+	// Set current line of the back buffer
+	ppu.backBuffer[ppu.LY] = frameLine
 
 	return penaltyDots
 }
