@@ -78,19 +78,19 @@ func (mbc *MBC5) Write(addr uint16, value uint8) {
 		// Only lower 4 bits are used
 		mbc.ramBankNumber = value & 0xF
 
+		if mbc.rumble {
+			if util.ReadBit(value, 3) == 1 {
+				// Rumble
+			} else {
+				// Stop rumble
+			}
+		}
+
 	case addr < 0x8000:
 		// Nothing
 
 	case 0xA000 <= addr && addr < 0xC000:
 		if mbc.ramEnabled {
-			if mbc.rumble {
-				if util.ReadBit(mbc.ramBankNumber, 3) == 1 {
-					log.Println("Start rumble")
-				} else {
-					log.Println("Stop rumble")
-				}
-			}
-
 			RAMAddress := mbc.computeRamAddress(addr)
 			mbc.RAM[RAMAddress] = value
 		}
