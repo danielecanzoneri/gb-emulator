@@ -4,6 +4,11 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/pkg/util"
 )
 
+const (
+	// https://forums.nesdev.org/viewtopic.php?p=188035&sid=c7368fbb8c83fb2f5245902eb4ff5791#p188035
+	triggerWaveCycleDelay = 3 // 3 APU cycles -> 6 ticks
+)
+
 type WaveChannel struct {
 	// Bit 7 of NR30
 	dacEnabled bool
@@ -18,12 +23,14 @@ type WaveChannel struct {
 	// Frequency and control (NR33 & NR34)
 	period        uint16 // Bits 2-0 of NR34 and 7-0 of NR33 (11 bits)
 	periodCounter uint16
-	// wavePosition ranges between 0 and 31
-	// where 0 is the upper nibble of FF30 and 31 is the lower nibble of FF3F
-	wavePosition uint8
+	// wavePosition ranges between 0 and 31 where 0 is the upper nibble of FF30 and 31 is the lower nibble of FF3F
+	wavePosition      uint8
+	justRead          bool // When reading Wave RAM while on, it will return the byte just read in the buffer if access happen in same cycle
+	triggerCycleDelay int  // Delay before advancing wavePosition after triggering
 
 	// Wave RAM
-	WaveRam [16]uint8
+	WaveRam      [16]uint8
+	bufferSample uint8 // CH3 does not emit samples directly, but stores every sample read into a buffer, and emits that continuously;
 }
 
 func NewWaveChannel(fs *frameSequencer) *WaveChannel {
@@ -46,30 +53,40 @@ func (ch *WaveChannel) Output() (sample float32) {
 		return
 	}
 
-	// 0 is the upper nibble of FF30 and 31 is the lower nibble of FF3F
-	nibble := ch.WaveRam[ch.wavePosition>>1]
-	nibble = nibble >> (4 * (1 - ch.wavePosition&1)) // If 0 take upper nibble
-	nibble &= 0xF
-
 	// volume has the following meaning
 	// 00	Mute (No sound)
 	// 01	100% volume (use samples read from Wave RAM as-is)
 	// 10	50% volume (shift samples read from Wave RAM right once)
 	// 11	25% volume (shift samples read from Wave RAM right twice)
-	nibble >>= ch.volume - 1
-	sample = float32(nibble) / 15
+	currSample := ch.bufferSample >> (ch.volume - 1)
+	sample = float32(currSample) / 15
 	return
 }
 
 func (ch *WaveChannel) Cycle() {
+	if !ch.active {
+		return
+	}
+
 	// The wave channel’s period divider is clocked once per two dots (twice per cycle)
 	for range 2 {
+		if ch.triggerCycleDelay > 0 {
+			ch.triggerCycleDelay--
+			continue
+		}
+		ch.justRead = false
 		ch.periodCounter++
 
 		// Frequency is 11 bits
 		if ch.periodCounter&0x7FF == 0 {
 			ch.periodCounter = ch.period
 			ch.wavePosition = (ch.wavePosition + 1) % 32
+
+			// 0 is the upper nibble of FF30 and 31 is the lower nibble of FF3F
+			ch.bufferSample = ch.WaveRam[ch.wavePosition>>1]
+			ch.bufferSample >>= 4 * (1 - ch.wavePosition&1) // If 0 take upper nibble
+			ch.bufferSample &= 0xF
+			ch.justRead = true
 		}
 	}
 }
@@ -141,12 +158,22 @@ func (ch *WaveChannel) ReadRegister(addr uint16) uint8 {
 
 func (ch *WaveChannel) WriteWRAM(addr uint16, v uint8) {
 	if ch.active {
+		if ch.justRead {
+			ch.WaveRam[ch.wavePosition>>1] = v
+		}
 		return
 	}
 	ch.WaveRam[addr-waveRAMAddr] = v
 }
+
 func (ch *WaveChannel) ReadWRAM(addr uint16) uint8 {
+	// If the wave channel is enabled, accessing any byte from $FF30-$FF3F is equivalent to accessing the current byte selected by the waveform position.
+	// Further, on the DMG accesses will only work in this manner if made within a couple of clocks of the wave channel accessing wave RAM;
+	// if made at any other time, reads return $FF and writes have no effect.
 	if ch.active {
+		if ch.justRead {
+			return ch.WaveRam[ch.wavePosition>>1]
+		}
 		return 0xFF
 	}
 	return ch.WaveRam[addr-waveRAMAddr]
@@ -159,15 +186,19 @@ func (ch *WaveChannel) Reset() {
 	ch.WriteRegister(nr32Addr, 0)
 	ch.WriteRegister(nr33Addr, 0)
 	ch.WriteRegister(nr34Addr, 0)
+	ch.bufferSample = 0
 }
 
 func (ch *WaveChannel) Trigger(value uint8) {
 	ch.lengthTimer.Trigger(value)
-	ch.periodCounter = ch.period
 
 	trigger := util.ReadBit(value, 7) > 0
 	if trigger && ch.dacEnabled {
 		// Active channel only if DAC is enabled
 		ch.active = true
+
+		ch.periodCounter = ch.period
+		ch.wavePosition = 0
+		ch.triggerCycleDelay = triggerWaveCycleDelay
 	}
 }
