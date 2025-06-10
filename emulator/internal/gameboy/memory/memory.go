@@ -57,7 +57,7 @@ func (mmu *MMU) Cycle() {
 		addr := uint16(mmu.read(dmaAddress)) << 8
 		mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
 
-		mmu.PPU.OAM.Data[mmu.dmaOffset] = mmu.dmaValue
+		mmu.PPU.OAM.Write(mmu.dmaOffset, mmu.dmaValue)
 		mmu.dmaOffset++
 
 		if mmu.dmaOffset == dmaDuration {

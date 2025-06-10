@@ -28,8 +28,7 @@ type PPU struct {
 	LY   uint8 // line counter
 	LYC  uint8 // line counter check
 	BGP  Palette
-	OBP0 Palette
-	OBP1 Palette
+	OBP  [2]Palette
 	WY   uint8
 	WX   uint8
 
@@ -72,8 +71,8 @@ func (ppu *PPU) Reset() {
 	ppu.LY = 0
 	ppu.LYC = 0
 	ppu.BGP = 0
-	ppu.OBP0 = 0
-	ppu.OBP1 = 0
+	ppu.OBP[0] = 0
+	ppu.OBP[1] = 0
 	ppu.WY = 0
 	ppu.WX = 0
 	ppu.wyCounter = 0

@@ -65,9 +65,9 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 	case BGPAddr:
 		ppu.BGP = Palette(v)
 	case OBP0Addr:
-		ppu.OBP0 = Palette(v)
+		ppu.OBP[0] = Palette(v)
 	case OBP1Addr:
-		ppu.OBP1 = Palette(v)
+		ppu.OBP[1] = Palette(v)
 	case SCYAddr:
 		ppu.SCY = v
 	case SCXAddr:
@@ -94,9 +94,9 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case BGPAddr:
 		return uint8(ppu.BGP)
 	case OBP0Addr:
-		return uint8(ppu.OBP0)
+		return uint8(ppu.OBP[0])
 	case OBP1Addr:
-		return uint8(ppu.OBP1)
+		return uint8(ppu.OBP[1])
 	case SCYAddr:
 		return ppu.SCY
 	case SCXAddr:
@@ -160,7 +160,7 @@ func (ppu *PPU) ReadOAM(addr uint16) uint8 {
 	if ppu.Mode == 2 || ppu.Mode == 3 {
 		return 0xFF
 	}
-	return ppu.OAM.read(addr - OAMStartAddr)
+	return ppu.OAM.Read(addr - OAMStartAddr)
 }
 
 // WriteOAM prevents OAM writes during PPU mode 2 and 3
@@ -168,9 +168,9 @@ func (ppu *PPU) WriteOAM(addr uint16, value uint8) {
 	if ppu.Mode == 2 || ppu.Mode == 3 {
 		return
 	}
-	ppu.OAM.write(addr-OAMStartAddr, value)
+	ppu.OAM.Write(addr-OAMStartAddr, value)
 }
 
 func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.OAM.Data[index] = value
+	ppu.OAM.Write(index, value)
 }

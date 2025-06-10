@@ -5,6 +5,17 @@ const (
 	FrameHeight = 144
 )
 
+type Palette uint8
+
+func (p Palette) getColor(id uint8) uint8 {
+	var mask uint8 = 0b11
+	id &= mask
+
+	// Bit 7,6: id 3; Bit 5,4: id 2; Bit 3,2: id 1; Bit 1,0: id 0
+	shift := id * 2
+	return (uint8(p) >> shift) & mask
+}
+
 func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint8 {
 	return ppu.frontBuffer
 }
@@ -124,7 +135,7 @@ func (ppu *PPU) drawLine() uint {
 			penaltyDots += 6
 
 			// Object row to draw is: LY + 16 - y
-			rowPixels := obj.getRow(ppu.LY + yOffset - obj.y)
+			rowPixels := ppu.getObjectRow(obj, ppu.LY+yOffset-obj.y)
 
 			// Draw pixels on the line if no other pixel with higher priority was drawn
 			for i, px := range rowPixels {
@@ -133,7 +144,7 @@ func (ppu *PPU) drawLine() uint {
 					x := uint8(i) + obj.x
 					if xOffset <= x && x < FrameWidth+xOffset {
 						if pixelLine[x-xOffset] == 0xFF {
-							pixelLine[x-xOffset] = obj.palette.getColor(px)
+							pixelLine[x-xOffset] = ppu.OBP[obj.paletteId].getColor(px)
 							pixelBGPriority[x-xOffset] = obj.bgPriority
 						}
 					}

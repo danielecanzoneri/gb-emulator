@@ -10,6 +10,7 @@ func TestDrawLineObj(t *testing.T) {
 	ppu.bgWindowEnabled = false
 	ppu.objEnabled = true
 	ppu.LY = 10
+	ppu.OBP[0] = Palette(0b11100100)
 
 	tile := Tile([16]uint8{
 		0b00111010, 0b11001010, // Row 0
@@ -18,21 +19,22 @@ func TestDrawLineObj(t *testing.T) {
 		0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0,
 	})
+	ppu.vRAM.tileData[0] = tile
 
 	// Mock objects
 	ppu.objsLY[1] = &Object{ // This has higher priority
-		x:       8,
-		y:       26,
-		palette: Palette(0b11100100),
-		tile1:   &tile, // Expected row 0
+		x:         8,
+		y:         26,
+		paletteId: 0,
+		tileIndex: 0, // Expected row 0
 	}
 	ppu.objsLY[0] = &Object{
-		x:       14,
-		y:       21,
-		palette: Palette(0b11100100),
-		tile1:   &tile,
-		xFlip:   true,
-		yFlip:   true, // Expect flipped row 2
+		x:         14,
+		y:         21,
+		paletteId: 0,
+		tileIndex: 0,
+		xFlip:     true,
+		yFlip:     true, // Expect flipped row 2
 	}
 	ppu.numObjs = 2
 
