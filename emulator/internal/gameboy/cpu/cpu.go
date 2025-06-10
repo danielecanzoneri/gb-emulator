@@ -32,7 +32,8 @@ type CPU struct {
 	interruptCancelled           bool
 
 	// Halt flag
-	halted bool
+	halted  bool
+	haltBug bool
 
 	// Other components
 	Timer *timer.Timer

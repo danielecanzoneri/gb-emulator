@@ -546,6 +546,12 @@ func (cpu *CPU) LD_A_A() {
 
 // HALT
 func (cpu *CPU) HALT() {
+	pending := cpu.MMU.Read(ieAddr) & cpu.MMU.Read(ifAddr) & 0x1F
+	if !cpu.IME && pending != 0 {
+		// HALT bug, do not enter halt mode
+		cpu.haltBug = true
+	}
+
 	cpu.halted = true
 }
 

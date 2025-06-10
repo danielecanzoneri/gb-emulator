@@ -16,7 +16,12 @@ func (cpu *CPU) WriteByte(addr uint16, v uint8) {
 
 func (cpu *CPU) ReadNextByte() uint8 {
 	b := cpu.ReadByte(cpu.PC)
-	cpu.PC++
+	if cpu.haltBug {
+		// Do not increment PC
+		cpu.haltBug = false
+	} else {
+		cpu.PC++
+	}
 	return b
 }
 func (cpu *CPU) WriteNextByte(v uint8) {
