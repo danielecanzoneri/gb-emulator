@@ -34,7 +34,7 @@ func (mbc *MBC5) Header() *Header {
 	return mbc.header
 }
 
-func NewMBC5(rom []uint8, ram []uint8, header *Header, battery bool, rumble bool) *MBC5 {
+func NewMBC5(rom []uint8, ram bool, savData []uint8, header *Header, battery bool, rumble bool) *MBC5 {
 	mbc := &MBC5{
 		header:        header,
 		battery:       battery,
@@ -44,15 +44,21 @@ func NewMBC5(rom []uint8, ram []uint8, header *Header, battery bool, rumble bool
 		ROM:           rom,
 		romBankNumber: 1,
 	}
-
-	switch {
-	case len(ram) != int(header.RAMBanks*0x2000):
-		log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
-		fallthrough
-	case ram == nil:
-		ram = make([]uint8, header.RAMBanks*0x2000)
+	if ram && header.RAMBanks == 0 {
+		log.Println("[WARN] Cartridge header specifies RAM present, but RAM banks is set to 0")
+		mbc.RAMBanks = 1
 	}
-	mbc.RAM = ram
+
+	if ram {
+		switch {
+		case battery && len(savData) != int(mbc.RAMBanks)*0x2000:
+			log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
+			fallthrough
+		case savData == nil:
+			savData = make([]uint8, int(mbc.RAMBanks)*0x2000)
+		}
+		mbc.RAM = savData
+	}
 
 	return mbc
 }

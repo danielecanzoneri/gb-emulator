@@ -82,7 +82,7 @@ func (mbc *MBC3) Header() *Header {
 	return mbc.header
 }
 
-func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc bool) *MBC3 {
+func NewMBC3(rom []uint8, ram bool, savData []uint8, header *Header, battery bool, rtc bool) *MBC3 {
 	mbc := &MBC3{
 		header:        header,
 		battery:       battery,
@@ -92,8 +92,8 @@ func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc boo
 		ROM:           rom,
 		romBankNumber: 1,
 	}
-	// Always have a RAM bank
-	if mbc.RAMBanks == 0 {
+	if ram && header.RAMBanks == 0 {
+		log.Println("[WARN] Cartridge header specifies RAM present, but RAM banks is set to 0")
 		mbc.RAMBanks = 1
 	}
 
@@ -102,18 +102,21 @@ func NewMBC3(rom []uint8, savData []uint8, header *Header, battery bool, rtc boo
 		rtcLen = 48
 	}
 
-	ramLen := int(header.RAMBanks * 0x2000)
-	switch {
-	case len(savData) != ramLen+rtcLen:
-		log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
-		fallthrough
-	case savData == nil:
-		mbc.RAM = make([]uint8, ramLen)
+	if ram {
+		ramLen := int(mbc.RAMBanks) * 0x2000
+		switch {
+		case battery && len(savData) != ramLen+rtcLen:
+			log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
+			fallthrough
 
-	default: // SAV data is of correct format
-		mbc.RAM = savData[:ramLen]
-		if rtc {
-			mbc.parseRTCData(savData[ramLen:])
+		case savData == nil:
+			mbc.RAM = make([]uint8, ramLen)
+
+		default: // SAV data is of correct format
+			mbc.RAM = savData[:ramLen]
+			if rtc {
+				mbc.parseRTCData(savData[ramLen:])
+			}
 		}
 	}
 

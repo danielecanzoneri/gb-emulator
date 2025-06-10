@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	mbc2Len = 512
+	mbc2RAMLen = 512
 )
 
 type MBC2 struct {
@@ -16,7 +16,7 @@ type MBC2 struct {
 	ROMBanks uint8
 
 	ROM []uint8
-	RAM [mbc2Len]uint8 // 512 half-bytes builtin RAM
+	RAM [mbc2RAMLen]uint8 // 512 half-bytes builtin RAM
 
 	// Registers 0000-3FFF
 	ramEnabled    bool
@@ -35,7 +35,7 @@ func (mbc *MBC2) Header() *Header {
 	return mbc.header
 }
 
-func NewMBC2(rom []uint8, ram []uint8, header *Header, battery bool) *MBC2 {
+func NewMBC2(rom []uint8, savData []uint8, header *Header, battery bool) *MBC2 {
 	mbc := &MBC2{
 		header:        header,
 		battery:       battery,
@@ -44,11 +44,11 @@ func NewMBC2(rom []uint8, ram []uint8, header *Header, battery bool) *MBC2 {
 		romBankNumber: 1,
 	}
 
-	if ram != nil {
-		if len(ram) != mbc2Len {
+	if savData != nil {
+		if battery && len(savData) != mbc2RAMLen {
 			log.Println("[WARN] sav file was of a different dimension than expected, resetting to zero")
 		} else {
-			copy(mbc.RAM[:], ram)
+			copy(mbc.RAM[:], savData)
 		}
 	}
 	return mbc
