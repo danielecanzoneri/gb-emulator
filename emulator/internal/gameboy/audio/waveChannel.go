@@ -197,6 +197,20 @@ func (ch *WaveChannel) Trigger(value uint8) {
 		// Active channel only if DAC is enabled
 		ch.active = true
 
+		// Triggering the wave channel on the DMG while it reads a sample byte will alter the first four bytes of wave RAM.
+		if ch.periodCounter == ch.period+1 { // Don't actually know why this works, but it works so GG
+			indexOfNextByte := ((ch.wavePosition + 1) % 32) >> 1
+			// If the channel was reading one of the first four bytes, the only first byte will be rewritten with the byte being read.
+			if indexOfNextByte < 4 {
+				ch.WaveRam[0] = ch.WaveRam[indexOfNextByte]
+			} else {
+				// If the channel was reading one of the later 12 bytes, the first FOUR bytes of wave RAM will be rewritten
+				// with the four aligned bytes that the read was from (bytes 4-7, 8-11, or 12-15);
+				// for example if it were reading byte 9 when< it was retriggered, the first four bytes would be rewritten with the contents of bytes 8-11.
+				copy(ch.WaveRam[:], ch.WaveRam[indexOfNextByte&0xFC:indexOfNextByte&0xFC+4])
+			}
+		}
+
 		ch.periodCounter = ch.period
 		ch.wavePosition = 0
 		ch.triggerCycleDelay = triggerWaveCycleDelay
