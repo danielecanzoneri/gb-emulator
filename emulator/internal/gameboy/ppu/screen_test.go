@@ -11,27 +11,26 @@ func TestDrawLineObj(t *testing.T) {
 	ppu.objEnabled = true
 	ppu.LY = 10
 
-	tile := &Tile{
-		data: [8]uint16{
-			0b1010010111001100, // Row 0
-			0,
-			0b1010010111001100, // Row 2
-			0, 0, 0, 0, 0,
-		},
-	}
+	tile := Tile([16]uint8{
+		0b00111010, 0b11001010, // Row 0
+		0, 0,
+		0b00111010, 0b11001010, // Row 2
+		0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0,
+	})
 
 	// Mock objects
 	ppu.objsLY[1] = &Object{ // This has higher priority
 		x:       8,
 		y:       26,
 		palette: Palette(0b11100100),
-		tile1:   tile, // Expected row 0
+		tile1:   &tile, // Expected row 0
 	}
 	ppu.objsLY[0] = &Object{
 		x:       14,
 		y:       21,
 		palette: Palette(0b11100100),
-		tile1:   tile,
+		tile1:   &tile,
 		xFlip:   true,
 		yFlip:   true, // Expect flipped row 2
 	}
@@ -72,12 +71,12 @@ func TestDrawLineBG(t *testing.T) {
 		0b00111010, 0b11001010, // would be 0b1010010111001100
 		0xBB, 0xAA, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
 	}
-	copy(ppu.vRAM.Data[tileAddr:tileAddr+16], tileData[:])
+	copy(ppu.vRAM.tileData[tileAddr/16][:], tileData[:])
 
 	// row 12 starting at 254 -> row 266 = 10 -> row 2 of 2nd row of tiles
 	// ranging from x = 205 (x=5 of 26th tile) to x=205+159=364=108 (x=4 of 14th tile)
-	ppu.vRAM.Data[0x1C00+32+25] = tileId
-	ppu.vRAM.Data[0x1C00+32+13] = tileId
+	ppu.vRAM.tileMaps[0x400+32+25] = tileId
+	ppu.vRAM.tileMaps[0x400+32+13] = tileId
 
 	tileRow := [8]uint8{0b10, 0b10, 0b01, 0b01, 0b11, 0b00, 0b11, 0b00}
 	expectedFrameLine := [160]uint8{}
@@ -117,7 +116,7 @@ func TestDrawLineWindow(t *testing.T) {
 		0b00111010, 0b11001010, // would be 0b1010010111001100
 		0xBB, 0xAA, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
 	}
-	copy(ppu.vRAM.Data[tileBGAddr:tileBGAddr+16], tileBGData[:])
+	copy(ppu.vRAM.tileData[tileBGAddr/16][:], tileBGData[:])
 
 	var tileWindowId uint8 = 2
 	var tileWindowAddr uint16 = 0x9020 - vRAMStartAddr
@@ -126,12 +125,12 @@ func TestDrawLineWindow(t *testing.T) {
 		0xFF, 0xEE, 0xDD, 0xCC,
 		0xBB, 0xAA, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
 	}
-	copy(ppu.vRAM.Data[tileWindowAddr:tileWindowAddr+16], tileWindowData[:])
+	copy(ppu.vRAM.tileData[tileWindowAddr/16][:], tileWindowData[:])
 
 	// Line 2 should take the first 10 pixels (WX = 17) of the BG and the others from the window
-	ppu.vRAM.Data[0x1C00] = tileBGId
-	ppu.vRAM.Data[0x1C00+1] = tileBGId
-	ppu.vRAM.Data[0x1800] = tileWindowId
+	ppu.vRAM.tileMaps[0x400] = tileBGId
+	ppu.vRAM.tileMaps[0x400+1] = tileBGId
+	ppu.vRAM.tileMaps[0] = tileWindowId
 
 	bgTileRow := [8]uint8{0b10, 0b10, 0b01, 0b01, 0b11, 0b00, 0b11, 0b00}
 	windowTileRow := [8]uint8{0b11, 0b10, 0b11, 0b10, 0b00, 0b10, 0b11, 0b00}

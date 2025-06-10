@@ -13,31 +13,24 @@ var (
 		0b01111100, 0b01010110,
 		0b00111000, 0b01111100,
 	}
-	TestExpectedTile = [8]uint16{
-		0b0010111111111000,
-		0b0011000000001100,
-		0b0011000000001100,
-		0b0011000000001100,
-		0b0011011111111100,
-		0b0001010111011100,
-		0b0011011101111000,
-		0b0010111111100000,
+	TestExpectedTile = [8][8]uint8{
+		{0b00, 0b10, 0b11, 0b11, 0b11, 0b11, 0b10, 0b00},
+		{0b00, 0b11, 0b00, 0b00, 0b00, 0b00, 0b11, 0b00},
+		{0b00, 0b11, 0b00, 0b00, 0b00, 0b00, 0b11, 0b00},
+		{0b00, 0b11, 0b00, 0b00, 0b00, 0b00, 0b11, 0b00},
+		{0b00, 0b11, 0b01, 0b11, 0b11, 0b11, 0b11, 0b00},
+		{0b00, 0b01, 0b01, 0b01, 0b11, 0b01, 0b11, 0b00},
+		{0b00, 0b11, 0b01, 0b11, 0b01, 0b11, 0b10, 0b00},
+		{0b00, 0b10, 0b11, 0b11, 0b11, 0b10, 0b00, 0b00},
 	}
 )
 
 func TestReadTile(t *testing.T) {
-	v := vRAM{}
-
-	tileId := uint16(0)
-	// Write tileData in vRAM
-	for i := range tileSize {
-		v.Data[tileId*tileSize+i] = TestTileData[i]
-	}
-
-	tile := v.readTile(tileId)
+	tile := Tile(TestTileData)
 	for i, expected := range TestExpectedTile {
-		if tile.data[i] != expected {
-			t.Errorf("tileData[%d]: expected %08b, got %08b", i, expected, tile.data[i])
+		row := tile.getRowPixels(uint8(i))
+		if row != expected {
+			t.Errorf("tileRow[%d]: expected %v, got %v", i, expected, row)
 		}
 	}
 }
@@ -47,15 +40,14 @@ func TestReadTileBGWindow(t *testing.T) {
 
 	tileId := uint16(300)
 	// Write tileData in vRAM
-	for i := range tileSize {
-		ppu.vRAM.Data[tileId*tileSize+i] = TestTileData[i]
-	}
+	copy(ppu.vRAM.tileData[tileId][:], TestTileData[:])
 
 	ppu.bgWindowTileDataArea = 0
 	tile := ppu.ReadTileBGWindow(uint8(tileId & 0xFF))
 	for i, expected := range TestExpectedTile {
-		if tile.data[i] != expected {
-			t.Errorf("tileData[%d]: expected %08b, got %08b", i, expected, tile.data[i])
+		row := tile.getRowPixels(uint8(i))
+		if row != expected {
+			t.Errorf("tileRow[%d]: expected %v, got %v", i, expected, row)
 		}
 	}
 }

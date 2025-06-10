@@ -61,8 +61,6 @@ func (ppu *PPU) Reset() {
 	ppu.Mode = 0
 	ppu.Dots = 0
 	ppu.mode3ExtraDots = 0
-	ppu.vRAM.Data = [vRAMSize]uint8{}
-	ppu.OAM.Data = [OAMSize]uint8{}
 	ppu.objsLY = [objsLimit]*Object{}
 	ppu.numObjs = 0
 	ppu.frontBuffer = &[FrameHeight][FrameWidth]uint8{}
