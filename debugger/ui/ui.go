@@ -92,6 +92,16 @@ func New(debugger *client.Client) *UI {
 	ui.window.SetContent(split)
 	ui.window.SetFixedSize(true)
 
+	// BGB-like shortcuts
+	ui.window.Canvas().SetOnTypedKey(func(event *fyne.KeyEvent) {
+		switch event.Name {
+		case fyne.KeyF3: // F3 shortcut to step
+			ui.stepButton.OnTapped()
+		case fyne.KeyF8: // F8 shortcut to continue
+			ui.continueButton.OnTapped()
+		}
+	})
+
 	return ui
 }
 
