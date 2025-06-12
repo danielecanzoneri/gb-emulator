@@ -191,15 +191,13 @@ func (ppu *PPU) checkLYLYC() {
 		return
 	}
 
-	if util.ReadBit(ppu.STAT, 6) > 0 {
-		// Bit 2 of STAT register is set when LY = LYC
-		if ppu.LY == ppu.LYC {
-			util.SetBit(&ppu.STAT, 2, 1)
-		} else {
-			util.SetBit(&ppu.STAT, 2, 0)
-		}
-		ppu.checkSTATInterruptState()
+	// Bit 2 of STAT register is set when LY = LYC
+	if ppu.LY == ppu.LYC {
+		util.SetBit(&ppu.STAT, 2, 1)
+	} else {
+		util.SetBit(&ppu.STAT, 2, 0)
 	}
+	ppu.checkSTATInterruptState()
 }
 
 func (ppu *PPU) checkSTATInterruptState() {
