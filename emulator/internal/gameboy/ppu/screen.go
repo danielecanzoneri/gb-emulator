@@ -33,9 +33,9 @@ func (ppu *PPU) emptyFrame() {
 }
 
 // drawLine returns the number of penalty dots incurred to draw this line
-func (ppu *PPU) drawLine() uint {
+func (ppu *PPU) drawLine() int {
 	// SCX % 8 pixels are discarded from the leftmost tile
-	penaltyDots := uint(ppu.SCX % 8)
+	penaltyDots := int(ppu.SCX % 8)
 	// Keep track of the background/window tiles under each pixel
 	tilesUnderPixels := [FrameWidth]uint16{}
 
@@ -127,7 +127,7 @@ func (ppu *PPU) drawLine() uint {
 				pixelsOnTheRight -= 2
 				//    - Incur this many dots of penalty, or zero if negative (from waiting for the BG fetch to finish).
 				if pixelsOnTheRight > 0 {
-					penaltyDots += uint(pixelsOnTheRight)
+					penaltyDots += pixelsOnTheRight
 				}
 			}
 			previousTile = tile

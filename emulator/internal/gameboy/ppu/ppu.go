@@ -6,8 +6,8 @@ import (
 
 type PPU struct {
 	Mode           uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
-	Dots           uint  // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
-	mode3ExtraDots uint
+	Dots           int   // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
+	mode3ExtraDots int
 
 	// vRAM and OAM data
 	vRAM vRAM

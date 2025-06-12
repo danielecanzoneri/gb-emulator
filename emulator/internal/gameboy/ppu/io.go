@@ -90,7 +90,7 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case LYCAddr:
 		return ppu.LYC
 	case STATAddr:
-		return ppu.STAT
+		return 0x80 | ppu.STAT // Bit 7 is unused
 	case BGPAddr:
 		return uint8(ppu.BGP)
 	case OBP0Addr:
@@ -116,6 +116,14 @@ func (ppu *PPU) enable() {
 	}
 	ppu.active = true
 	ppu.checkLYLYC()
+	// Always be 2 ticks in advance (since PPU ticks twice in one M-cycle)
+	ppu.Dots = -2
+
+	// Line 0 has different timing after enabling, it starts with mode 0 and goes straight to mode 3
+	// Moreover, mode 0 is shorter by 2 cycles (8 dots)
+	ppu.setMode(hBlank)
+	ppu.Dots += 8
+
 	ppu.lcdJustEnabled = true
 	ppu.emptyFrame()
 }
@@ -129,7 +137,6 @@ func (ppu *PPU) disable() {
 	// Reset to HBlank
 	ppu.LY = 0
 	ppu.Dots = 0
-	ppu.setMode(hBlank)
 
 	// Blank screen
 	ppu.emptyFrame()
