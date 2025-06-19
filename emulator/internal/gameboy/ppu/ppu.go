@@ -95,12 +95,12 @@ const (
 	vBlank  = 1
 )
 
-func (ppu *PPU) Cycle() {
+func (ppu *PPU) Tick(ticks uint) {
 	if !ppu.active {
 		return
 	}
 
-	ppu.Dots += 4 // M-cycles -> T-states
+	ppu.Dots += int(ticks) // M-cycles -> T-states
 
 	switch ppu.Mode {
 	case oamScan:
