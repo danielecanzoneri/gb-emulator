@@ -131,8 +131,8 @@ func (mbc *MBC3) Tick(ticks uint) {
 
 	// RTC clocking: Game Boy runs at 2^22 Hz
 	mbc.rtcClockCounter += ticks
-	if mbc.rtcClockCounter >= 1<<20 {
-		mbc.rtcClockCounter -= 1 << 20
+	if mbc.rtcClockCounter >= 1<<22 {
+		mbc.rtcClockCounter -= 1 << 22
 
 		mbc.rtcS = (mbc.rtcS + 1) & rtcSecondsMask
 		if mbc.rtcS == 60 {

@@ -20,12 +20,6 @@ type GameBoy struct {
 
 	sampleRate float64
 	sampleBuff chan float32
-
-	cycles uint
-}
-
-func (gb *GameBoy) Cycle() {
-	gb.cycles++
 }
 
 func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
@@ -48,8 +42,6 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
 	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
 
-	gb.CPU.AddCycler(gb)
-
 	gb.CPU.Reset()
 	gb.Memory.Reset()
 
@@ -70,7 +62,7 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	gb.Memory.Cartridge = rom
 
 	// MBC3 RTC clocking
-	if c, ok := rom.(interface{ Cycle() }); ok {
+	if c, ok := rom.(interface{ Tick(uint) }); ok {
 		gb.CPU.AddCycler(c)
 	}
 }
