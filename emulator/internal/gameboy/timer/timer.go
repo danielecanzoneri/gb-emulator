@@ -40,7 +40,18 @@ func (t *Timer) Reset() {
 	t.timaReloaded = false
 }
 
-func (t *Timer) Cycle() {
+func (t *Timer) Tick(ticks uint) {
+	for range ticks {
+		// Update DIV
+		t.systemCounter++
+
+		if t.systemCounter%4 == 0 {
+			t.cycle()
+		}
+	}
+}
+
+func (t *Timer) cycle() {
 	t.timaReloaded = false
 	if t.timaOverflow {
 		t.timaOverflow = false
@@ -48,9 +59,6 @@ func (t *Timer) Cycle() {
 		t.RequestInterrupt()
 		t.TIMA = t.TMA
 	}
-
-	// Update DIV
-	t.systemCounter += 4
 
 	// Update TIMA
 	t.detectFallingEdge()
