@@ -86,10 +86,10 @@ func (cpu *CPU) serveInterrupt(interruptMask uint8) bool {
 	cpu.IME = false
 
 	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
-	cpu.Cycle()
+	cpu.Tick(4)
 	cpu.PUSH_STACK(cpu.PC)
 
-	defer cpu.Cycle() // Internal (set PC)
+	defer cpu.Tick(4) // Internal (set PC)
 
 	// Check if interrupt is still requested, otherwise set PC to 0000
 	if !cpu.interruptCancelled {

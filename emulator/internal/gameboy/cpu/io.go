@@ -6,11 +6,11 @@ import (
 
 // ReadByte uses 1 M-cycle
 func (cpu *CPU) ReadByte(addr uint16) uint8 {
-	defer cpu.Cycle()
+	defer cpu.Tick(4)
 	return cpu.MMU.Read(addr)
 }
 func (cpu *CPU) WriteByte(addr uint16, v uint8) {
-	defer cpu.Cycle()
+	defer cpu.Tick(4)
 	cpu.MMU.Write(addr, v)
 }
 

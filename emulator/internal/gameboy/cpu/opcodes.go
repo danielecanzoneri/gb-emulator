@@ -75,7 +75,7 @@ func (cpu *CPU) LD_N16_SP() {
 // INC R16
 func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
 	writeR16(readR16() + 1)
-	cpu.Cycle()
+	cpu.Tick(4)
 }
 func (cpu *CPU) INC_BC() {
 	cpu.INC_R16(cpu.ReadBC, cpu.writeBC)
@@ -93,7 +93,7 @@ func (cpu *CPU) INC_SP() {
 // DEC R16
 func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
 	writeR16(readR16() - 1)
-	cpu.Cycle()
+	cpu.Tick(4)
 }
 func (cpu *CPU) DEC_BC() {
 	cpu.DEC_R16(cpu.ReadBC, cpu.writeBC)
@@ -116,7 +116,7 @@ func (cpu *CPU) ADD_HL_R16(readR16 func() uint16) {
 	cpu.setCFlag(carry)
 	cpu.writeHL(sum)
 
-	cpu.Cycle()
+	cpu.Tick(4)
 }
 func (cpu *CPU) ADD_HL_BC() {
 	cpu.ADD_HL_R16(cpu.ReadBC)
@@ -316,7 +316,7 @@ func (cpu *CPU) JR_COND_E8(checkCondition func() bool) {
 
 	if checkCondition() {
 		cpu.PC = uint16(int(cpu.PC) + int(int8(e8)))
-		cpu.Cycle()
+		cpu.Tick(4)
 	}
 }
 func (cpu *CPU) JR_Z_E8() {
@@ -894,7 +894,7 @@ func (cpu *CPU) POP_AF() {
 
 // PUSH R16STK
 func (cpu *CPU) PUSH_STACK(v uint16) {
-	cpu.Cycle() // Internal
+	cpu.Tick(4) // Internal
 
 	// Write first high then low
 	high, low := util.SplitWord(v)
@@ -918,10 +918,10 @@ func (cpu *CPU) PUSH_AF() {
 
 // RET COND
 func (cpu *CPU) RET_COND(checkCondition func() bool) {
-	cpu.Cycle() // Internal (branch decision)
+	cpu.Tick(4) // Internal (branch decision)
 	if checkCondition() {
 		cpu.PC = cpu.POP_STACK()
-		cpu.Cycle() // Internal (set PC)
+		cpu.Tick(4) // Internal (set PC)
 	}
 }
 func (cpu *CPU) RET_Z() {
@@ -940,13 +940,13 @@ func (cpu *CPU) RET_NC() {
 // RET
 func (cpu *CPU) RET() {
 	cpu.PC = cpu.POP_STACK()
-	cpu.Cycle() // Internal (set PC)
+	cpu.Tick(4) // Internal (set PC)
 }
 
 // RETI
 func (cpu *CPU) RETI() {
 	cpu.PC = cpu.POP_STACK()
-	cpu.Cycle() // Internal (set PC)
+	cpu.Tick(4) // Internal (set PC)
 
 	cpu.interruptMaskRequested = 0
 	cpu.IME = true
@@ -957,7 +957,7 @@ func (cpu *CPU) JP_COND_N16(checkCondition func() bool) {
 	addr := cpu.ReadNextWord()
 	if checkCondition() {
 		cpu.PC = addr
-		cpu.Cycle() // Internal (set PC)
+		cpu.Tick(4) // Internal (set PC)
 	}
 }
 func (cpu *CPU) JP_Z_N16() {
@@ -1083,22 +1083,22 @@ func (cpu *CPU) ADD_SP_E8() {
 	high, low := util.SplitWord(cpu.SUM_SP_E8())
 
 	cpu.writeLowSP(low)
-	cpu.Cycle()
+	cpu.Tick(4)
 	cpu.writeHighSP(high)
-	cpu.Cycle()
+	cpu.Tick(4)
 }
 
 // LD HL SP+E8
 func (cpu *CPU) LD_HL_SP_E8() {
 	sum := cpu.SUM_SP_E8()
 	cpu.writeHL(sum)
-	cpu.Cycle() // Internal
+	cpu.Tick(4) // Internal
 }
 
 // LD SP HL
 func (cpu *CPU) LD_SP_HL() {
 	cpu.SP = cpu.ReadHL()
-	cpu.Cycle() // Internal
+	cpu.Tick(4) // Internal
 }
 
 // DI

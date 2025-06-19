@@ -6,9 +6,9 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy/timer"
 )
 
-// Cycler describes hardware components that needs clock synchronization
-type Cycler interface {
-	Cycle()
+// Ticker describes hardware components that needs clock synchronization
+type Ticker interface {
+	Tick(ticks uint)
 }
 
 type CPU struct {
@@ -39,7 +39,7 @@ type CPU struct {
 	Timer *timer.Timer
 	MMU   *memory.MMU
 
-	cyclers []Cycler
+	cyclers []Ticker
 	steps   uint
 }
 
@@ -64,13 +64,13 @@ func (cpu *CPU) Reset() {
 	cpu.steps = 0
 }
 
-func (cpu *CPU) AddCycler(cyclers ...Cycler) {
+func (cpu *CPU) AddCycler(cyclers ...Ticker) {
 	for _, c := range cyclers {
 		cpu.cyclers = append(cpu.cyclers, c)
 	}
 }
 
-func (cpu *CPU) Cycle() {
+func (cpu *CPU) Tick(ticks uint) {
 	cpu.interruptCancelled = false
 
 	// Cancel interrupt one cycle later
@@ -84,7 +84,7 @@ func (cpu *CPU) Cycle() {
 	}
 
 	for _, cycler := range cpu.cyclers {
-		cycler.Cycle()
+		cycler.Tick(ticks)
 	}
 }
 
@@ -652,7 +652,7 @@ func (cpu *CPU) ExecuteInstruction() {
 			fmt.Printf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 		}
 	} else { // Cycle if halted
-		cpu.Cycle()
+		cpu.Tick(4)
 	}
 }
 

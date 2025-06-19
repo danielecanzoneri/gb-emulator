@@ -3,11 +3,11 @@ package cpu
 import "testing"
 
 type CycleCounter struct {
-	Cycles uint
+	ticks uint
 }
 
-func (c *CycleCounter) Cycle() {
-	c.Cycles++
+func (c *CycleCounter) Tick(ticks uint) {
+	c.ticks += ticks
 }
 
 func TestOpcodesTiming(t *testing.T) {
@@ -27,8 +27,8 @@ func TestOpcodesTiming(t *testing.T) {
 		writeTestProgram(cpu, uint8(opcode))
 		cpu.ExecuteInstruction()
 
-		if counter.Cycles != OPCODES_CYCLES[opcode] {
-			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, counter.Cycles, OPCODES_CYCLES[opcode])
+		if counter.ticks != OPCODES_CYCLES[opcode]*4 {
+			t.Errorf("Wrong timing for opcode %02X: got %d, expected %d", opcode, counter.ticks, OPCODES_CYCLES[opcode]*4)
 		}
 	}
 }
@@ -42,8 +42,8 @@ func TestPrefixedOpcodesTiming(t *testing.T) {
 		cpu.ExecuteInstruction()
 
 		expectedCycles := OPCODES_CYCLES[PREFIX_OPCODE] + PREFIX_OPCODES_CYCLES[opcode]
-		if counter.Cycles != expectedCycles {
-			t.Errorf("Wrong timing for opcode CB %02X: got %d, expected %d", opcode, counter.Cycles, expectedCycles)
+		if counter.ticks != expectedCycles*4 {
+			t.Errorf("Wrong timing for opcode CB %02X: got %d, expected %d", opcode, counter.ticks, expectedCycles*4)
 		}
 	}
 }
@@ -72,18 +72,18 @@ func TestOpcodesWithBranchingTiming(t *testing.T) {
 			writeTestProgram(cpu, op)
 
 			cpu.ExecuteInstruction()
-			if counter.Cycles != OPCODES_CYCLES[op] {
-				t.Errorf("opcode %02X no branch: got %d Cycles, expected %d", op, counter.Cycles, OPCODES_CYCLES[op])
+			if counter.ticks != OPCODES_CYCLES[op]*4 {
+				t.Errorf("opcode %02X no branch: got %d Cycles, expected %d", op, counter.ticks, OPCODES_CYCLES[op]*4)
 			}
 
 			// Branch
 			setCondition(true)
 			writeTestProgram(cpu, op)
 
-			counter.Cycles = 0
+			counter.ticks = 0
 			cpu.ExecuteInstruction()
-			if counter.Cycles != OPCODES_CYCLES_BRANCH[op] {
-				t.Errorf("opcode %02X branch: got %d Cycles, expected %d", op, counter.Cycles, OPCODES_CYCLES_BRANCH[op])
+			if counter.ticks != OPCODES_CYCLES_BRANCH[op]*4 {
+				t.Errorf("opcode %02X branch: got %d Cycles, expected %d", op, counter.ticks, OPCODES_CYCLES_BRANCH[op]*4)
 			}
 		}
 	}
