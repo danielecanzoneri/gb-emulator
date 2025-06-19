@@ -26,11 +26,11 @@ type MMU struct {
 	ieReg  uint8
 
 	// DMA cycles
-	dmaStart      bool
-	dmaWaitCycles uint8 // Wait two cycles before starting dma
-	dmaTransfer   bool
-	dmaOffset     uint16
-	dmaValue      uint8
+	dmaStart    bool
+	dmaCycles   int
+	dmaTransfer bool
+	dmaOffset   uint16
+	dmaValue    uint8
 }
 
 func (mmu *MMU) Reset() {
@@ -46,32 +46,26 @@ func (mmu *MMU) Reset() {
 	mmu.ifReg = 0
 	mmu.ieReg = 0
 	mmu.dmaStart = false
-	mmu.dmaWaitCycles = 0
 	mmu.dmaTransfer = false
 	mmu.dmaOffset = 0
 	mmu.dmaValue = 0
 }
 
-func (mmu *MMU) Cycle() {
+func (mmu *MMU) Tick(ticks uint) {
 	if mmu.dmaTransfer {
-		addr := uint16(mmu.read(dmaAddress)) << 8
-		mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
+		mmu.dmaCycles += int(ticks)
+		for mmu.dmaCycles > 4 {
+			mmu.dmaCycles -= 4
 
-		mmu.PPU.OAM.Write(mmu.dmaOffset, mmu.dmaValue)
-		mmu.dmaOffset++
+			addr := uint16(mmu.read(dmaAddress)) << 8
+			mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
 
-		if mmu.dmaOffset == dmaDuration {
-			mmu.dmaTransfer = false
-		}
-	}
+			mmu.PPU.OAM.Write(mmu.dmaOffset, mmu.dmaValue)
+			mmu.dmaOffset++
 
-	// Start dma one cycle later
-	if mmu.dmaStart {
-		mmu.dmaWaitCycles--
-		if mmu.dmaWaitCycles == 0 {
-			mmu.dmaStart = false
-			mmu.dmaTransfer = true
-			mmu.dmaOffset = 0
+			if mmu.dmaOffset == dmaDuration {
+				mmu.dmaTransfer = false
+			}
 		}
 	}
 }

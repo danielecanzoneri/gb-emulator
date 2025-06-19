@@ -7,7 +7,7 @@ import (
 )
 
 func TestDMA(t *testing.T) {
-	mmu := &MMU{Cartridge: &cartridge.MBC0{ROM: make([]uint8, 0x8000)}, PPU: &ppu.PPU{}}
+	mmu := &MMU{Cartridge: cartridge.NewMBC1(make([]uint8, 0x8000), true, nil, &cartridge.Header{ROMBanks: 1, RAMBanks: 1}, false), PPU: &ppu.PPU{}}
 
 	// Write data to RAM
 	startAddr := 0xA000
@@ -20,9 +20,9 @@ func TestDMA(t *testing.T) {
 	mmu.write(validAddress, 0x12)
 
 	mmu.write(dmaAddress, uint8(startAddr>>8))
-	mmu.Cycle()
+	mmu.Tick(4)
 	for i := 0; i < dmaDuration; i++ {
-		mmu.Cycle()
+		mmu.Tick(4)
 
 		// Check that at every cycle everything read from the OAM will return 0xFF
 		if mmu.Read(oamAddress) != 0xFF {
