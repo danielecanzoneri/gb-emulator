@@ -28,6 +28,8 @@ type SquareChannel struct {
 
 	periodCounter uint16
 	wavePosition  uint8 // Varies from 0 to 7
+
+	ticks uint
 }
 
 func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16, fs *frameSequencer) *SquareChannel {
@@ -61,13 +63,20 @@ func (ch *SquareChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *SquareChannel) Cycle() {
-	ch.periodCounter++
+func (ch *SquareChannel) Tick(ticks uint) {
+	ch.ticks += ticks
 
-	// Frequency is 11 bits
-	if ch.periodCounter&0x7FF == 0 {
-		ch.periodCounter = ch.period
-		ch.wavePosition = (ch.wavePosition + 1) % 8
+	// Channel 1 and 2 clock at 1048576 HZ
+	for ch.ticks >= 4 {
+		ch.ticks -= 4
+
+		ch.periodCounter++
+
+		// Frequency is 11 bits
+		if ch.periodCounter&0x7FF == 0 {
+			ch.periodCounter = ch.period
+			ch.wavePosition = (ch.wavePosition + 1) % 8
+		}
 	}
 }
 
@@ -143,6 +152,8 @@ func (ch *SquareChannel) Reset() {
 	ch.WriteRegister(ch.addrNRx2, 0)
 	ch.WriteRegister(ch.addrNRx3, 0)
 	ch.WriteRegister(ch.addrNRx4, 0)
+
+	ch.ticks = 0
 }
 
 func (ch *SquareChannel) Trigger(value uint8) {

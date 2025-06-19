@@ -31,6 +31,8 @@ type WaveChannel struct {
 	// Wave RAM
 	WaveRam      [16]uint8
 	bufferSample uint8 // CH3 does not emit samples directly, but stores every sample read into a buffer, and emits that continuously;
+
+	ticks uint
 }
 
 func NewWaveChannel(fs *frameSequencer) *WaveChannel {
@@ -63,13 +65,17 @@ func (ch *WaveChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *WaveChannel) Cycle() {
+func (ch *WaveChannel) Tick(ticks uint) {
 	if !ch.active {
 		return
 	}
 
-	// The wave channel’s period divider is clocked once per two dots (twice per cycle)
-	for range 2 {
+	ch.ticks += ticks
+
+	// Channel 3 clocks at 2097152 HZ
+	for ch.ticks >= 2 {
+		ch.ticks -= 2
+
 		if ch.triggerCycleDelay > 0 {
 			ch.triggerCycleDelay--
 			continue
@@ -187,6 +193,7 @@ func (ch *WaveChannel) Reset() {
 	ch.WriteRegister(nr33Addr, 0)
 	ch.WriteRegister(nr34Addr, 0)
 	ch.bufferSample = 0
+	ch.ticks = 0
 }
 
 func (ch *WaveChannel) Trigger(value uint8) {

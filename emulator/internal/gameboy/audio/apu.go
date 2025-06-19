@@ -63,20 +63,20 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 	return apu
 }
 
-func (apu *APU) Cycle() {
+func (apu *APU) Tick(ticks uint) {
 	if !apu.active {
 		return
 	}
 
-	apu.channel1.Cycle()
-	apu.channel2.Cycle()
-	apu.channel3.Cycle()
-	apu.channel4.Cycle()
+	apu.channel1.Tick(ticks)
+	apu.channel2.Tick(ticks)
+	apu.channel3.Tick(ticks)
+	apu.channel4.Tick(ticks)
 
-	apu.sampleCounter++
-	var cyclesPerSample = 4194304. / (apu.sampleRate * 4)
-	if apu.sampleCounter >= cyclesPerSample {
-		apu.sampleCounter -= cyclesPerSample
+	apu.sampleCounter += float64(ticks)
+	var ticksPerSample = 4194304. / apu.sampleRate
+	for apu.sampleCounter >= ticksPerSample {
+		apu.sampleCounter -= ticksPerSample
 
 		left, right := apu.sample()
 		apu.sampleBuffer <- left

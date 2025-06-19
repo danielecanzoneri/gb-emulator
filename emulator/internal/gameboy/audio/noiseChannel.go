@@ -22,6 +22,8 @@ type NoiseChannel struct {
 	clockShift   uint8 // Bits 7-4
 	lfsrWidth    uint8 // Bit 3 (0 = 15-bit, 1 = 7-bit)
 	clockDivider uint8 // Bits 2-0
+
+	ticks uint
 }
 
 func NewNoiseChannel(fs *frameSequencer) *NoiseChannel {
@@ -60,20 +62,26 @@ func (ch *NoiseChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *NoiseChannel) Cycle() {
-	ch.frequencyCounter--
+func (ch *NoiseChannel) Tick(ticks uint) {
+	ch.ticks += ticks
 
-	if ch.frequencyCounter == 0 {
-		// Advance LFSR
-		bit15 := ^(ch.lfsr ^ (ch.lfsr >> 1)) & 0b1
-		util.SetBit(&ch.lfsr, 15, bit15)
+	// Channel 4 clocks at 1048576 HZ
+	for ch.ticks >= 4 {
+		ch.ticks -= 4
 
-		if ch.lfsrWidth == 1 { // 7-bit mode
-			util.SetBit(&ch.lfsr, 7, bit15)
+		ch.frequencyCounter--
+		if ch.frequencyCounter == 0 {
+			// Advance LFSR
+			bit15 := ^(ch.lfsr ^ (ch.lfsr >> 1)) & 0b1
+			util.SetBit(&ch.lfsr, 15, bit15)
+
+			if ch.lfsrWidth == 1 { // 7-bit mode
+				util.SetBit(&ch.lfsr, 7, bit15)
+			}
+
+			ch.lfsr >>= 1
+			ch.resetFrequency()
 		}
-
-		ch.lfsr >>= 1
-		ch.resetFrequency()
 	}
 }
 
@@ -135,6 +143,8 @@ func (ch *NoiseChannel) Reset() {
 	ch.WriteRegister(nr42Addr, 0)
 	ch.WriteRegister(nr43Addr, 0)
 	ch.WriteRegister(nr44Addr, 0)
+
+	ch.ticks = 0
 }
 
 func (ch *NoiseChannel) Trigger(value uint8) {
