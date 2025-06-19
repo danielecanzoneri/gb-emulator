@@ -122,16 +122,17 @@ func NewMBC3(rom []uint8, ram bool, savData []uint8, header *Header, battery boo
 
 	return mbc
 }
-func (mbc *MBC3) Cycle() {
+
+func (mbc *MBC3) Tick(ticks uint) {
 	// Check if RTC is enabled
 	if util.ReadBit(mbc.rtcDH, 6) != 0 {
 		return
 	}
 
-	// RTC clocking: Game Boy runs at 2^22 Hz and a cycle happens every 4 Hz
-	mbc.rtcClockCounter++
-	if mbc.rtcClockCounter == 1<<20 {
-		mbc.rtcClockCounter = 0
+	// RTC clocking: Game Boy runs at 2^22 Hz
+	mbc.rtcClockCounter += ticks
+	if mbc.rtcClockCounter >= 1<<20 {
+		mbc.rtcClockCounter -= 1 << 20
 
 		mbc.rtcS = (mbc.rtcS + 1) & rtcSecondsMask
 		if mbc.rtcS == 60 {
