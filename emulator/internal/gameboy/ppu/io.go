@@ -116,8 +116,6 @@ func (ppu *PPU) enable() {
 	}
 	ppu.active = true
 	ppu.checkLYLYC()
-	// Always be 2 ticks in advance (since PPU ticks twice in one M-cycle)
-	ppu.Dots = -2
 
 	// Line 0 has different timing after enabling, it starts with mode 0 and goes straight to mode 3
 	// Moreover, mode 0 is shorter by 2 cycles (8 dots)

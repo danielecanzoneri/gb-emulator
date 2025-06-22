@@ -54,6 +54,14 @@ type PPU struct {
 	// Callbacks to request interrupt
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
+
+	// Delay STAT updates by 4 ticks
+	delayedSTATUpdates []delayedSTATUpdate
+}
+
+type delayedSTATUpdate struct {
+	delay  int
+	update func()
 }
 
 func (ppu *PPU) Reset() {
@@ -65,7 +73,7 @@ func (ppu *PPU) Reset() {
 	ppu.frontBuffer = &[FrameHeight][FrameWidth]uint8{}
 	ppu.backBuffer = &[FrameHeight][FrameWidth]uint8{}
 	ppu.LCDC = 0
-	ppu.STAT = 0
+	ppu.STAT = 0x80 // Unused bit
 	ppu.SCY = 0
 	ppu.SCX = 0
 	ppu.LY = 0
@@ -100,28 +108,38 @@ func (ppu *PPU) Tick(ticks uint) {
 		return
 	}
 
+	// Handle delayed STAT updates
+	var remaining []delayedSTATUpdate
+	for _, d := range ppu.delayedSTATUpdates {
+		d.delay -= int(ticks)
+		if d.delay <= 0 {
+			d.update()
+			ppu.checkSTATInterruptState()
+		} else {
+			remaining = append(remaining, d)
+		}
+	}
+	ppu.delayedSTATUpdates = remaining
+
 	ppu.Dots += int(ticks) // M-cycles -> T-states
 
 	switch ppu.Mode {
 	case oamScan:
-		if ppu.Dots >= 80 {
+		if ppu.Dots > 80 {
 			ppu.setMode(drawing)
 		}
 	case drawing:
-		if ppu.Dots >= 172+80+ppu.mode3ExtraDots {
+		if ppu.Dots > 172+80+ppu.mode3ExtraDots {
 			ppu.setMode(hBlank)
 		}
 	case hBlank:
 		// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
-		if ppu.lcdJustEnabled && ppu.Dots >= 80 {
-			// When enabling LCD line 0 has different timings because the PPU is late by 2 T-cycles
-			//ppu.Dots -= 2
-
+		if ppu.lcdJustEnabled && ppu.Dots > 80 {
 			ppu.lcdJustEnabled = false
 			ppu.setMode(drawing)
 		}
 
-		if ppu.Dots >= 456 {
+		if ppu.Dots > 456 {
 			ppu.Dots -= 456
 			ppu.newLine()
 			if ppu.LY == 144 { // Enter VBlank period
@@ -131,7 +149,7 @@ func (ppu *PPU) Tick(ticks uint) {
 			}
 		}
 	case vBlank:
-		if ppu.Dots >= 456 {
+		if ppu.Dots > 456 {
 			ppu.Dots -= 456
 			ppu.newLine()
 
@@ -146,7 +164,6 @@ func New() *PPU {
 	ppu := new(PPU)
 	ppu.STAT = 0x80 // Set unused bit
 	ppu.setMode(oamScan)
-	ppu.checkLYLYC()
 
 	// Init buffers
 	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
@@ -157,9 +174,6 @@ func New() *PPU {
 
 func (ppu *PPU) setMode(mode uint8) {
 	ppu.Mode = mode
-	ppu.STAT = (ppu.STAT & 0xFC) | mode
-
-	ppu.checkSTATInterruptState()
 
 	switch mode {
 	case oamScan:
@@ -175,6 +189,10 @@ func (ppu *PPU) setMode(mode uint8) {
 		ppu.frontBuffer = ppu.backBuffer
 		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
 	}
+
+	ppu.setSTATUpdateHandler(func() {
+		ppu.STAT = (ppu.STAT & 0xFC) | mode
+	})
 }
 
 func (ppu *PPU) newLine() {
@@ -183,7 +201,21 @@ func (ppu *PPU) newLine() {
 		ppu.LY = 0
 	}
 
+	// When LY changes, LY=LYC flag is always set to 0 and then updated
+	// TODO - check if this is true
+	util.SetBit(&ppu.STAT, 2, 0)
+
 	ppu.checkLYLYC()
+}
+
+func (ppu *PPU) setSTATUpdateHandler(statUpdate func()) {
+	// STAT register is updated 4 (or 1 is enough?) T-cycles later
+	// (see https://github.com/Gekkio/mooneye-test-suite/blob/main/acceptance/ppu/lcdon_timing-GS.s)
+
+	ppu.delayedSTATUpdates = append(ppu.delayedSTATUpdates, delayedSTATUpdate{
+		delay:  4,
+		update: statUpdate,
+	})
 }
 
 func (ppu *PPU) checkLYLYC() {
@@ -193,11 +225,14 @@ func (ppu *PPU) checkLYLYC() {
 
 	// Bit 2 of STAT register is set when LY = LYC
 	if ppu.LY == ppu.LYC {
-		util.SetBit(&ppu.STAT, 2, 1)
+		ppu.setSTATUpdateHandler(func() {
+			util.SetBit(&ppu.STAT, 2, 1)
+		})
 	} else {
-		util.SetBit(&ppu.STAT, 2, 0)
+		ppu.setSTATUpdateHandler(func() {
+			util.SetBit(&ppu.STAT, 2, 0)
+		})
 	}
-	ppu.checkSTATInterruptState()
 }
 
 func (ppu *PPU) checkSTATInterruptState() {
