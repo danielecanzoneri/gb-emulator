@@ -138,7 +138,6 @@ func (ppu *PPU) Tick(ticks uint) {
 	case hBlank:
 		// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
 		if ppu.lcdJustEnabled && ppu.Dots > 80 {
-			ppu.lcdJustEnabled = false
 			ppu.setMode(drawing)
 		}
 
@@ -176,19 +175,36 @@ func New() *PPU {
 }
 
 func (ppu *PPU) setMode(mode uint8) {
+	// From what I gathered from mooneye tests, OAM and vRAM behave as follows:
+	// normally they become inaccessible 4 ticks before STAT mode changes
+	// (when internal mode flag is updated) but become accessible again when STAT mode changes
+	// (if for example mode 3 lasts 172 dots, vRAM is inaccessible for 176 dots, same for OAM).
+	// Things are different on the first line 0 after PPU is on. In the first 0 -> 3 mode transition,
+	// both become inaccessible when STAT is updated.
 	ppu.mode = mode
 
 	switch mode {
 	case oamScan:
 		ppu.oam.disabled = true
 	case drawing:
-		ppu.vRAM.disabled = true
+		if ppu.lcdJustEnabled {
+			ppu.lcdJustEnabled = false
+			// Ugly hack: delay by 4 ticks
+			ppu.setSTATUpdateHandler(func() {
+				ppu.oam.disabled = true
+				ppu.vRAM.disabled = true
+			})
+		} else {
+			ppu.oam.disabled = true
+			ppu.vRAM.disabled = true
+		}
 
 		ppu.selectObjects()
 		ppu.mode3ExtraDots = ppu.drawLine()
 	case hBlank:
-		ppu.oam.disabled = false
-		ppu.vRAM.disabled = false
+		// OAM and vRAM are re-enabled 4 ticks later
+		// ppu.oam.disabled = false
+		// ppu.vRAM.disabled = false
 	case vBlank:
 		ppu.wyCounter = 0
 		ppu.RequestVBlankInterrupt()
@@ -200,6 +216,10 @@ func (ppu *PPU) setMode(mode uint8) {
 
 	ppu.setSTATUpdateHandler(func() {
 		ppu.STAT = (ppu.STAT & 0xFC) | mode
+		if mode == hBlank {
+			ppu.oam.disabled = false
+			ppu.vRAM.disabled = false
+		}
 	})
 }
 
