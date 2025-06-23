@@ -26,11 +26,11 @@ type MMU struct {
 	ieReg  uint8
 
 	// DMA cycles
-	dmaStart    bool
-	dmaCycles   int
-	dmaTransfer bool
-	dmaOffset   uint16
-	dmaValue    uint8
+	delayDmaTicks int
+	dmaTicks      int
+	dmaTransfer   bool
+	dmaOffset     uint16
+	dmaValue      uint8
 }
 
 func (mmu *MMU) Reset() {
@@ -45,7 +45,8 @@ func (mmu *MMU) Reset() {
 	mmu.dmaReg = 0
 	mmu.ifReg = 0
 	mmu.ieReg = 0
-	mmu.dmaStart = false
+	mmu.delayDmaTicks = 0
+	mmu.dmaTicks = 0
 	mmu.dmaTransfer = false
 	mmu.dmaOffset = 0
 	mmu.dmaValue = 0
@@ -53,9 +54,9 @@ func (mmu *MMU) Reset() {
 
 func (mmu *MMU) Tick(ticks uint) {
 	if mmu.dmaTransfer {
-		mmu.dmaCycles += int(ticks)
-		for mmu.dmaCycles > 4 {
-			mmu.dmaCycles -= 4
+		mmu.dmaTicks += int(ticks)
+		for mmu.dmaTicks >= 4 {
+			mmu.dmaTicks -= 4
 
 			addr := uint16(mmu.read(dmaAddress)) << 8
 			mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
@@ -66,6 +67,15 @@ func (mmu *MMU) Tick(ticks uint) {
 			if mmu.dmaOffset == dmaDuration {
 				mmu.dmaTransfer = false
 			}
+		}
+	}
+
+	if mmu.delayDmaTicks > 0 {
+		mmu.delayDmaTicks -= int(ticks)
+		if mmu.delayDmaTicks <= 0 {
+			mmu.dmaTransfer = true
+			mmu.dmaTicks = 0
+			mmu.dmaOffset = 0
 		}
 	}
 }

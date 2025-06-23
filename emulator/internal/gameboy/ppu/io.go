@@ -155,5 +155,5 @@ func (ppu *PPU) disable() {
 }
 
 func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.oam.Write(index, value)
+	ppu.oam.Write(OAMStartAddr+index, value)
 }
