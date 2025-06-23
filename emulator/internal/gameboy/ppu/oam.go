@@ -14,14 +14,27 @@ const (
 
 type OAM struct {
 	objectsData [OAMSize / objectsSize]Object
+
+	// Disabled during mode 2 (OAM scan) and 3 (drawing)
+	disabled bool
 }
 
 func (oam *OAM) Read(addr uint16) uint8 {
+	if oam.disabled {
+		return 0xFF
+	}
+
+	addr -= OAMStartAddr
 	objectId := addr / objectsSize
 	return oam.objectsData[objectId].read(addr % objectsSize)
 }
 
 func (oam *OAM) Write(addr uint16, value uint8) {
+	if oam.disabled {
+		return
+	}
+
+	addr -= OAMStartAddr
 	objectId := addr / objectsSize
 	oam.objectsData[objectId].write(addr%objectsSize, value)
 }
@@ -128,7 +141,7 @@ func (ppu *PPU) selectObjects() {
 	ppu.numObjs = 0
 
 	// Scan OAM and select objects that lie in current line
-	for _, obj := range ppu.OAM.objectsData {
+	for _, obj := range ppu.oam.objectsData {
 		// obj is on the line if obj.y <= LY+16 < obj.y + height
 		if obj.y <= ppu.LY+yOffset && ppu.LY+yOffset < obj.y+objHeight {
 			ppu.objsLY[ppu.numObjs] = &obj

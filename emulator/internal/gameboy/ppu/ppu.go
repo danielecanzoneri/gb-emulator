@@ -4,14 +4,21 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/pkg/util"
 )
 
+const (
+	oamScan = 2
+	drawing = 3
+	hBlank  = 0
+	vBlank  = 1
+)
+
 type PPU struct {
-	Mode           uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
 	Dots           int   // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
+	mode           uint8 // (internal) 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
 	mode3ExtraDots int
 
 	// vRAM and OAM data
 	vRAM vRAM
-	OAM  OAM
+	oam  OAM
 
 	// objects on current line
 	objsLY  [objsLimit]*Object
@@ -65,7 +72,7 @@ type delayedSTATUpdate struct {
 }
 
 func (ppu *PPU) Reset() {
-	ppu.Mode = 0
+	ppu.mode = 0
 	ppu.Dots = 0
 	ppu.mode3ExtraDots = 0
 	ppu.objsLY = [objsLimit]*Object{}
@@ -94,14 +101,10 @@ func (ppu *PPU) Reset() {
 	ppu.bgWindowEnabled = false
 	ppu.lcdJustEnabled = false
 	ppu.STATInterruptState = false
-}
 
-const (
-	oamScan = 2
-	drawing = 3
-	hBlank  = 0
-	vBlank  = 1
-)
+	ppu.oam.disabled = false
+	ppu.vRAM.disabled = false
+}
 
 func (ppu *PPU) Tick(ticks uint) {
 	if !ppu.active {
@@ -123,7 +126,7 @@ func (ppu *PPU) Tick(ticks uint) {
 
 	ppu.Dots += int(ticks) // M-cycles -> T-states
 
-	switch ppu.Mode {
+	switch ppu.mode {
 	case oamScan:
 		if ppu.Dots > 80 {
 			ppu.setMode(drawing)
@@ -173,14 +176,19 @@ func New() *PPU {
 }
 
 func (ppu *PPU) setMode(mode uint8) {
-	ppu.Mode = mode
+	ppu.mode = mode
 
 	switch mode {
 	case oamScan:
+		ppu.oam.disabled = true
 	case drawing:
+		ppu.vRAM.disabled = true
+
 		ppu.selectObjects()
 		ppu.mode3ExtraDots = ppu.drawLine()
 	case hBlank:
+		ppu.oam.disabled = false
+		ppu.vRAM.disabled = false
 	case vBlank:
 		ppu.wyCounter = 0
 		ppu.RequestVBlankInterrupt()
@@ -241,14 +249,15 @@ func (ppu *PPU) checkSTATInterruptState() {
 	}
 	state := false
 
+	mode := ppu.STAT & 3
 	// LYC == LY int (bit 6)
 	if (ppu.LY == ppu.LYC && (util.ReadBit(ppu.STAT, 6) > 0)) ||
 		// Mode 2 int (bit 5)
-		(ppu.Mode == 2 && (util.ReadBit(ppu.STAT, 5) > 0)) ||
+		(mode == 2 && (util.ReadBit(ppu.STAT, 5) > 0)) ||
 		// Mode 1 int (bit 4)
-		(ppu.Mode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
+		(mode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
 		// Mode 0 int (bit 3)
-		(ppu.Mode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
+		(mode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
 		state = true
 	}
 

@@ -60,7 +60,7 @@ func (mmu *MMU) Tick(ticks uint) {
 			addr := uint16(mmu.read(dmaAddress)) << 8
 			mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
 
-			mmu.PPU.OAM.Write(mmu.dmaOffset, mmu.dmaValue)
+			mmu.PPU.DMAWrite(mmu.dmaOffset, mmu.dmaValue)
 			mmu.dmaOffset++
 
 			if mmu.dmaOffset == dmaDuration {
@@ -89,7 +89,7 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	case addr < 0x8000:
 		return mmu.Cartridge.Read(addr)
 	case addr < 0xA000: // vRAM
-		return mmu.PPU.ReadVRAM(addr)
+		return mmu.PPU.Read(addr)
 	case addr < 0xC000:
 		return mmu.Cartridge.Read(addr)
 	case addr < 0xE000: // wRAM
@@ -97,7 +97,7 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	case addr < 0xFE00: // Echo RAM
 		return mmu.read(addr - 0x2000)
 	case addr < 0xFEA0: // OAM
-		return mmu.PPU.ReadOAM(addr)
+		return mmu.PPU.Read(addr)
 	case addr < 0xFF00:
 		//panic("Can't read reserved memory: " + strconv.FormatUint(uint64(addr), 16))
 		return 0xFF
@@ -127,7 +127,7 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 	case addr < 0x8000:
 		mmu.Cartridge.Write(addr, value)
 	case addr < 0xA000: // vRAM
-		mmu.PPU.WriteVRAM(addr, value)
+		mmu.PPU.Write(addr, value)
 	case addr < 0xC000:
 		mmu.Cartridge.Write(addr, value)
 	case addr < 0xE000: // wRAM
@@ -135,7 +135,7 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 	case addr < 0xFE00: // Echo RAM
 		mmu.Write(addr-0x2000, value)
 	case addr < 0xFEA0: // OAM
-		mmu.PPU.WriteOAM(addr, value)
+		mmu.PPU.Write(addr, value)
 	case addr < 0xFF00:
 		//panic("Can't write reserved memory: " + strconv.FormatUint(uint64(addr), 16))
 	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers

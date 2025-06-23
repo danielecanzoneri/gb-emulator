@@ -26,6 +26,14 @@ const (
 )
 
 func (ppu *PPU) Write(addr uint16, v uint8) {
+	if 0x8000 <= addr && addr < 0xA000 { // vRAM
+		ppu.vRAM.Write(addr, v)
+		return
+	} else if 0xFE00 <= addr && addr < 0xFEA0 { // OAM
+		ppu.oam.Write(addr, v)
+		return
+	}
+
 	switch addr {
 	case LCDCAddr:
 		//if ppu.active && ppu.Mode != vBlank && util.ReadBit(ppu.LCDC, 7) > 0 {
@@ -82,6 +90,12 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 }
 
 func (ppu *PPU) Read(addr uint16) uint8 {
+	if 0x8000 <= addr && addr < 0xA000 { // vRAM
+		return ppu.vRAM.Read(addr)
+	} else if 0xFE00 <= addr && addr < 0xFEA0 { // OAM
+		return ppu.oam.Read(addr)
+	}
+
 	switch addr {
 	case LCDCAddr:
 		return ppu.LCDC
@@ -140,42 +154,6 @@ func (ppu *PPU) disable() {
 	ppu.emptyFrame()
 }
 
-// ReadVRAM prevents vRAM reads during PPU mode 3
-func (ppu *PPU) ReadVRAM(addr uint16) uint8 {
-	if ppu.Mode == 3 {
-		return 0xFF
-	}
-	return ppu.readVRAM(addr)
-}
-
-func (ppu *PPU) readVRAM(addr uint16) uint8 {
-	return ppu.vRAM.read(addr - vRAMStartAddr)
-}
-
-// WriteVRAM prevents vRAM writes during PPU mode 3
-func (ppu *PPU) WriteVRAM(addr uint16, value uint8) {
-	if ppu.Mode == 3 {
-		return
-	}
-	ppu.vRAM.write(addr-vRAMStartAddr, value)
-}
-
-// ReadOAM prevents OAM reads during PPU mode 2 and 3
-func (ppu *PPU) ReadOAM(addr uint16) uint8 {
-	if ppu.Mode == 2 || ppu.Mode == 3 {
-		return 0xFF
-	}
-	return ppu.OAM.Read(addr - OAMStartAddr)
-}
-
-// WriteOAM prevents OAM writes during PPU mode 2 and 3
-func (ppu *PPU) WriteOAM(addr uint16, value uint8) {
-	if ppu.Mode == 2 || ppu.Mode == 3 {
-		return
-	}
-	ppu.OAM.Write(addr-OAMStartAddr, value)
-}
-
 func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.OAM.Write(index, value)
+	ppu.oam.Write(index, value)
 }

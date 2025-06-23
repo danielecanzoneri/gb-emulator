@@ -14,10 +14,21 @@ const (
 type vRAM struct {
 	tileData [tileNums]Tile
 	tileMaps [tileMapsSize]uint8
-	// Data [vRAMSize]uint8
+
+	// Disabled during mode 3 (drawing)
+	disabled bool
+}
+
+func (v *vRAM) Read(addr uint16) uint8 {
+	if v.disabled {
+		return 0xFF
+	}
+	return v.read(addr)
 }
 
 func (v *vRAM) read(addr uint16) uint8 {
+	addr -= vRAMStartAddr
+
 	if addr < tileNums*tileSize { // Tile data
 		tileId := addr / tileSize
 		tileOffset := addr % tileSize
@@ -28,7 +39,16 @@ func (v *vRAM) read(addr uint16) uint8 {
 	return v.tileMaps[addr-tileNums*tileSize]
 }
 
+func (v *vRAM) Write(addr uint16, value uint8) {
+	if v.disabled {
+		return
+	}
+	v.write(addr, value)
+}
+
 func (v *vRAM) write(addr uint16, value uint8) {
+	addr -= vRAMStartAddr
+
 	if addr < tileNums*tileSize { // Tile data
 		tileId := addr / tileSize
 		tileOffset := addr % tileSize

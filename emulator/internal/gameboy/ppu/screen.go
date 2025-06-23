@@ -56,7 +56,7 @@ func (ppu *PPU) drawLine() int {
 				// We're drawing the window
 				xWindow := uint8(x) + 7 - ppu.WX
 				tileAddr := ppu.windowTileMapAddr + getTileMapOffset(xWindow, yWindow)
-				tileId := ppu.readVRAM(tileAddr)
+				tileId := ppu.vRAM.read(tileAddr)
 
 				tilesUnderPixels[x] = tileAddr
 
@@ -67,7 +67,7 @@ func (ppu *PPU) drawLine() int {
 				// We're drawing the background
 				xBackground := ppu.SCX + uint8(x) // Auto wrap around
 				tileAddr := ppu.bgTileMapAddr + getTileMapOffset(xBackground, yBackground)
-				tileId := ppu.readVRAM(tileAddr)
+				tileId := ppu.vRAM.read(tileAddr)
 
 				tilesUnderPixels[x] = tileAddr
 

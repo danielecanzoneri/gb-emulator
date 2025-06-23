@@ -18,7 +18,7 @@ func TestObjectSelection8x8(t *testing.T) {
 			{y: 10}, // Hidden
 			{y: 19}, // Hidden
 		}
-		writeObjectsOAM(&ppu.OAM, objects)
+		writeObjectsOAM(&ppu.oam, objects)
 		ppu.selectObjects()
 
 		if ppu.numObjs != 3 {
@@ -46,7 +46,7 @@ func TestObjectSelection8x8(t *testing.T) {
 			{y: 15, x: 100}, // Shown
 			{y: 11, x: 100}, // Hidden because of limit
 		}
-		writeObjectsOAM(&ppu.OAM, objects)
+		writeObjectsOAM(&ppu.oam, objects)
 		ppu.selectObjects()
 
 		if ppu.numObjs != objsLimit {
@@ -74,7 +74,7 @@ func TestObjectSelection8x16(t *testing.T) {
 			{y: 2},  // Hidden
 			{y: 19}, // Hidden
 		}
-		writeObjectsOAM(&ppu.OAM, objects)
+		writeObjectsOAM(&ppu.oam, objects)
 		ppu.selectObjects()
 
 		if ppu.numObjs != 3 {
@@ -102,7 +102,7 @@ func TestObjectSelection8x16(t *testing.T) {
 			{y: 18}, // Shown
 			{y: 10}, // Hidden because of limit
 		}
-		writeObjectsOAM(&ppu.OAM, objects)
+		writeObjectsOAM(&ppu.oam, objects)
 		ppu.selectObjects()
 
 		if ppu.numObjs != objsLimit {
