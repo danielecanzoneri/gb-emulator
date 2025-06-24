@@ -148,6 +148,9 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.newLine()
 			if ppu.LY == 144 { // Enter VBlank period
 				ppu.setMode(vBlank)
+
+				// A STAT interrupt can also be triggered at line 144 when vblank starts.
+				ppu.checkSTATInterruptState()
 			} else {
 				ppu.setMode(oamScan)
 			}
@@ -294,6 +297,12 @@ func (ppu *PPU) checkSTATInterruptState() {
 		(mode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
 		// Mode 0 int (bit 3)
 		(mode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
+		state = true
+	}
+
+	// If bit 5 (mode 2 OAM interrupt) is set, an interrupt is also triggered
+	// at line 144 when vblank starts.
+	if ppu.LY == 144 && util.ReadBit(ppu.STAT, 5) > 0 {
 		state = true
 	}
 
