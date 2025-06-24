@@ -16,11 +16,12 @@ type vRAM struct {
 	tileMaps [tileMapsSize]uint8
 
 	// Disabled during mode 3 (drawing)
-	disabled bool
+	readDisabled  bool
+	writeDisabled bool
 }
 
 func (v *vRAM) Read(addr uint16) uint8 {
-	if v.disabled {
+	if v.readDisabled {
 		return 0xFF
 	}
 	return v.read(addr)
@@ -40,7 +41,7 @@ func (v *vRAM) read(addr uint16) uint8 {
 }
 
 func (v *vRAM) Write(addr uint16, value uint8) {
-	if v.disabled {
+	if v.writeDisabled {
 		return
 	}
 	v.write(addr, value)

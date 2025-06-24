@@ -102,8 +102,10 @@ func (ppu *PPU) Reset() {
 	ppu.lcdJustEnabled = false
 	ppu.STATInterruptState = false
 
-	ppu.oam.disabled = false
-	ppu.vRAM.disabled = false
+	ppu.oam.readDisabled = false
+	ppu.vRAM.readDisabled = false
+	ppu.oam.writeDisabled = false
+	ppu.vRAM.writeDisabled = false
 }
 
 func (ppu *PPU) Tick(ticks uint) {
@@ -175,36 +177,41 @@ func New() *PPU {
 }
 
 func (ppu *PPU) setMode(mode uint8) {
-	// From what I gathered from mooneye tests, OAM and vRAM behave as follows:
-	// normally they become inaccessible 4 ticks before STAT mode changes
-	// (when internal mode flag is updated) but become accessible again when STAT mode changes
-	// (if for example mode 3 lasts 172 dots, vRAM is inaccessible for 176 dots, same for OAM).
+	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
+	// normally it is blocked 4 ticks before STAT mode changes
+	// (when internal mode flag is updated) but is available again when STAT mode changes
+	// (if for example mode 3 lasts 172 dots, vRAM cannot be read for 176 dots, same for OAM).
 	// Things are different on the first line 0 after PPU is on. In the first 0 -> 3 mode transition,
-	// both become inaccessible when STAT is updated.
+	// both are blocked when STAT is updated.
+	// Write works differently: they are always tied to the STAT register: if it is 2 or 3,
+	// they are blocked for OAM (except for a cycle at the end of mode 2 in the 2 -> 3 transition)
+	// and blocked for vRAM in mode 3
 	ppu.mode = mode
 
 	switch mode {
 	case oamScan:
-		ppu.oam.disabled = true
+		ppu.oam.readDisabled = true
 	case drawing:
 		if ppu.lcdJustEnabled {
 			ppu.lcdJustEnabled = false
 			// Ugly hack: delay by 4 ticks
 			ppu.setSTATUpdateHandler(func() {
-				ppu.oam.disabled = true
-				ppu.vRAM.disabled = true
+				ppu.oam.readDisabled = true
+				ppu.vRAM.readDisabled = true
 			})
 		} else {
-			ppu.oam.disabled = true
-			ppu.vRAM.disabled = true
+			ppu.oam.readDisabled = true
+			ppu.vRAM.readDisabled = true
+			// For the 2 -> 3 transition
+			ppu.oam.writeDisabled = false
 		}
 
 		ppu.selectObjects()
 		ppu.mode3ExtraDots = ppu.drawLine()
 	case hBlank:
 		// OAM and vRAM are re-enabled 4 ticks later
-		// ppu.oam.disabled = false
-		// ppu.vRAM.disabled = false
+		// ppu.oam.readDisabled = false
+		// ppu.vRAM.readDisabled = false
 	case vBlank:
 		ppu.wyCounter = 0
 		ppu.RequestVBlankInterrupt()
@@ -216,11 +223,20 @@ func (ppu *PPU) setMode(mode uint8) {
 
 	ppu.setSTATUpdateHandler(func() {
 		ppu.STAT = (ppu.STAT & 0xFC) | mode
-		if mode == hBlank {
-			ppu.oam.disabled = false
-			ppu.vRAM.disabled = false
+		switch mode {
+		case hBlank:
+			ppu.oam.readDisabled = false
+			ppu.vRAM.readDisabled = false
+			ppu.oam.writeDisabled = false
+			ppu.vRAM.writeDisabled = false
+		case oamScan:
+			ppu.oam.writeDisabled = true
+		case drawing:
+			ppu.oam.writeDisabled = true
+			ppu.vRAM.writeDisabled = true
 		}
 	})
+
 }
 
 func (ppu *PPU) newLine() {
