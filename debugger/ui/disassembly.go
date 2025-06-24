@@ -224,6 +224,15 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 	var scrollTo int
 
 	for addr := 0; addr < 0x10000; {
+		if 0x104 <= addr && addr < 0x150 { // Header memory
+			dl.entries[counter].name = "Cart Header"
+			dl.entries[counter].address = uint16(addr)
+			dl.entries[counter].bytes = []uint8{state.Memory[addr]}
+			counter++
+			addr++
+			continue
+		}
+
 		if uint16(addr) == state.PC {
 			// Clear previous instruction background
 			if dl.previousEntry != nil {
