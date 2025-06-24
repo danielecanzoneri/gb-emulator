@@ -133,7 +133,6 @@ func (ppu *PPU) enable() {
 
 	// Line 0 has different timing after enabling, it starts with mode 0 and goes straight to mode 3
 	// Moreover, mode 0 is shorter by 2 cycles (8 dots)
-	ppu.setMode(hBlank)
 	ppu.Dots += 8
 
 	ppu.lcdJustEnabled = true
@@ -145,6 +144,9 @@ func (ppu *PPU) disable() {
 		return
 	}
 	ppu.active = false
+	// Reset mode
+	ppu.mode = hBlank
+	ppu.STAT &= 0xFC
 
 	// Reset to HBlank
 	ppu.LY = 0

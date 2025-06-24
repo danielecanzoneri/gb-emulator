@@ -80,7 +80,7 @@ func (ppu *PPU) Reset() {
 	ppu.frontBuffer = &[FrameHeight][FrameWidth]uint8{}
 	ppu.backBuffer = &[FrameHeight][FrameWidth]uint8{}
 	ppu.LCDC = 0
-	ppu.STAT = 0x80 // Unused bit
+	ppu.STAT = 0x84 // Unused bit and LY=LYC
 	ppu.SCY = 0
 	ppu.SCX = 0
 	ppu.LY = 0
@@ -166,7 +166,7 @@ func (ppu *PPU) Tick(ticks uint) {
 
 func New() *PPU {
 	ppu := new(PPU)
-	ppu.STAT = 0x80 // Set unused bit
+	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
 	ppu.setMode(oamScan)
 
 	// Init buffers
