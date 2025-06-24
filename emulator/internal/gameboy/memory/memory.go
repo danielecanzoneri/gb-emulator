@@ -38,9 +38,6 @@ func (mmu *MMU) Reset() {
 	mmu.hRAM = [0x7F]uint8{}
 
 	mmu.Write(0xFF0F, 0xE1) // IF
-	mmu.Write(0xFF40, 0x91) // LCDC
-	mmu.Write(0xFF41, 0x81) // STAT
-	mmu.Write(0xFF47, 0xFC) // BGP
 
 	mmu.dmaReg = 0
 	mmu.ifReg = 0

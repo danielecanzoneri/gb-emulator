@@ -106,6 +106,10 @@ func (ppu *PPU) Reset() {
 	ppu.vRAM.readDisabled = false
 	ppu.oam.writeDisabled = false
 	ppu.vRAM.writeDisabled = false
+
+	ppu.Write(0xFF40, 0x91) // LCDC
+	ppu.Write(0xFF41, 0x81) // STAT
+	ppu.Write(0xFF47, 0xFC) // BGP
 }
 
 func (ppu *PPU) Tick(ticks uint) {

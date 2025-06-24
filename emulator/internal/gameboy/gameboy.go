@@ -44,6 +44,7 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 
 	gb.CPU.Reset()
 	gb.Memory.Reset()
+	gb.PPU.Reset()
 
 	return gb
 }
