@@ -111,7 +111,7 @@ go test ./...
 - [Data Crystal](https://datacrystal.tcrf.net/wiki/Data_Crystal) (MBC testing)
 - [Opcode table](https://gbdev.io/gb-opcodes/optables/) and [opcode reference](https://rgbds.gbdev.io/docs/v0.9.2/gbz80.7)
 - [GBops](https://izik1.github.io/gbops/) (opcode timing)
-- [Blargg](https://github.com/retrio/gb-test-roms), [Gekkio](https://github.com/Gekkio/mooneye-test-suite), DMG acid, [MBC3 RTC test](https://github.com/aaaaaa123456789/rtc3test) (test ROMs)
+- [Blargg](https://github.com/retrio/gb-test-roms), [Gekkio](https://github.com/Gekkio/mooneye-test-suite), [DMG acid](https://github.com/mattcurrie/dmg-acid2), [MBC3 RTC test](https://github.com/aaaaaa123456789/rtc3test) (test ROMs)
 
 ## TODO
 
