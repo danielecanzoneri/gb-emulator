@@ -95,15 +95,6 @@ or, if built:
   - Register and interrupt viewer
   - Step (`F3`), Continue (`F8`), and Reset controls
 
-## Testing
-
-The emulator includes extensive unit tests, especially for the CPU:
-
-```sh
-cd emulator
-go test ./...
-```
-
 ## Resources
 
 - [Pandocs](https://gbdev.io/pandocs/OAM.html)
