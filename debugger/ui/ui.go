@@ -102,6 +102,8 @@ func New(debugger *client.Client) *UI {
 		}
 	})
 
+	ui.Update(&debug.GameBoyState{})
+
 	return ui
 }
 

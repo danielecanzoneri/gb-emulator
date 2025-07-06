@@ -1,12 +1,12 @@
 package ui
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/emulator/ui/debugger"
+	"log"
+
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/emulator/internal/server"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
-	"log"
-	"os/exec"
 )
 
 type UI struct {
@@ -22,12 +22,11 @@ type UI struct {
 	debugStringTimer uint
 
 	// Debugger
-	debuggerCmd *exec.Cmd
-
-	DebugState *server.Server
+	debuggerActive bool
+	debugger       *debugger.Debugger
 }
 
-func New(s *server.Server) (*UI, error) {
+func New() (*UI, error) {
 	ui := new(UI)
 
 	// Create audio buffer
@@ -36,12 +35,7 @@ func New(s *server.Server) (*UI, error) {
 	ui.gameBoy = gb
 
 	// Debugger
-	ui.DebugState = s
-	s.SetDebugger(
-		gb.CPU, gb.Memory,
-	)
-	s.OnStep = ui.gameBoy.CPU.ExecuteInstruction
-	s.OnReset = ui.gameBoy.Reset
+	ui.debugger = debugger.New()
 
 	// Create audio player
 	player, err := newAudioPlayer(ui)

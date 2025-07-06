@@ -37,19 +37,24 @@ func (ui *UI) Update() error {
 		return ebiten.Termination
 	}
 
-	titleSuffix := ""
-	if ui.DebugState.IsActive() {
-		titleSuffix = " (debugging)"
-	}
-	ebiten.SetWindowTitle(ui.gameTitle + titleSuffix)
-
 	ui.handleInput()
 
-	// Game updates are called in the audio callback function
-	return nil
+	if ui.debuggerActive {
+		ebiten.SetWindowTitle(ui.gameTitle + " (debugging)")
+		return ui.debugger.Update()
+	} else {
+		ebiten.SetWindowTitle(ui.gameTitle)
+		// Game updates are called in the audio callback function
+		return nil
+	}
 }
 
 func (ui *UI) Draw(screen *ebiten.Image) {
+	if ui.debuggerActive {
+		ui.debugger.Draw(screen)
+		return
+	}
+
 	// Update the frame image with the current frame in the PPU
 	frameBuffer := ui.gameBoy.PPU.GetFrame()
 	for y := range ppu.FrameHeight {

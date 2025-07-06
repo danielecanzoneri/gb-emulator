@@ -3,10 +3,11 @@ package ui
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/ebitengine/oto/v3"
 	"io"
 	"math"
 	"os"
+
+	"github.com/ebitengine/oto/v3"
 )
 
 const (
@@ -62,7 +63,7 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 
 		default:
 			// If paused, return silence
-			if ui.DebugState.Paused() {
+			if ui.debuggerActive {
 				binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(0))
 				bufferPosition += 4
 				continue
@@ -71,13 +72,13 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			ui.gameBoy.Joypad.DetectKeysPressed()
 			ui.gameBoy.CPU.ExecuteInstruction()
 
-			if ui.DebugState.IsActive() {
-				// Check breakpoint
-				pc := ui.gameBoy.CPU.ReadPC()
-				if ui.DebugState.IsBreakpoint(pc) {
-					ui.DebugState.BreakpointHit()
-				}
-			}
+			//if ui.DebugState.IsActive() {
+			//	// Check breakpoint
+			//	pc := ui.gameBoy.CPU.ReadPC()
+			//	if ui.DebugState.IsBreakpoint(pc) {
+			//		ui.DebugState.BreakpointHit()
+			//	}
+			//}
 		}
 	}
 	_, _ = AudioFile.Write(buf[:bufferPosition])

@@ -3,22 +3,16 @@ package ui
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"log"
 )
 
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		if err := ui.startDebugger(); err != nil {
-			log.Println("Could not start debugger:", err)
-		} else {
-			log.Println("Debugger started")
-		}
+		ui.debuggerActive = !ui.debuggerActive
 	}
 
 	// Ctrl+L to load a new game
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		// Stop running
-		ui.DebugState.Pause()
 		ui.audioPlayer.Pause()
 
 		// Save game before switching
@@ -28,7 +22,6 @@ func (ui *UI) handleInput() {
 		ui.LoadNewGame()
 
 		// Start running
-		ui.DebugState.Resume()
 		ui.audioPlayer.Play()
 	}
 
