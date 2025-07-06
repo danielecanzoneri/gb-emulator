@@ -1,13 +1,10 @@
 package debugger
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"golang.org/x/image/font/gofont/gomono"
 	"image/color"
 	"log"
 	"strings"
@@ -31,8 +28,6 @@ var (
 		Left: 2, Right: 2, Top: 2, Bottom: 2,
 	}
 )
-
-var font text.Face
 
 // disassemblyEntry represents a single line in the disassembler
 type disassemblerEntry struct {
@@ -107,8 +102,6 @@ func newDisassembler() *disassembler {
 		}
 	}
 	d.selected = d.entries[0]
-
-	font = loadFont(16)
 
 	container := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -241,16 +234,4 @@ func (d *disassembler) scroll(offset int) {
 	d.first = min(d.first, d.totalEntries-d.length) // Reset to maximum if too high
 
 	d.refresh()
-}
-
-func loadFont(size float64) text.Face {
-	s, err := text.NewGoTextFaceSource(bytes.NewReader(gomono.TTF))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &text.GoTextFace{
-		Source: s,
-		Size:   size,
-	}
 }
