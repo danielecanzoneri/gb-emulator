@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/danielecanzoneri/gb-emulator/emulator/ui/debugger"
 	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
 	"image/color"
 )
@@ -244,7 +245,7 @@ func (dl *disassembler) Update(state *debug.GameBoyState) {
 			dl.previousEntry = dl.entries[counter]
 		}
 
-		name, length, bytes := getOpcodeInfo(state, uint16(addr))
+		name, length, bytes := debugger.getOpcodeInfo(state, uint16(addr))
 		dl.entries[counter].name = name
 		dl.entries[counter].address = uint16(addr)
 		dl.entries[counter].bytes = bytes

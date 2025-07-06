@@ -12,6 +12,10 @@ func (ui *UI) handleInput() {
 			// Sync debugger state
 			ui.debugger.Sync(ui.gameBoy)
 		}
+
+		// Resize window
+		newWidth, newHeight := ui.Layout(0, 0)
+		ebiten.SetWindowSize(newWidth, newHeight)
 	}
 
 	// Ctrl+L to load a new game

@@ -14,7 +14,7 @@ const (
 
 var (
 	// Original palette
-	colors = [4]color.Color{
+	GameBoyScreenPalette = [4]color.Color{
 		color.RGBA{R: 198, G: 222, B: 140, A: 255},
 		color.RGBA{R: 132, G: 165, B: 99, A: 255},
 		color.RGBA{R: 57, G: 97, B: 57, A: 255},
@@ -50,18 +50,18 @@ func (ui *UI) Update() error {
 }
 
 func (ui *UI) Draw(screen *ebiten.Image) {
-	if ui.debuggerActive {
-		ui.debugger.Draw(screen)
-		return
-	}
-
 	// Update the frame image with the current frame in the PPU
 	frameBuffer := ui.gameBoy.PPU.GetFrame()
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {
 			colorId := frameBuffer[y][x]
-			frameImage.Set(x, y, colors[colorId])
+			frameImage.Set(x, y, GameBoyScreenPalette[colorId])
 		}
+	}
+
+	if ui.debuggerActive {
+		ui.debugger.Draw(screen, frameImage)
+		return
 	}
 
 	// Draw the entire frame at once with scaling
@@ -77,5 +77,9 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 
 func (ui *UI) Layout(_, _ int) (int, int) {
 	// Adjust the layout based on whether the debugger is visible
-	return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight
+	if ui.debuggerActive {
+		return ui.debugger.Layout(0, 0)
+	} else {
+		return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight
+	}
 }
