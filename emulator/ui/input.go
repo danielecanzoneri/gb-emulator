@@ -8,6 +8,10 @@ import (
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		ui.debuggerActive = !ui.debuggerActive
+		if ui.debuggerActive {
+			// Sync debugger state
+			ui.debugger.Sync(ui.gameBoy)
+		}
 	}
 
 	// Ctrl+L to load a new game

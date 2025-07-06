@@ -1,8 +1,8 @@
-package ui
+package debugger
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/pkg/debug"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"strings"
 )
 
@@ -35,8 +35,8 @@ type OpcodeInfo struct {
 }
 
 // getOpcodeInfo returns name and length of the opcode at the given address
-func getOpcodeInfo(state *debug.GameBoyState, addr uint16) (string, int, []uint8) {
-	opcode := state.Memory[addr]
+func getOpcodeInfo(gb *gameboy.GameBoy, addr uint16) (string, int, []uint8) {
+	opcode := gb.Memory.DebugRead(addr)
 	opcodeInfo := opcodesInfo[opcode]
 
 	var name string
@@ -48,12 +48,12 @@ func getOpcodeInfo(state *debug.GameBoyState, addr uint16) (string, int, []uint8
 		name = opcodeInfo.name
 		bytes = []uint8{opcode}
 	case 2:
-		data1 := state.Memory[addr+1]
+		data1 := gb.Memory.DebugRead(addr + 1)
 		name = opcodeInfo.format(opcodeInfo.name, data1)
 		bytes = []uint8{opcode, data1}
 	case 3:
-		data1 := state.Memory[addr+1]
-		data2 := state.Memory[addr+2]
+		data1 := gb.Memory.DebugRead(addr + 1)
+		data2 := gb.Memory.DebugRead(addr + 2)
 		name = opcodeInfo.format(opcodeInfo.name, data1, data2)
 		bytes = []uint8{opcode, data1, data2}
 	}

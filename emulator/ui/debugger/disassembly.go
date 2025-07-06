@@ -3,6 +3,7 @@ package debugger
 import (
 	"bytes"
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -42,8 +43,9 @@ type disassemblerEntry struct {
 }
 
 type disassembler struct {
-	widget  *widget.Container
-	entries []*disassemblerEntry
+	widget       *widget.Container
+	entries      []*disassemblerEntry
+	totalEntries int
 
 	// Current entry highlighted (to unselect when stepping)
 	selected *disassemblerEntry
@@ -51,6 +53,44 @@ type disassembler struct {
 	// Entries to show
 	first  int
 	length int
+}
+
+// Sync scans through memory and marks which addresses contain
+// executable code vs data bytes that are part of multibyte instructions.
+// This is used to properly display the disassembly view.
+func (d *disassembler) Sync(gb *gameboy.GameBoy) {
+	counter := 0
+	var scrollTo int
+
+	for addr := 0; addr < 0x10000; {
+		if 0x104 <= addr && addr < 0x150 { // Header memory
+			d.entries[counter].name = "Cart Header"
+			d.entries[counter].address = uint16(addr)
+			d.entries[counter].bytes = []uint8{gb.Memory.DebugRead(uint16(addr))}
+			counter++
+			addr++
+			continue
+		}
+
+		if uint16(addr) == gb.CPU.PC {
+			// Entry to be highlighted
+			d.selected = d.entries[counter]
+			scrollTo = counter
+		}
+
+		name, length, b := getOpcodeInfo(gb, uint16(addr))
+		d.entries[counter].name = name
+		d.entries[counter].address = uint16(addr)
+		d.entries[counter].bytes = b
+		counter++
+
+		addr += length
+	}
+
+	d.totalEntries = counter
+	d.scroll(scrollTo - d.length/2) // Selected instruction always at center
+
+	d.refresh()
 }
 
 func newDisassembler() *disassembler {
@@ -80,7 +120,7 @@ func newDisassembler() *disassembler {
 
 	// Populate the container with buttons
 	for i := 0; i < d.length; i++ {
-		entry := createEntryWidget(d.entries[i])
+		entry := d.createRow(i)
 		container.AddChild(entry)
 	}
 
@@ -113,7 +153,7 @@ func newDisassembler() *disassembler {
 	navigateButtons.AddChild(widget.NewContainer(widget.ContainerOpts.WidgetOpts(widget.WidgetOpts.MinSize(10, 0))))
 	for i := 1; i <= 3; i++ {
 		txt := strings.Repeat("↑", i)
-		offset := 1 << (4 * (i - 1)) // 1: 1, 2: 32, 3: 1024
+		offset := 1 << (5 * (i - 1)) // 1: 1, 2: 32, 3: 1024
 		button := widget.NewButton(
 			widget.ButtonOpts.Image(buttonImage),               // Background
 			widget.ButtonOpts.Text(txt, font, buttonTextColor), // Font and text
@@ -140,25 +180,42 @@ func newDisassembler() *disassembler {
 	return d
 }
 
-func createEntryWidget(entry *disassemblerEntry) widget.PreferredSizeLocateableWidget {
-	return widget.NewButton(
-		widget.ButtonOpts.Image(buttonImage),                      // Background
-		widget.ButtonOpts.Text(entry.name, font, buttonTextColor), // Font and text
+func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {
+	button := widget.NewButton(
+		widget.ButtonOpts.Image(buttonImage),              // Background
+		widget.ButtonOpts.Text("", font, buttonTextColor), // Font and text
 		widget.ButtonOpts.TextPadding(buttonTextPadding),
+		widget.ButtonOpts.TextPosition(0, 0),
 
 		// Click handler
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
+			entry := d.entries[d.first+rowId]
 			entry.isBreakpoint = !entry.isBreakpoint
-			updateEntry(args.Button, entry)
+			refreshEntry(args.Button, entry)
 
 			log.Printf("Pressed %04X\n", entry.address)
 		}),
 	)
+
+	// Fix widget min width so that even if buttons are smaller it doesn't resize
+	button.GetWidget().MinWidth = 300
+
+	return button
 }
 
-// updateEntry changes button rendering based on entry state
-func updateEntry(button *widget.Button, entry *disassemblerEntry) {
-	button.Text().Label = entry.name // Update label
+// refreshEntry changes button rendering based on entry state
+func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
+	// Update label
+	bytesStr := ""
+	for _, b := range entry.bytes {
+		bytesStr += fmt.Sprintf("%02X ", b)
+	}
+
+	// Add padding to align the instruction name
+	for len(bytesStr) < 9 { // 3 chars per byte, up to 3 bytes
+		bytesStr += "   "
+	}
+	button.Text().Label = fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name)
 
 	// Update color
 	if entry.isBreakpoint {
@@ -168,21 +225,22 @@ func updateEntry(button *widget.Button, entry *disassemblerEntry) {
 	}
 }
 
-func (d *disassembler) update() {
+// refresh disassembler rows
+func (d *disassembler) refresh() {
 	// Update all rows
 	rows := d.widget.Children()[:d.length]
 	for i, r := range rows {
 		button := r.(*widget.Button)
-		updateEntry(button, d.entries[d.first+i])
+		refreshEntry(button, d.entries[d.first+i])
 	}
 }
 
 func (d *disassembler) scroll(offset int) {
 	d.first += offset
 	d.first = max(d.first, 0)                       // Reset to 0 if too low
-	d.first = min(d.first, len(d.entries)-d.length) // Reset to maximum if too high
+	d.first = min(d.first, d.totalEntries-d.length) // Reset to maximum if too high
 
-	d.update()
+	d.refresh()
 }
 
 func loadFont(size float64) text.Face {

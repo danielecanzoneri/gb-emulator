@@ -1,6 +1,7 @@
 package debugger
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"image/color"
 
 	"github.com/ebitenui/ebitenui"
@@ -35,6 +36,11 @@ func New() *Debugger {
 		Container: rootContainer,
 	}
 	return d
+}
+
+// Sync state between game boy and debugger
+func (d *Debugger) Sync(gb *gameboy.GameBoy) {
+	d.disassembler.Sync(gb)
 }
 
 func (d *Debugger) Update() error {
