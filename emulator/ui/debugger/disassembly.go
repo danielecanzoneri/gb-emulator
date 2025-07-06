@@ -83,7 +83,7 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 	}
 
 	d.totalEntries = counter
-	d.scroll(scrollTo - d.length/2) // Selected instruction always at center
+	d.scrollTo(scrollTo - d.length/2) // Selected instruction always at center
 
 	d.refresh()
 }
@@ -91,7 +91,7 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 func newDisassembler() *disassembler {
 	d := &disassembler{
 		entries: make([]*disassemblerEntry, 0x10000),
-		length:  16,
+		length:  24,
 	}
 
 	// Initialize the disassembler with dummy data
@@ -138,7 +138,7 @@ func newDisassembler() *disassembler {
 
 			// Click handler
 			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				d.scroll(offset)
+				d.scrollTo(d.first + offset)
 			}),
 		)
 		navigateButtons.AddChild(button)
@@ -154,7 +154,7 @@ func newDisassembler() *disassembler {
 
 			// Click handler
 			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				d.scroll(-offset)
+				d.scrollTo(d.first - offset)
 			}),
 		)
 		navigateButtons.AddChild(button)
@@ -228,8 +228,8 @@ func (d *disassembler) refresh() {
 	}
 }
 
-func (d *disassembler) scroll(offset int) {
-	d.first += offset
+func (d *disassembler) scrollTo(newOffset int) {
+	d.first = newOffset
 	d.first = max(d.first, 0)                       // Reset to 0 if too low
 	d.first = min(d.first, d.totalEntries-d.length) // Reset to maximum if too high
 
