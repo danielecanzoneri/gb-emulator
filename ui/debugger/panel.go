@@ -21,7 +21,12 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p := new(panel)
 
 	// Create container
-	p.Container = newContainer(widget.DirectionVertical)
+	p.Container = widget.NewContainer(widget.ContainerOpts.Layout(
+		widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+			widget.RowLayoutOpts.Padding(widget.Insets{Left: 5, Right: 5}),
+		),
+	))
 
 	// Panel title
 	titleLabel := newLabel(title, colornames.Yellow)
