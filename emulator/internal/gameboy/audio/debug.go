@@ -1,7 +1,5 @@
 package audio
 
-import "strconv"
-
 func (apu *APU) DebugRead(addr uint16) uint8 {
 	if nr10Addr <= addr && addr <= nr14Addr {
 		return apu.channel1.ReadRegister(addr)
@@ -22,7 +20,7 @@ func (apu *APU) DebugRead(addr uint16) uint8 {
 		case nr52Addr:
 			return apu.readNR52()
 		default:
-			panic("APU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
+			return 0xFF
 		}
 	}
 }
