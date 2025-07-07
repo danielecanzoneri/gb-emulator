@@ -34,7 +34,7 @@ func New() (*UI, error) {
 	ui.gameBoy = gb
 
 	// Debugger
-	ui.debugger = debugger.New()
+	ui.debugger = debugger.New(gb)
 
 	// Create audio player
 	player, err := newAudioPlayer(ui)

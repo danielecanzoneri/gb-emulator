@@ -98,23 +98,23 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 	d.refresh()
 }
 
-func newDisassembler() *disassembler {
-	d := &disassembler{
+func (d *Debugger) newDisassembler() *disassembler {
+	dis := &disassembler{
 		entries:      make([]*disassemblerEntry, 0x10000),
 		totalEntries: 0x10000,
 		length:       24,
 		breakpoints:  make(map[uint16]struct{}),
 	}
-	d.rowsWidget = make([]widget.PreferredSizeLocateableWidget, d.length)
+	dis.rowsWidget = make([]widget.PreferredSizeLocateableWidget, dis.length)
 
 	// Initialize the disassembler with dummy data
 	for i := range 0x10000 {
-		d.entries[i] = &disassemblerEntry{
+		dis.entries[i] = &disassemblerEntry{
 			address: uint16(i),
 			name:    fmt.Sprintf("%04X    NOP    ; No operation", i),
 		}
 	}
-	d.selected = d.entries[0]
+	dis.selected = dis.entries[0]
 
 	entryList := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -124,25 +124,25 @@ func newDisassembler() *disassembler {
 	)
 
 	// Populate the container with buttons
-	for i := 0; i < d.length; i++ {
-		entry := d.createRow(i)
+	for i := 0; i < dis.length; i++ {
+		entry := dis.createRow(i)
 		entryList.AddChild(entry)
-		d.rowsWidget[i] = entry
+		dis.rowsWidget[i] = entry
 	}
 
 	// Slider
-	d.slider = widget.NewSlider(
+	dis.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
 			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
 		}, buttonImage),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),
-		widget.SliderOpts.MinMax(0, d.totalEntries-d.length),
+		widget.SliderOpts.MinMax(0, dis.totalEntries-dis.length),
 		widget.SliderOpts.PageSizeFunc(func() int {
-			return d.length / 2
+			return dis.length / 2
 		}),
 		widget.SliderOpts.ChangedHandler(func(args *widget.SliderChangedEventArgs) {
-			d.scrollTo(args.Slider.Current)
+			dis.scrollTo(args.Slider.Current)
 		}),
 		widget.SliderOpts.WidgetOpts(
 			// Stretch to container height
@@ -164,14 +164,31 @@ func newDisassembler() *disassembler {
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
 			p := -int(a.Y)
-			d.scrollTo(d.first + p)
+			dis.scrollTo(dis.first + p)
 		}
 	})
 
-	d.Container = newContainer(widget.DirectionHorizontal,
-		scrollContainer, d.slider,
+	// Step, continue buttons
+	controlButtons := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewGridLayout(
+			widget.GridLayoutOpts.Columns(3),
+			widget.GridLayoutOpts.Stretch([]bool{true, true}, nil),
+			widget.GridLayoutOpts.Spacing(10, 0)),
+		),
 	)
-	return d
+	controlButtons.AddChild(
+		dis.createControlButton("Step", d.Step),
+		dis.createControlButton("Continue", d.Continue),
+		dis.createControlButton("Stop", d.Stop),
+	)
+
+	dis.Container = newContainer(widget.DirectionVertical,
+		newContainer(widget.DirectionHorizontal,
+			scrollContainer, dis.slider,
+		),
+		controlButtons,
+	)
+	return dis
 }
 
 func (d *disassembler) ToggleBreakpoint(addr uint16) {
@@ -185,6 +202,20 @@ func (d *disassembler) ToggleBreakpoint(addr uint16) {
 func (d *disassembler) IsBreakpoint(addr uint16) bool {
 	_, ok := d.breakpoints[addr]
 	return ok
+}
+
+func (d *disassembler) createControlButton(name string, f func()) *widget.Button {
+	return widget.NewButton(
+		widget.ButtonOpts.Image(buttonImage),                // Background
+		widget.ButtonOpts.Text(name, font, buttonTextColor), // Font and text
+		// widget.ButtonOpts.TextPadding(buttonTextPadding),
+		// widget.ButtonOpts.TextPosition(0, 0),
+
+		// Click handler
+		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
+			f()
+		}),
+	)
 }
 
 func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {

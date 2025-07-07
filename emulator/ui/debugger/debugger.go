@@ -21,16 +21,19 @@ type Debugger struct {
 	registersViewer *registersViewer
 
 	// State
-	Active   bool
-	Continue bool // True when debugger is active and we are stepping until breakpoint
+	gameBoy   *gameboy.GameBoy
+	Active    bool
+	Continued bool // True when debugger is active and we are stepping until breakpoint
 }
 
-func New() *Debugger {
+func New(gb *gameboy.GameBoy) *Debugger {
 	// Misc
 	font = loadFont(16)
 
-	d := new(Debugger)
-	d.disassembler = newDisassembler()
+	d := &Debugger{
+		gameBoy: gb,
+	}
+	d.disassembler = d.newDisassembler()
 	d.screen = newScreen()
 	d.memoryViewer = newMemoryViewer()
 	d.registersViewer = newRegisterViewer()
@@ -57,10 +60,10 @@ func New() *Debugger {
 }
 
 // Sync state between game boy and debugger
-func (d *Debugger) Sync(gb *gameboy.GameBoy) {
-	d.disassembler.Sync(gb)
-	d.memoryViewer.Sync(gb)
-	d.registersViewer.Sync(gb)
+func (d *Debugger) Sync() {
+	d.disassembler.Sync(d.gameBoy)
+	d.memoryViewer.Sync(d.gameBoy)
+	d.registersViewer.Sync(d.gameBoy)
 }
 
 func (d *Debugger) Update() error {

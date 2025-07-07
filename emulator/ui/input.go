@@ -8,10 +8,6 @@ import (
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		ui.debugger.Toggle()
-		if ui.debugger.Active {
-			// Sync debugger state
-			ui.debugger.Sync(ui.gameBoy)
-		}
 
 		// Resize window
 		newWidth, newHeight := ui.Layout(0, 0)
