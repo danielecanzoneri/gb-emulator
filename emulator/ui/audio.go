@@ -75,7 +75,7 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			if ui.debugger.Active { // && ui.debugger.Continue
 				// Check breakpoint
 				pc := ui.gameBoy.CPU.ReadPC()
-				if _, ok := ui.debugger.Breakpoints[pc]; ok {
+				if ui.debugger.CheckBreakpoint(pc) {
 					// Stop
 					ui.debugger.Continue = false
 				}

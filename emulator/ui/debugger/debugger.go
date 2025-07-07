@@ -2,12 +2,11 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
-	"image/color"
-
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
+	"image/color"
 )
 
 var backgroundColor = color.NRGBA{R: 0x13, G: 0x1A, B: 0x22, A: 0xFF}
@@ -22,9 +21,8 @@ type Debugger struct {
 	registersViewer *registersViewer
 
 	// State
-	Active      bool
-	Continue    bool // True when debugger is active and we are stepping until breakpoint
-	Breakpoints map[uint16]struct{}
+	Active   bool
+	Continue bool // True when debugger is active and we are stepping until breakpoint
 }
 
 func New() *Debugger {
@@ -56,11 +54,6 @@ func New() *Debugger {
 		),
 	)
 	return d
-}
-
-func (d *Debugger) Toggle() {
-	d.Active = !d.Active
-	d.Continue = false // In case toggling while continuing
 }
 
 // Sync state between game boy and debugger

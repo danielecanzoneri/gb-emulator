@@ -6,7 +6,6 @@ import (
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"image/color"
-	"log"
 )
 
 var (
@@ -30,10 +29,9 @@ var (
 
 // disassemblyEntry represents a single line in the disassembler
 type disassemblerEntry struct {
-	address      uint16
-	name         string
-	bytes        []uint8
-	isBreakpoint bool
+	address uint16
+	name    string
+	bytes   []uint8
 }
 
 type disassembler struct {
@@ -51,6 +49,9 @@ type disassembler struct {
 	// Entries to show
 	first  int
 	length int
+
+	// Map with all breakpoints
+	breakpoints map[uint16]struct{}
 }
 
 // Sync scans through memory and marks which addresses contain
@@ -102,6 +103,7 @@ func newDisassembler() *disassembler {
 		entries:      make([]*disassemblerEntry, 0x10000),
 		totalEntries: 0x10000,
 		length:       24,
+		breakpoints:  make(map[uint16]struct{}),
 	}
 	d.rowsWidget = make([]widget.PreferredSizeLocateableWidget, d.length)
 
@@ -172,6 +174,19 @@ func newDisassembler() *disassembler {
 	return d
 }
 
+func (d *disassembler) ToggleBreakpoint(addr uint16) {
+	if d.IsBreakpoint(addr) {
+		delete(d.breakpoints, addr)
+	} else {
+		d.breakpoints[addr] = struct{}{}
+	}
+}
+
+func (d *disassembler) IsBreakpoint(addr uint16) bool {
+	_, ok := d.breakpoints[addr]
+	return ok
+}
+
 func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {
 	button := widget.NewButton(
 		widget.ButtonOpts.Image(buttonImage),              // Background
@@ -182,10 +197,8 @@ func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget
 		// Click handler
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			entry := d.entries[d.first+rowId]
-			entry.isBreakpoint = !entry.isBreakpoint
-			refreshEntry(args.Button, entry)
-
-			log.Printf("Pressed %04X\n", entry.address)
+			d.ToggleBreakpoint(entry.address)
+			d.refreshEntry(rowId)
 		}),
 	)
 
@@ -196,7 +209,10 @@ func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget
 }
 
 // refreshEntry changes button rendering based on entry state
-func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
+func (d *disassembler) refreshEntry(entryId int) {
+	entry := d.entries[d.first+entryId]
+	button := d.rowsWidget[entryId].(*widget.Button)
+
 	// Update label
 	bytesStr := ""
 	for _, b := range entry.bytes {
@@ -210,7 +226,7 @@ func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
 	button.Text().Label = fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name)
 
 	// Update color
-	if entry.isBreakpoint {
+	if d.IsBreakpoint(entry.address) {
 		button.Image = buttonImageBreakpoint
 	} else {
 		button.Image = buttonImage
@@ -220,9 +236,8 @@ func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
 // refresh disassembler rows
 func (d *disassembler) refresh() {
 	// Update all rows
-	for i, r := range d.rowsWidget {
-		button := r.(*widget.Button)
-		refreshEntry(button, d.entries[d.first+i])
+	for i := range d.rowsWidget {
+		d.refreshEntry(i)
 	}
 }
 
