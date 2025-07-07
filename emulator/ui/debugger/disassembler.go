@@ -150,8 +150,24 @@ func newDisassembler() *disassembler {
 		),
 	)
 
+	// Allow scrolling with mouse wheel
+	scrollContainer := widget.NewScrollContainer(
+		widget.ScrollContainerOpts.Content(entryList),
+		// Image is required (set to transparent)
+		widget.ScrollContainerOpts.Image(&widget.ScrollContainerImage{
+			Idle: image.NewNineSliceColor(color.RGBA{}),
+			Mask: image.NewNineSliceColor(color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
+		}),
+	)
+	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
+		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
+			p := -int(a.Y)
+			d.scrollTo(d.first + p)
+		}
+	})
+
 	d.Container = newContainer(widget.DirectionHorizontal,
-		entryList, d.slider,
+		scrollContainer, d.slider,
 	)
 	return d
 }
@@ -215,5 +231,6 @@ func (d *disassembler) scrollTo(newOffset int) {
 	d.first = max(d.first, 0)                       // Reset to 0 if too low
 	d.first = min(d.first, d.totalEntries-d.length) // Reset to maximum if too high
 
+	d.slider.Current = d.first
 	d.refresh()
 }

@@ -36,6 +36,9 @@ func New() *Debugger {
 		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
 		widget.ContainerOpts.Layout(widget.NewRowLayout()),
 	)
+	d.ui = &ebitenui.UI{
+		Container: root,
+	}
 
 	// Add widgets to the root container
 	root.AddChild(
@@ -47,10 +50,6 @@ func New() *Debugger {
 			d.memoryViewer,
 		),
 	)
-
-	d.ui = &ebitenui.UI{
-		Container: root,
-	}
 	return d
 }
 

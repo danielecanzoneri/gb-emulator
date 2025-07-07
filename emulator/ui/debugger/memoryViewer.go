@@ -18,6 +18,8 @@ type memoryRow struct {
 type memoryViewer struct {
 	*widget.Container
 
+	slider *widget.Slider
+
 	entries    []*memoryRow
 	rowsWidget []widget.PreferredSizeLocateableWidget
 
@@ -54,7 +56,7 @@ func newMemoryViewer() *memoryViewer {
 	}
 
 	// Slider
-	slider := widget.NewSlider(
+	mv.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
 			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
 		}, buttonImage),
@@ -73,8 +75,24 @@ func newMemoryViewer() *memoryViewer {
 		),
 	)
 
+	// Allow scrolling with mouse wheel
+	scrollContainer := widget.NewScrollContainer(
+		widget.ScrollContainerOpts.Content(entryList),
+		// Image is required (set to transparent)
+		widget.ScrollContainerOpts.Image(&widget.ScrollContainerImage{
+			Idle: image.NewNineSliceColor(color.RGBA{}),
+			Mask: image.NewNineSliceColor(color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
+		}),
+	)
+	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
+		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
+			p := -int(a.Y)
+			mv.scrollTo(mv.first + p)
+		}
+	})
+
 	mv.Container = newContainer(widget.DirectionHorizontal,
-		entryList, slider,
+		scrollContainer, mv.slider,
 	)
 
 	return mv
@@ -95,7 +113,6 @@ func (mv *memoryViewer) createRow() widget.PreferredSizeLocateableWidget {
 	dummyText := "0000  00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00"
 	label := widget.NewText(
 		widget.TextOpts.Text(dummyText, font, colornames.White), // Font and text
-		widget.TextOpts.Insets(buttonTextPadding),
 	)
 	return label
 }
@@ -120,5 +137,6 @@ func (mv *memoryViewer) scrollTo(newOffset int) {
 	mv.first = max(mv.first, 0)                         // Reset to 0 if too low
 	mv.first = min(mv.first, len(mv.entries)-mv.length) // Reset to maximum if too high
 
+	mv.slider.Current = mv.first
 	mv.refresh()
 }
