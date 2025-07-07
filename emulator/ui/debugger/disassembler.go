@@ -170,10 +170,8 @@ func (d *Debugger) newDisassembler() *disassembler {
 
 	// Step, continue buttons
 	controlButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewGridLayout(
-			widget.GridLayoutOpts.Columns(3),
-			widget.GridLayoutOpts.Stretch([]bool{true, true}, nil),
-			widget.GridLayoutOpts.Spacing(10, 0)),
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Spacing(10)),
 		),
 	)
 	controlButtons.AddChild(
