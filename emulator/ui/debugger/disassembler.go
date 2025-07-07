@@ -7,7 +7,6 @@ import (
 	"github.com/ebitenui/ebitenui/widget"
 	"image/color"
 	"log"
-	"strings"
 )
 
 var (
@@ -40,8 +39,11 @@ type disassemblerEntry struct {
 type disassembler struct {
 	*widget.Container
 
+	slider *widget.Slider
+
 	entries      []*disassemblerEntry
-	totalEntries int
+	totalEntries int // Number of actual entries
+	rowsWidget   []widget.PreferredSizeLocateableWidget
 
 	// Current entry highlighted (to unselect when stepping)
 	selected *disassemblerEntry
@@ -83,17 +85,25 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 		addr += length
 	}
 
+	// Update number of entries
 	d.totalEntries = counter
-	d.scrollTo(scrollTo - d.length/2) // Selected instruction always at center
+	d.slider.Max = counter - d.length
+
+	// Scroll to correct offset
+	scrollTo -= d.length / 2 // Selected instruction always at center
+	d.scrollTo(scrollTo)
+	d.slider.Current = scrollTo
 
 	d.refresh()
 }
 
 func newDisassembler() *disassembler {
 	d := &disassembler{
-		entries: make([]*disassemblerEntry, 0x10000),
-		length:  24,
+		entries:      make([]*disassemblerEntry, 0x10000),
+		totalEntries: 0x10000,
+		length:       24,
 	}
+	d.rowsWidget = make([]widget.PreferredSizeLocateableWidget, d.length)
 
 	// Initialize the disassembler with dummy data
 	for i := range 0x10000 {
@@ -104,7 +114,7 @@ func newDisassembler() *disassembler {
 	}
 	d.selected = d.entries[0]
 
-	d.Container = widget.NewContainer(
+	entryList := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(1), // Add a small margin between entries
@@ -114,62 +124,35 @@ func newDisassembler() *disassembler {
 	// Populate the container with buttons
 	for i := 0; i < d.length; i++ {
 		entry := d.createRow(i)
-		d.AddChild(entry)
+		entryList.AddChild(entry)
+		d.rowsWidget[i] = entry
 	}
 
-	// Add a row containing buttons for fast scrolling
-	navigateButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Spacing(5),
-		)),
-		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.LayoutData(widget.AnchorLayoutData{
-				HorizontalPosition: widget.AnchorLayoutPositionCenter,
-			}),
+	// Slider
+	d.slider = widget.NewSlider(
+		widget.SliderOpts.Images(&widget.SliderTrackImage{
+			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
+		}, buttonImage),
+		widget.SliderOpts.MinHandleSize(15), // Width of handle
+		widget.SliderOpts.Direction(widget.DirectionVertical),
+		widget.SliderOpts.MinMax(0, d.totalEntries-d.length),
+		widget.SliderOpts.PageSizeFunc(func() int {
+			return d.length / 2
+		}),
+		widget.SliderOpts.ChangedHandler(func(args *widget.SliderChangedEventArgs) {
+			d.scrollTo(args.Slider.Current)
+		}),
+		widget.SliderOpts.WidgetOpts(
+			// Stretch to container height
+			widget.WidgetOpts.LayoutData(widget.RowLayoutData{Stretch: true}),
+			// Set slider height to non-zero value for correct layout computation
+			widget.WidgetOpts.MinSize(0, 1),
 		),
 	)
-	for i := 1; i <= 3; i++ {
-		txt := strings.Repeat("↓", i)
-		offset := 1 << (5 * (i - 1)) // 1: 1, 2: 32, 3: 1024
-		button := widget.NewButton(
-			widget.ButtonOpts.Image(buttonImage),               // Background
-			widget.ButtonOpts.Text(txt, font, buttonTextColor), // Font and text
-			widget.ButtonOpts.TextPadding(buttonTextPadding),
 
-			// Click handler
-			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				d.scrollTo(d.first + offset)
-			}),
-		)
-		navigateButtons.AddChild(button)
-	}
-	navigateButtons.AddChild(widget.NewContainer(widget.ContainerOpts.WidgetOpts(widget.WidgetOpts.MinSize(10, 0))))
-	for i := 1; i <= 3; i++ {
-		txt := strings.Repeat("↑", i)
-		offset := 1 << (5 * (i - 1)) // 1: 1, 2: 32, 3: 1024
-		button := widget.NewButton(
-			widget.ButtonOpts.Image(buttonImage),               // Background
-			widget.ButtonOpts.Text(txt, font, buttonTextColor), // Font and text
-			widget.ButtonOpts.TextPadding(buttonTextPadding),
-
-			// Click handler
-			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				d.scrollTo(d.first - offset)
-			}),
-		)
-		navigateButtons.AddChild(button)
-	}
-
-	containerWidth, _ := d.PreferredSize()
-	centerButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
-		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.MinSize(containerWidth, 0),
-		),
+	d.Container = newContainer(widget.DirectionHorizontal,
+		entryList, d.slider,
 	)
-	centerButtons.AddChild(navigateButtons)
-	d.AddChild(centerButtons)
-
 	return d
 }
 
@@ -221,8 +204,7 @@ func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
 // refresh disassembler rows
 func (d *disassembler) refresh() {
 	// Update all rows
-	rows := d.Children()[:d.length]
-	for i, r := range rows {
+	for i, r := range d.rowsWidget {
 		button := r.(*widget.Button)
 		refreshEntry(button, d.entries[d.first+i])
 	}

@@ -3,9 +3,10 @@ package debugger
 import (
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
+	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"golang.org/x/image/colornames"
-	"strings"
+	"image/color"
 )
 
 // disassemblyEntry represents a single line in the disassembler
@@ -17,7 +18,8 @@ type memoryRow struct {
 type memoryViewer struct {
 	*widget.Container
 
-	entries []*memoryRow
+	entries    []*memoryRow
+	rowsWidget []widget.PreferredSizeLocateableWidget
 
 	// Entries to show
 	first  int
@@ -29,6 +31,7 @@ func newMemoryViewer() *memoryViewer {
 		entries: make([]*memoryRow, 0x10000/16),
 		length:  16,
 	}
+	mv.rowsWidget = make([]widget.PreferredSizeLocateableWidget, mv.length)
 
 	// Initialize the rows
 	for i := range mv.entries {
@@ -37,71 +40,42 @@ func newMemoryViewer() *memoryViewer {
 		}
 	}
 
-	mv.Container = widget.NewContainer(
+	entryList := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(1), // Add a small margin between entries
 		)),
 	)
-
 	// Populate the container with the rows
 	for i := 0; i < mv.length; i++ {
 		entry := mv.createRow()
-		mv.AddChild(entry)
+		entryList.AddChild(entry)
+		mv.rowsWidget[i] = entry
 	}
 
-	// Add a row containing buttons for fast scrolling
-	navigateButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Spacing(5),
-		)),
-		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.LayoutData(widget.AnchorLayoutData{
-				HorizontalPosition: widget.AnchorLayoutPositionCenter,
-			}),
+	// Slider
+	slider := widget.NewSlider(
+		widget.SliderOpts.Images(&widget.SliderTrackImage{
+			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
+		}, buttonImage),
+		widget.SliderOpts.MinHandleSize(15), // Width of handle
+		widget.SliderOpts.Direction(widget.DirectionVertical),
+		widget.SliderOpts.MinMax(0, len(mv.entries)-mv.length),
+		widget.SliderOpts.PageSizeFunc(func() int { return mv.length / 2 }),
+		widget.SliderOpts.ChangedHandler(func(args *widget.SliderChangedEventArgs) {
+			mv.scrollTo(args.Slider.Current)
+		}),
+		widget.SliderOpts.WidgetOpts(
+			// Stretch to container height
+			widget.WidgetOpts.LayoutData(widget.RowLayoutData{Stretch: true}),
+			// Set slider height to non-zero value for correct layout computation
+			widget.WidgetOpts.MinSize(0, 1),
 		),
 	)
-	for i := 1; i <= 3; i++ {
-		txt := strings.Repeat("↓", i)
-		offset := 1 << (4 * (i - 1)) // 1: 1, 2: 16, 3: 256
-		button := widget.NewButton(
-			widget.ButtonOpts.Image(buttonImage),               // Background
-			widget.ButtonOpts.Text(txt, font, buttonTextColor), // Font and text
-			widget.ButtonOpts.TextPadding(buttonTextPadding),
 
-			// Click handler
-			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				mv.scrollTo(mv.first + offset)
-			}),
-		)
-		navigateButtons.AddChild(button)
-	}
-	navigateButtons.AddChild(widget.NewContainer(widget.ContainerOpts.WidgetOpts(widget.WidgetOpts.MinSize(10, 0))))
-	for i := 1; i <= 3; i++ {
-		txt := strings.Repeat("↑", i)
-		offset := 1 << (4 * (i - 1)) // 1: 1, 2: 16, 3: 256
-		button := widget.NewButton(
-			widget.ButtonOpts.Image(buttonImage),               // Background
-			widget.ButtonOpts.Text(txt, font, buttonTextColor), // Font and text
-			widget.ButtonOpts.TextPadding(buttonTextPadding),
-
-			// Click handler
-			widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-				mv.scrollTo(mv.first - offset)
-			}),
-		)
-		navigateButtons.AddChild(button)
-	}
-
-	containerWidth, _ := mv.PreferredSize()
-	centerButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
-		widget.ContainerOpts.WidgetOpts(
-			widget.WidgetOpts.MinSize(containerWidth, 0),
-		),
+	mv.Container = newContainer(widget.DirectionHorizontal,
+		entryList, slider,
 	)
-	centerButtons.AddChild(navigateButtons)
-	mv.AddChild(centerButtons)
 
 	return mv
 }
@@ -128,8 +102,7 @@ func (mv *memoryViewer) createRow() widget.PreferredSizeLocateableWidget {
 
 func (mv *memoryViewer) refresh() {
 	// Update all rows
-	rows := mv.Children()[:mv.length]
-	for i, r := range rows {
+	for i, r := range mv.rowsWidget {
 		label := r.(*widget.Text)
 		entry := mv.entries[mv.first+i]
 		label.Label = fmt.Sprintf("%04X  %02X %02X %02X %02X %02X %02X %02X %02X | %02X %02X %02X %02X %02X %02X %02X %02X",
