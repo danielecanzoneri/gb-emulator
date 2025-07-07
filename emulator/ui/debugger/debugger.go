@@ -16,9 +16,10 @@ type Debugger struct {
 	ui *ebitenui.UI
 
 	// Widgets
-	disassembler *disassembler
-	screen       *screen
-	memoryViewer *memoryViewer
+	disassembler    *disassembler
+	screen          *screen
+	memoryViewer    *memoryViewer
+	registersViewer *registersViewer
 }
 
 func New() *Debugger {
@@ -32,6 +33,8 @@ func New() *Debugger {
 	d.screen = scr
 	mv := newMemoryViewer()
 	d.memoryViewer = mv
+	rv := newRegisterViewer()
+	d.registersViewer = rv
 
 	root := widget.NewContainer(
 		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
@@ -42,6 +45,7 @@ func New() *Debugger {
 	root.AddChild(dis.widget)
 	root.AddChild(scr.widget)
 	root.AddChild(mv.widget)
+	root.AddChild(rv)
 
 	d.ui = &ebitenui.UI{
 		Container: root,
@@ -53,6 +57,7 @@ func New() *Debugger {
 func (d *Debugger) Sync(gb *gameboy.GameBoy) {
 	d.disassembler.Sync(gb)
 	d.memoryViewer.Sync(gb)
+	d.registersViewer.Sync(gb)
 }
 
 func (d *Debugger) Update() error {
