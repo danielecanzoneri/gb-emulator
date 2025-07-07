@@ -183,6 +183,7 @@ func (d *Debugger) newDisassembler() *disassembler {
 		dis.createControlButton("Step", d.Step),
 		dis.createControlButton("Continue", d.Continue),
 		dis.createControlButton("Stop", d.Stop),
+		dis.createControlButton("Reset", d.Reset),
 	)
 
 	dis.Container = newContainer(widget.DirectionVertical,

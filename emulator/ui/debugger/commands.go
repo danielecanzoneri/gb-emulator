@@ -12,18 +12,25 @@ func (d *Debugger) CheckBreakpoint(addr uint16) bool {
 }
 
 func (d *Debugger) Step() {
+	defer d.Sync()
+
 	d.gameBoy.CPU.ExecuteInstruction()
-	d.Sync() // Show updated data
 }
 
 func (d *Debugger) Continue() {
 	d.Continued = true
-	// Disable control buttons
+	// TODO Disable control buttons
 }
 
 func (d *Debugger) Stop() {
-	d.Continued = false
-	// Enable control buttons
+	defer d.Sync()
 
-	d.Sync() // Show updated data
+	d.Continued = false
+	// TODO Enable control buttons
+}
+
+func (d *Debugger) Reset() {
+	defer d.Sync()
+
+	d.gameBoy.Reset()
 }
