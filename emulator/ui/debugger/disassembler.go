@@ -19,6 +19,11 @@ var (
 		Hover:   image.NewNineSliceColor(color.NRGBA{R: 255, G: 130, B: 150, A: 255}),
 		Pressed: image.NewNineSliceColor(color.NRGBA{R: 255, G: 90, B: 120, A: 255}),
 	}
+	buttonImageCurrent = &widget.ButtonImage{
+		Idle:    image.NewNineSliceColor(color.NRGBA{R: 170, G: 170, B: 255, A: 255}),
+		Hover:   image.NewNineSliceColor(color.NRGBA{R: 130, G: 130, B: 255, A: 255}),
+		Pressed: image.NewNineSliceColor(color.NRGBA{R: 90, G: 90, B: 255, A: 255}),
+	}
 	buttonTextColor = &widget.ButtonTextColor{
 		Idle: color.Black,
 	}
@@ -255,10 +260,14 @@ func (d *disassembler) refreshEntry(entryId int) {
 	button.Text().Label = fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name)
 
 	// Update color
-	if d.IsBreakpoint(entry.address) {
-		button.Image = buttonImageBreakpoint
+	if d.selected == entry {
+		button.Image = buttonImageCurrent
 	} else {
-		button.Image = buttonImage
+		if d.IsBreakpoint(entry.address) {
+			button.Image = buttonImageBreakpoint
+		} else {
+			button.Image = buttonImage
+		}
 	}
 }
 
