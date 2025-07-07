@@ -38,7 +38,8 @@ type disassemblerEntry struct {
 }
 
 type disassembler struct {
-	widget       *widget.Container
+	*widget.Container
+
 	entries      []*disassemblerEntry
 	totalEntries int
 
@@ -103,18 +104,17 @@ func newDisassembler() *disassembler {
 	}
 	d.selected = d.entries[0]
 
-	container := widget.NewContainer(
+	d.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(1), // Add a small margin between entries
 		)),
 	)
-	d.widget = container
 
 	// Populate the container with buttons
 	for i := 0; i < d.length; i++ {
 		entry := d.createRow(i)
-		container.AddChild(entry)
+		d.AddChild(entry)
 	}
 
 	// Add a row containing buttons for fast scrolling
@@ -160,7 +160,7 @@ func newDisassembler() *disassembler {
 		navigateButtons.AddChild(button)
 	}
 
-	containerWidth, _ := container.PreferredSize()
+	containerWidth, _ := d.PreferredSize()
 	centerButtons := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
 		widget.ContainerOpts.WidgetOpts(
@@ -168,7 +168,7 @@ func newDisassembler() *disassembler {
 		),
 	)
 	centerButtons.AddChild(navigateButtons)
-	container.AddChild(centerButtons)
+	d.AddChild(centerButtons)
 
 	return d
 }
@@ -221,7 +221,7 @@ func refreshEntry(button *widget.Button, entry *disassemblerEntry) {
 // refresh disassembler rows
 func (d *disassembler) refresh() {
 	// Update all rows
-	rows := d.widget.Children()[:d.length]
+	rows := d.Children()[:d.length]
 	for i, r := range rows {
 		button := r.(*widget.Button)
 		refreshEntry(button, d.entries[d.first+i])

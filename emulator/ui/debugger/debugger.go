@@ -27,14 +27,10 @@ func New() *Debugger {
 	font = loadFont(16)
 
 	d := new(Debugger)
-	dis := newDisassembler()
-	d.disassembler = dis
-	scr := newScreen()
-	d.screen = scr
-	mv := newMemoryViewer()
-	d.memoryViewer = mv
-	rv := newRegisterViewer()
-	d.registersViewer = rv
+	d.disassembler = newDisassembler()
+	d.screen = newScreen()
+	d.memoryViewer = newMemoryViewer()
+	d.registersViewer = newRegisterViewer()
 
 	root := widget.NewContainer(
 		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
@@ -42,10 +38,10 @@ func New() *Debugger {
 	)
 
 	// Add widgets to the root container
-	root.AddChild(dis.widget)
-	root.AddChild(scr.widget)
-	root.AddChild(mv.widget)
-	root.AddChild(rv)
+	root.AddChild(d.disassembler)
+	root.AddChild(d.screen)
+	root.AddChild(d.memoryViewer)
+	root.AddChild(d.registersViewer)
 
 	d.ui = &ebitenui.UI{
 		Container: root,

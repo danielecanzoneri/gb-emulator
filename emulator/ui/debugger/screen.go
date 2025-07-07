@@ -9,22 +9,20 @@ import (
 const screenScale = 2
 
 type screen struct {
-	widget *widget.Graphic
+	*widget.Graphic
 }
 
 func (s *screen) Sync(image *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(screenScale, screenScale)
-	s.widget.Image.DrawImage(image, op)
+	s.Image.DrawImage(image, op)
 }
 
 func newScreen() *screen {
 	image := ebiten.NewImage(ppu.FrameWidth*screenScale, ppu.FrameHeight*screenScale)
-	w := widget.NewGraphic(
+	s := new(screen)
+	s.Graphic = widget.NewGraphic(
 		widget.GraphicOpts.Image(image),
 	)
-
-	return &screen{
-		widget: w,
-	}
+	return s
 }

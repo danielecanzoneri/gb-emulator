@@ -14,7 +14,7 @@ type memoryRow struct {
 }
 
 type memoryViewer struct {
-	widget *widget.Container
+	*widget.Container
 
 	entries []*memoryRow
 
@@ -36,18 +36,17 @@ func newMemoryViewer() *memoryViewer {
 		}
 	}
 
-	container := widget.NewContainer(
+	mv.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Spacing(1), // Add a small margin between entries
 		)),
 	)
-	mv.widget = container
 
 	// Populate the container with the rows
 	for i := 0; i < mv.length; i++ {
 		entry := mv.createRow()
-		container.AddChild(entry)
+		mv.AddChild(entry)
 	}
 
 	// Add a row containing buttons for fast scrolling
@@ -93,7 +92,7 @@ func newMemoryViewer() *memoryViewer {
 		navigateButtons.AddChild(button)
 	}
 
-	containerWidth, _ := container.PreferredSize()
+	containerWidth, _ := mv.PreferredSize()
 	centerButtons := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
 		widget.ContainerOpts.WidgetOpts(
@@ -101,7 +100,7 @@ func newMemoryViewer() *memoryViewer {
 		),
 	)
 	centerButtons.AddChild(navigateButtons)
-	container.AddChild(centerButtons)
+	mv.AddChild(centerButtons)
 
 	return mv
 }
@@ -133,7 +132,7 @@ func (mv *memoryViewer) createRow() widget.PreferredSizeLocateableWidget {
 
 func (mv *memoryViewer) refresh() {
 	// Update all rows
-	rows := mv.widget.Children()[:mv.length]
+	rows := mv.Children()[:mv.length]
 	for i, r := range rows {
 		label := r.(*widget.Container).Children()[0].(*widget.Text)
 		entry := mv.entries[mv.first+i]
