@@ -15,8 +15,10 @@ var backgroundColor = color.NRGBA{R: 0x13, G: 0x1A, B: 0x22, A: 0xFF}
 type Debugger struct {
 	ui *ebitenui.UI
 
+	// Widgets
 	disassembler *disassembler
 	screen       *screen
+	memoryViewer *memoryViewer
 }
 
 func New() *Debugger {
@@ -28,6 +30,8 @@ func New() *Debugger {
 	d.disassembler = dis
 	scr := newScreen()
 	d.screen = scr
+	mv := newMemoryViewer()
+	d.memoryViewer = mv
 
 	root := widget.NewContainer(
 		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
@@ -37,6 +41,7 @@ func New() *Debugger {
 	// Add widgets to the root container
 	root.AddChild(dis.widget)
 	root.AddChild(scr.widget)
+	root.AddChild(mv.widget)
 
 	d.ui = &ebitenui.UI{
 		Container: root,
@@ -47,6 +52,7 @@ func New() *Debugger {
 // Sync state between game boy and debugger
 func (d *Debugger) Sync(gb *gameboy.GameBoy) {
 	d.disassembler.Sync(gb)
+	d.memoryViewer.Sync(gb)
 }
 
 func (d *Debugger) Update() error {
