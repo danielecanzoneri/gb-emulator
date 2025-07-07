@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/emulator/internal/gameboy"
 	"github.com/ebitenui/ebitenui/widget"
+	"golang.org/x/image/colornames"
 	"strings"
 )
 
@@ -119,22 +120,17 @@ func (mv *memoryViewer) Sync(gb *gameboy.GameBoy) {
 func (mv *memoryViewer) createRow() widget.PreferredSizeLocateableWidget {
 	dummyText := "0000  00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00"
 	label := widget.NewText(
-		widget.TextOpts.Text(dummyText, font, buttonTextColor.Idle), // Font and text
+		widget.TextOpts.Text(dummyText, font, colornames.White), // Font and text
 		widget.TextOpts.Insets(buttonTextPadding),
 	)
-	c := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
-		widget.ContainerOpts.BackgroundImage(buttonImage.Idle), // Same as idle button
-	)
-	c.AddChild(label)
-	return c
+	return label
 }
 
 func (mv *memoryViewer) refresh() {
 	// Update all rows
 	rows := mv.Children()[:mv.length]
 	for i, r := range rows {
-		label := r.(*widget.Container).Children()[0].(*widget.Text)
+		label := r.(*widget.Text)
 		entry := mv.entries[mv.first+i]
 		label.Label = fmt.Sprintf("%04X  %02X %02X %02X %02X %02X %02X %02X %02X | %02X %02X %02X %02X %02X %02X %02X %02X",
 			entry.baseAddress,

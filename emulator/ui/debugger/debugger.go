@@ -38,10 +38,15 @@ func New() *Debugger {
 	)
 
 	// Add widgets to the root container
-	root.AddChild(d.disassembler)
-	root.AddChild(d.screen)
-	root.AddChild(d.memoryViewer)
-	root.AddChild(d.registersViewer)
+	root.AddChild(
+		d.disassembler,
+		newContainer(widget.DirectionVertical,
+			newContainer(widget.DirectionHorizontal,
+				d.screen, d.registersViewer,
+			),
+			d.memoryViewer,
+		),
+	)
 
 	d.ui = &ebitenui.UI{
 		Container: root,
