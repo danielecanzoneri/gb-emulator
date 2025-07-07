@@ -7,8 +7,8 @@ import (
 
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		ui.debuggerActive = !ui.debuggerActive
-		if ui.debuggerActive {
+		ui.debugger.Toggle()
+		if ui.debugger.Active {
 			// Sync debugger state
 			ui.debugger.Sync(ui.gameBoy)
 		}

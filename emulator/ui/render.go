@@ -39,7 +39,7 @@ func (ui *UI) Update() error {
 
 	ui.handleInput()
 
-	if ui.debuggerActive {
+	if ui.debugger.Active {
 		ebiten.SetWindowTitle(ui.gameTitle + " (debugging)")
 		return ui.debugger.Update()
 	} else {
@@ -59,7 +59,7 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	if ui.debuggerActive {
+	if ui.debugger.Active {
 		ui.debugger.Draw(screen, frameImage)
 		return
 	}
@@ -77,7 +77,7 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 
 func (ui *UI) Layout(_, _ int) (int, int) {
 	// Adjust the layout based on whether the debugger is visible
-	if ui.debuggerActive {
+	if ui.debugger.Active {
 		return ui.debugger.Layout(0, 0)
 	} else {
 		return Scale * ppu.FrameWidth, Scale * ppu.FrameHeight

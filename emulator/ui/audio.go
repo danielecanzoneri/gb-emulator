@@ -62,8 +62,8 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			bufferPosition += 4
 
 		default:
-			// If paused, return silence
-			if ui.debuggerActive {
+			// If debugger is active and paused, return silence
+			if ui.debugger.Active && !ui.debugger.Continue { // If paused, return silence
 				binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(0))
 				bufferPosition += 4
 				continue
@@ -72,13 +72,14 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			ui.gameBoy.Joypad.DetectKeysPressed()
 			ui.gameBoy.CPU.ExecuteInstruction()
 
-			//if ui.DebugState.IsActive() {
-			//	// Check breakpoint
-			//	pc := ui.gameBoy.CPU.ReadPC()
-			//	if ui.DebugState.IsBreakpoint(pc) {
-			//		ui.DebugState.BreakpointHit()
-			//	}
-			//}
+			if ui.debugger.Active { // && ui.debugger.Continue
+				// Check breakpoint
+				pc := ui.gameBoy.CPU.ReadPC()
+				if _, ok := ui.debugger.Breakpoints[pc]; ok {
+					// Stop
+					ui.debugger.Continue = false
+				}
+			}
 		}
 	}
 	_, _ = AudioFile.Write(buf[:bufferPosition])

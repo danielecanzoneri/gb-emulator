@@ -22,8 +22,7 @@ type UI struct {
 	debugStringTimer uint
 
 	// Debugger
-	debuggerActive bool
-	debugger       *debugger.Debugger
+	debugger *debugger.Debugger
 }
 
 func New() (*UI, error) {

@@ -20,6 +20,11 @@ type Debugger struct {
 	screen          *screen
 	memoryViewer    *memoryViewer
 	registersViewer *registersViewer
+
+	// State
+	Active      bool
+	Continue    bool // True when debugger is active and we are stepping until breakpoint
+	Breakpoints map[uint16]struct{}
 }
 
 func New() *Debugger {
@@ -51,6 +56,11 @@ func New() *Debugger {
 		),
 	)
 	return d
+}
+
+func (d *Debugger) Toggle() {
+	d.Active = !d.Active
+	d.Continue = false // In case toggling while continuing
 }
 
 // Sync state between game boy and debugger
