@@ -59,7 +59,7 @@ func newMemoryViewer() *memoryViewer {
 	// Slider
 	mv.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
-			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
+			Idle: image.NewNineSliceColor(color.NRGBA{R: 255, G: 255, B: 255, A: 32}),
 		}, buttonImage),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),

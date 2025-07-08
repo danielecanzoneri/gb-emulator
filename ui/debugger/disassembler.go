@@ -9,26 +9,15 @@ import (
 )
 
 var (
-	buttonImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(color.NRGBA{R: 170, G: 170, B: 180, A: 255}),
-		Hover:   image.NewNineSliceColor(color.NRGBA{R: 130, G: 130, B: 150, A: 255}),
-		Pressed: image.NewNineSliceColor(color.NRGBA{R: 90, G: 90, B: 120, A: 255}),
+	entryBreakpointImage = &widget.ButtonImage{
+		Idle:    image.NewNineSliceColor(breakpointColor),
+		Hover:   image.NewNineSliceColor(breakpointHoverColor),
+		Pressed: image.NewNineSliceColor(breakpointPressedColor),
 	}
-	buttonImageBreakpoint = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(color.NRGBA{R: 255, G: 170, B: 180, A: 255}),
-		Hover:   image.NewNineSliceColor(color.NRGBA{R: 255, G: 130, B: 150, A: 255}),
-		Pressed: image.NewNineSliceColor(color.NRGBA{R: 255, G: 90, B: 120, A: 255}),
-	}
-	buttonImageCurrent = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(color.NRGBA{R: 170, G: 170, B: 255, A: 255}),
-		Hover:   image.NewNineSliceColor(color.NRGBA{R: 130, G: 130, B: 255, A: 255}),
-		Pressed: image.NewNineSliceColor(color.NRGBA{R: 90, G: 90, B: 255, A: 255}),
-	}
-	buttonTextColor = &widget.ButtonTextColor{
-		Idle: color.Black,
-	}
-	buttonTextPadding = widget.Insets{
-		Left: 2, Right: 2, Top: 2, Bottom: 2,
+	entryCurrentImage = &widget.ButtonImage{
+		Idle:    image.NewNineSliceColor(currInstrColor),
+		Hover:   image.NewNineSliceColor(currInstrHoverColor),
+		Pressed: image.NewNineSliceColor(currInstrPressedColor),
 	}
 )
 
@@ -226,7 +215,6 @@ func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget
 	button := widget.NewButton(
 		widget.ButtonOpts.Image(buttonImage),              // Background
 		widget.ButtonOpts.Text("", font, buttonTextColor), // Font and text
-		widget.ButtonOpts.TextPadding(buttonTextPadding),
 		widget.ButtonOpts.TextPosition(0, 0),
 
 		// Click handler
@@ -262,10 +250,10 @@ func (d *disassembler) refreshEntry(entryId int) {
 
 	// Update color
 	if d.selected == entry {
-		button.Image = buttonImageCurrent
+		button.Image = entryCurrentImage
 	} else {
 		if d.IsBreakpoint(entry.address) {
-			button.Image = buttonImageBreakpoint
+			button.Image = entryBreakpointImage
 		} else {
 			button.Image = buttonImage
 		}

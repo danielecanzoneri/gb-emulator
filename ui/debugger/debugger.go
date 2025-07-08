@@ -1,16 +1,12 @@
 package debugger
 
 import (
-	"image/color"
-
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-var backgroundColor = color.NRGBA{R: 0x13, G: 0x1A, B: 0x22, A: 0xFF}
 
 type Debugger struct {
 	ui *ebitenui.UI
@@ -40,7 +36,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.registersViewer = newRegisterViewer()
 
 	root := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(mainColor)),
 		widget.ContainerOpts.Layout(widget.NewRowLayout()),
 	)
 	d.ui = &ebitenui.UI{

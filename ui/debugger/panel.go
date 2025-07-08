@@ -3,7 +3,6 @@ package debugger
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/widget"
-	"golang.org/x/image/colornames"
 )
 
 type panelEntry struct {
@@ -29,13 +28,13 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	))
 
 	// Panel title
-	titleLabel := newLabel(title, colornames.Yellow)
+	titleLabel := newLabel(title, titleColor)
 	p.AddChild(titleLabel)
 
 	// Two vertical containers: one with labels and one with values
 	labels := newContainer(widget.DirectionVertical)
 	for _, entry := range entries {
-		l := newLabel(entry.name, colornames.White)
+		l := newLabel(entry.name, labelColor)
 		labels.AddChild(l)
 	}
 
@@ -43,7 +42,7 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p.Sync = func(gb *gameboy.GameBoy) {}
 	values := newContainer(widget.DirectionVertical)
 	for _, entry := range entries {
-		l := newLabel("", colornames.White)
+		l := newLabel("", labelColor)
 		values.AddChild(l)
 
 		oldSync := p.Sync
