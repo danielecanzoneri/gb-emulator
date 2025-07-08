@@ -5,6 +5,7 @@ import (
 	"github.com/ebitenui/ebitenui/widget"
 	"golang.org/x/image/colornames"
 	"image/color"
+	"math"
 )
 
 var (
@@ -24,7 +25,12 @@ var (
 	currInstrColor        = color.NRGBA{R: 170, G: 170, B: 255, A: 255}
 	currInstrHoverColor   = color.NRGBA{R: 130, G: 130, B: 255, A: 255}
 	currInstrPressedColor = color.NRGBA{R: 90, G: 90, B: 255, A: 255}
+
+	breakpointCurrColor        = blendColors(breakpointColor, currInstrColor)
+	breakpointCurrHoverColor   = blendColors(breakpointHoverColor, currInstrHoverColor)
+	breakpointCurrPressedColor = blendColors(breakpointPressedColor, currInstrPressedColor)
 )
+
 var (
 	buttonImage = &widget.ButtonImage{
 		Idle:    image.NewNineSliceColor(buttonColor),
@@ -35,3 +41,14 @@ var (
 		Idle: buttonLabelColor,
 	}
 )
+
+func blendColors(a, b color.Color) color.Color {
+	r1, g1, b1, a1 := a.RGBA()
+	r2, g2, b2, a2 := b.RGBA()
+	return color.NRGBA64{
+		R: uint16(math.Sqrt(float64(r1*r1/2 + r2*r2/2))),
+		G: uint16(math.Sqrt(float64(g1*g1/2 + g2*g2/2))),
+		B: uint16(math.Sqrt(float64(b1*b1/2 + b2*b2/2))),
+		A: uint16((a1 + a2) / 2),
+	}
+}

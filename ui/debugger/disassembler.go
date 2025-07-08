@@ -19,6 +19,11 @@ var (
 		Hover:   image.NewNineSliceColor(currInstrHoverColor),
 		Pressed: image.NewNineSliceColor(currInstrPressedColor),
 	}
+	entryBreakpointAndCurrentImage = &widget.ButtonImage{
+		Idle:    image.NewNineSliceColor(breakpointCurrColor),
+		Hover:   image.NewNineSliceColor(breakpointCurrHoverColor),
+		Pressed: image.NewNineSliceColor(breakpointCurrPressedColor),
+	}
 )
 
 // disassemblyEntry represents a single line in the disassembler
@@ -37,8 +42,8 @@ type disassembler struct {
 	totalEntries int // Number of actual entries
 	rowsWidget   []widget.PreferredSizeLocateableWidget
 
-	// Current entry highlighted (to unselect when stepping)
-	selected *disassemblerEntry
+	// Address of entry to highlight (-1 if no entry has to be highlighted)
+	currentInstruction int
 
 	// Entries to show
 	first  int
@@ -52,6 +57,8 @@ type disassembler struct {
 // executable code vs data bytes that are part of multibyte instructions.
 // This is used to properly display the disassembly view.
 func (d *disassembler) Sync(gb *gameboy.GameBoy) {
+	d.currentInstruction = int(gb.CPU.PC)
+
 	counter := 0
 	var scrollTo int
 
@@ -65,9 +72,8 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 			continue
 		}
 
-		if uint16(addr) == gb.CPU.PC {
+		if addr == d.currentInstruction {
 			// Entry to be highlighted
-			d.selected = d.entries[counter]
 			scrollTo = counter
 		}
 
@@ -96,7 +102,7 @@ func (d *Debugger) newDisassembler() *disassembler {
 	dis := &disassembler{
 		entries:      make([]*disassemblerEntry, 0x10000),
 		totalEntries: 0x10000,
-		length:       24,
+		length:       32,
 		breakpoints:  make(map[uint16]struct{}),
 	}
 	dis.rowsWidget = make([]widget.PreferredSizeLocateableWidget, dis.length)
@@ -108,7 +114,6 @@ func (d *Debugger) newDisassembler() *disassembler {
 			name:    fmt.Sprintf("%04X    NOP    ; No operation", i),
 		}
 	}
-	dis.selected = dis.entries[0]
 
 	entryList := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
@@ -249,10 +254,17 @@ func (d *disassembler) refreshEntry(entryId int) {
 	button.Text().Label = fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name)
 
 	// Update color
-	if d.selected == entry {
-		button.Image = entryCurrentImage
+	isCurr := int(entry.address) == d.currentInstruction
+	isBreakpoint := d.IsBreakpoint(entry.address)
+
+	if isCurr {
+		if isBreakpoint {
+			button.Image = entryBreakpointAndCurrentImage
+		} else {
+			button.Image = entryCurrentImage
+		}
 	} else {
-		if d.IsBreakpoint(entry.address) {
+		if isBreakpoint {
 			button.Image = entryBreakpointImage
 		} else {
 			button.Image = buttonImage

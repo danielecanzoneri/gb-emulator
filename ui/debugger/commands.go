@@ -19,7 +19,12 @@ func (d *Debugger) Step() {
 
 func (d *Debugger) Continue() {
 	d.Continued = true
+
+	// Unselect current entry
+	d.disassembler.currentInstruction = -1
+
 	// TODO Disable control buttons
+	d.disassembler.refresh()
 }
 
 func (d *Debugger) Stop() {
