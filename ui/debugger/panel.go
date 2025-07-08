@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 )
 
@@ -20,12 +21,13 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p := new(panel)
 
 	// Create container
-	p.Container = widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(
+	p.Container = widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 			widget.RowLayoutOpts.Padding(widget.Insets{Left: 5, Right: 5}),
-		),
-	))
+		)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(mainColor)),
+	)
 
 	// Panel title
 	titleLabel := newLabel(title, titleColor)

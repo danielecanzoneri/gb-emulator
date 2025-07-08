@@ -59,7 +59,7 @@ func newMemoryViewer() *memoryViewer {
 	// Slider
 	mv.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
-			Idle: image.NewNineSliceColor(color.NRGBA{R: 255, G: 255, B: 255, A: 32}),
+			Idle: image.NewNineSliceColor(sliderTrackColor),
 		}, buttonImage),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),
@@ -95,6 +95,7 @@ func newMemoryViewer() *memoryViewer {
 	mv.Container = newContainer(widget.DirectionHorizontal,
 		scrollContainer, mv.slider,
 	)
+	mv.Container.BackgroundImage = image.NewNineSliceColor(mainColor)
 
 	return mv
 }

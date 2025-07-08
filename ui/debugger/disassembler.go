@@ -2,13 +2,19 @@ package debugger
 
 import (
 	"fmt"
+	"image/color"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"image/color"
 )
 
 var (
+	entryImage = &widget.ButtonImage{
+		Idle:    image.NewNineSliceColor(mainColor),
+		Hover:   image.NewNineSliceColor(mainHoverColor),
+		Pressed: image.NewNineSliceColor(mainPressedColor),
+	}
 	entryBreakpointImage = &widget.ButtonImage{
 		Idle:    image.NewNineSliceColor(breakpointColor),
 		Hover:   image.NewNineSliceColor(breakpointHoverColor),
@@ -132,7 +138,7 @@ func (d *Debugger) newDisassembler() *disassembler {
 	// Slider
 	dis.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
-			Idle: image.NewNineSliceColor(color.NRGBA{255, 255, 255, 32}),
+			Idle: image.NewNineSliceColor(sliderTrackColor),
 		}, buttonImage),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),
@@ -218,7 +224,7 @@ func (d *disassembler) createControlButton(name string, f func()) *widget.Button
 
 func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {
 	button := widget.NewButton(
-		widget.ButtonOpts.Image(buttonImage),              // Background
+		widget.ButtonOpts.Image(entryImage),               // Background
 		widget.ButtonOpts.Text("", font, buttonTextColor), // Font and text
 		widget.ButtonOpts.TextPosition(0, 0),
 
@@ -267,7 +273,7 @@ func (d *disassembler) refreshEntry(entryId int) {
 		if isBreakpoint {
 			button.Image = entryBreakpointImage
 		} else {
-			button.Image = buttonImage
+			button.Image = entryImage
 		}
 	}
 }

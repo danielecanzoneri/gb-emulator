@@ -36,7 +36,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.registersViewer = newRegisterViewer()
 
 	root := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(mainColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
 		widget.ContainerOpts.Layout(widget.NewRowLayout()),
 	)
 	d.ui = &ebitenui.UI{
