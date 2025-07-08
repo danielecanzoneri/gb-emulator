@@ -216,9 +216,6 @@ func (mbc *MBC3) Write(addr uint16, value uint8) {
 				mbc.RAM[RAMAddress] = value
 			}
 		}
-
-	default:
-		log.Printf("[WARN] MBC3 Write address is out of range: %04X\n", addr)
 	}
 }
 
@@ -246,9 +243,6 @@ func (mbc *MBC3) Read(addr uint16) uint8 {
 			RAMAddress := mbc.computeRamAddress(addr)
 			return mbc.RAM[RAMAddress]
 		}
-
-	default:
-		log.Printf("[WARN] MBC3 Read address is out of range: %04X\n", addr)
 	}
 
 	return 0xFF

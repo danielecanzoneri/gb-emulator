@@ -1,7 +1,5 @@
 package cartridge
 
-import "log"
-
 type MBC0 struct {
 	header *Header
 
@@ -34,7 +32,6 @@ func (mbc *MBC0) Read(addr uint16) uint8 {
 		return mbc.ROM[addr]
 
 	default:
-		log.Printf("[WARN] Cartridge Read address is out of range: %04X\n", addr)
 		return 0xFF
 	}
 }
