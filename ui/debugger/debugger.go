@@ -68,6 +68,7 @@ func (d *Debugger) Sync() {
 }
 
 func (d *Debugger) Update() error {
+	d.registersViewer.Sync(d.gameBoy)
 	d.ui.Update()
 	return nil
 }
