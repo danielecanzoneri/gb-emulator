@@ -19,22 +19,24 @@ type registersViewer struct {
 	cpu        *panel
 	interrupts *panel
 
-	lcd   *panel
-	timer *panel
+	lcd         *panel
+	lcdInternal *panel
+	timer       *panel
 }
 
 func newRegisterViewer() *registersViewer {
 	rv := &registersViewer{
-		ch1:        newSoundCh1Panel(),
-		ch2:        newSoundCh2Panel(),
-		ch3:        newSoundCh3Panel(),
-		ch4:        newSoundCh4Panel(),
-		control:    newSoundControlPanel(),
-		waveRam:    newWaveRamPanel(),
-		cpu:        newCpuPanel(),
-		interrupts: newInterruptsPanel(),
-		lcd:        newLcdPanel(),
-		timer:      newTimerPanel(),
+		ch1:         newSoundCh1Panel(),
+		ch2:         newSoundCh2Panel(),
+		ch3:         newSoundCh3Panel(),
+		ch4:         newSoundCh4Panel(),
+		control:     newSoundControlPanel(),
+		waveRam:     newWaveRamPanel(),
+		cpu:         newCpuPanel(),
+		interrupts:  newInterruptsPanel(),
+		lcd:         newLcdPanel(),
+		lcdInternal: newLcdInternalPanel(),
+		timer:       newTimerPanel(),
 	}
 
 	soundRow := newContainer(widget.DirectionHorizontal,
@@ -54,7 +56,11 @@ func newRegisterViewer() *registersViewer {
 		rv.waveRam,
 	)
 	secondRow := newContainer(widget.DirectionHorizontal,
-		rv.lcd, centralPanels,
+		newContainer(widget.DirectionVertical,
+			rv.lcd,
+			rv.lcdInternal,
+		),
+		centralPanels,
 	)
 
 	rv.Container = newContainer(widget.DirectionVertical,
@@ -73,6 +79,7 @@ func (rv *registersViewer) Sync(gb *gameboy.GameBoy) {
 	rv.cpu.Sync(gb)
 	rv.interrupts.Sync(gb)
 	rv.lcd.Sync(gb)
+	rv.lcdInternal.Sync(gb)
 	rv.timer.Sync(gb)
 }
 
@@ -113,6 +120,14 @@ func newLcdPanel() *panel {
 		{name: "FF4A WY", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF4A)) }},
 	}
 	return newPanel("LCD", entries...)
+}
+
+func newLcdInternalPanel() *panel {
+	entries := []panelEntry{
+		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.Dots) }},
+		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.STAT&3) }},
+	}
+	return newPanel("LCD (internal)", entries...)
 }
 
 func newSoundCh1Panel() *panel {
