@@ -1,11 +1,9 @@
 package debugger
 
 import (
-	"image/color"
-	"math"
-
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
+	"image/color"
 )
 
 var (
@@ -46,15 +44,5 @@ var (
 	buttonTextColor = &widget.ButtonTextColor{
 		Idle: buttonLabelColor,
 	}
+	padding = 5
 )
-
-func blendColors(a, b color.Color) color.Color {
-	r1, g1, b1, a1 := a.RGBA()
-	r2, g2, b2, a2 := b.RGBA()
-	return color.NRGBA64{
-		R: uint16(math.Sqrt(float64(r1*r1/2 + r2*r2/2))),
-		G: uint16(math.Sqrt(float64(g1*g1/2 + g2*g2/2))),
-		B: uint16(math.Sqrt(float64(b1*b1/2 + b2*b2/2))),
-		A: uint16((a1 + a2) / 2),
-	}
-}

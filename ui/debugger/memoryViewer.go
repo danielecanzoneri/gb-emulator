@@ -84,6 +84,7 @@ func newMemoryViewer() *memoryViewer {
 			Idle: image.NewNineSliceColor(color.RGBA{}),
 			Mask: image.NewNineSliceColor(color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
 		}),
+		widget.ScrollContainerOpts.Padding(widget.NewInsetsSimple(padding)),
 	)
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {

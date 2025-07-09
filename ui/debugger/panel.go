@@ -7,8 +7,6 @@ import (
 	"image/color"
 )
 
-const panelsPadding = 5
-
 type panelEntry struct {
 	name      string
 	valueSync func(gb *gameboy.GameBoy) string
@@ -24,11 +22,11 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p := new(panel)
 
 	// Create container (background image should account for padding)
-	backgroundImage := image.NewBorderedNineSliceColor(mainColor, color.Transparent, panelsPadding)
+	backgroundImage := image.NewBorderedNineSliceColor(mainColor, color.Transparent, padding)
 	p.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(panelsPadding)),
+			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(padding)),
 		)),
 		widget.ContainerOpts.BackgroundImage(backgroundImage),
 	)
