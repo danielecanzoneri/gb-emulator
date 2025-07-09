@@ -4,7 +4,10 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
+	"image/color"
 )
+
+const panelsPadding = 5
 
 type panelEntry struct {
 	name      string
@@ -20,13 +23,14 @@ type panel struct {
 func newPanel(title string, entries ...panelEntry) *panel {
 	p := new(panel)
 
-	// Create container
+	// Create container (background image should account for padding)
+	backgroundImage := image.NewBorderedNineSliceColor(mainColor, color.Transparent, panelsPadding)
 	p.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Padding(widget.Insets{Left: 5, Right: 5}),
+			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(panelsPadding)),
 		)),
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(mainColor)),
+		widget.ContainerOpts.BackgroundImage(backgroundImage),
 	)
 
 	// Panel title
@@ -36,7 +40,11 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	// Two vertical containers: one with labels and one with values
 	labels := newContainer(widget.DirectionVertical)
 	for _, entry := range entries {
-		l := newLabel(entry.name, labelColor)
+		if entry.name == "" {
+			continue
+		}
+
+		l := newLabel(entry.name+":", labelColor)
 		labels.AddChild(l)
 	}
 
@@ -60,7 +68,11 @@ func newPanel(title string, entries ...panelEntry) *panel {
 			widget.RowLayoutOpts.Spacing(10),
 		),
 	))
-	core.AddChild(labels, values)
+	if len(labels.Children()) == 0 { // Do not add title container if all titles are empty
+		core.AddChild(values)
+	} else {
+		core.AddChild(labels, values)
+	}
 	p.AddChild(core)
 
 	return p
