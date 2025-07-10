@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/ui/debugger"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -30,6 +31,11 @@ func (ui *UI) handleInput() {
 	}
 
 	ui.handleAudioToggle()
+
+	// Handle debugger input
+	for _, handler := range debugger.InputHandlers {
+		handler()
+	}
 }
 
 func (ui *UI) handleAudioToggle() {

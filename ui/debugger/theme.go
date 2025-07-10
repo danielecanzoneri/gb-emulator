@@ -32,6 +32,15 @@ var (
 	breakpointCurrHoverColor   = color.NRGBA{R: 200, G: 120, B: 200, A: 255}
 	breakpointCurrPressedColor = color.NRGBA{R: 220, G: 160, B: 220, A: 255}
 
+	toolbarBackgroundColor   = color.NRGBA{R: 12, G: 14, B: 90, A: 255}
+	toolbarTextColor         = color.White
+	toolbarMenuColor         = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+	toolbarMenuHoverColor    = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+	toolbarMenuPressedColor  = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+	toolbarEntryColor        = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+	toolbarEntryHoverColor   = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+	toolbarEntryPressedColor = color.NRGBA{R: 12, G: 14, B: 19, A: 255}
+
 	sliderTrackColor = color.NRGBA{R: 255, G: 255, B: 255, A: 32}
 )
 

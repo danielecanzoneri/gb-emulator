@@ -104,7 +104,7 @@ func (d *disassembler) Sync(gb *gameboy.GameBoy) {
 	d.refresh()
 }
 
-func (d *Debugger) newDisassembler() *disassembler {
+func newDisassembler() *disassembler {
 	dis := &disassembler{
 		entries:      make([]*disassemblerEntry, 0x10000),
 		totalEntries: 0x10000,
@@ -173,24 +173,8 @@ func (d *Debugger) newDisassembler() *disassembler {
 		}
 	})
 
-	// Step, continue buttons
-	controlButtons := widget.NewContainer(
-		widget.ContainerOpts.Layout(widget.NewRowLayout(
-			widget.RowLayoutOpts.Spacing(10)),
-		),
-	)
-	controlButtons.AddChild(
-		dis.createControlButton("Step", d.Step),
-		dis.createControlButton("Continue", d.Continue),
-		dis.createControlButton("Stop", d.Stop),
-		dis.createControlButton("Reset", d.Reset),
-	)
-
-	dis.Container = newContainer(widget.DirectionVertical,
-		newContainer(widget.DirectionHorizontal,
-			scrollContainer, dis.slider,
-		),
-		controlButtons,
+	dis.Container = newContainer(widget.DirectionHorizontal,
+		scrollContainer, dis.slider,
 	)
 	return dis
 }

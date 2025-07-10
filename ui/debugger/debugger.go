@@ -9,9 +9,10 @@ import (
 )
 
 type Debugger struct {
-	ui *ebitenui.UI
+	*ebitenui.UI
 
 	// Widgets
+	toolbar         *toolbar
 	disassembler    *disassembler
 	screen          *screen
 	memoryViewer    *memoryViewer
@@ -27,24 +28,28 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	// Misc
 	font = loadFont(16)
 
+	// Main container
+	root := widget.NewContainer(
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
+		)),
+	)
+
 	d := &Debugger{
+		UI:      &ebitenui.UI{Container: root},
 		gameBoy: gb,
 	}
-	d.disassembler = d.newDisassembler()
+
+	// Create widgets
+	d.toolbar = d.newToolbar()
+	d.disassembler = newDisassembler()
 	d.screen = newScreen()
 	d.memoryViewer = newMemoryViewer()
 	d.registersViewer = newRegisterViewer()
 
-	root := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
-		widget.ContainerOpts.Layout(widget.NewRowLayout()),
-	)
-	d.ui = &ebitenui.UI{
-		Container: root,
-	}
-
 	// Add widgets to the root container
-	root.AddChild(
+	main := newContainer(widget.DirectionHorizontal,
 		d.disassembler,
 		newContainer(widget.DirectionVertical,
 			newContainer(widget.DirectionHorizontal,
@@ -53,6 +58,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 			d.memoryViewer,
 		),
 	)
+	root.AddChild(d.toolbar, main)
 	return d
 }
 
@@ -65,15 +71,15 @@ func (d *Debugger) Sync() {
 
 func (d *Debugger) Update() error {
 	d.registersViewer.Sync(d.gameBoy)
-	d.ui.Update()
+	d.UI.Update()
 	return nil
 }
 
 func (d *Debugger) Draw(screen *ebiten.Image, frame *ebiten.Image) {
 	d.screen.Sync(frame)
-	d.ui.Draw(screen)
+	d.UI.Draw(screen)
 }
 
 func (d *Debugger) Layout(_, _ int) (int, int) {
-	return d.ui.Container.PreferredSize()
+	return d.UI.Container.PreferredSize()
 }
