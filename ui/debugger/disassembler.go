@@ -2,11 +2,10 @@ package debugger
 
 import (
 	"fmt"
-	"image/color"
-
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
+	"image/color"
 )
 
 var (
@@ -168,8 +167,8 @@ func newDisassembler() *disassembler {
 	)
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
-			p := -int(a.Y)
-			dis.scrollTo(dis.first + p)
+			amount := computeRowsToScroll(a.Y, 4096)
+			dis.scrollTo(dis.first + amount)
 		}
 	})
 

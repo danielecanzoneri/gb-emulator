@@ -88,8 +88,8 @@ func newMemoryViewer() *memoryViewer {
 	)
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
-			p := -int(a.Y)
-			mv.scrollTo(mv.first + p)
+			amount := computeRowsToScroll(a.Y, 1024)
+			mv.scrollTo(mv.first + amount)
 		}
 	})
 
