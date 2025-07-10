@@ -34,5 +34,5 @@ func computeRowsToScroll(variation float64, maxScroll int) int {
 	default: // >= 6
 		amount = maxScroll
 	}
-	return amount * direction
+	return -amount * direction
 }
