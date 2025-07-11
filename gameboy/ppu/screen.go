@@ -36,8 +36,6 @@ func (ppu *PPU) emptyFrame() {
 func (ppu *PPU) drawLine() int {
 	// SCX % 8 pixels are discarded from the leftmost tile
 	penaltyDots := int(ppu.SCX % 8)
-	// Keep track of the background/window tiles under each pixel
-	tilesUnderPixels := [FrameWidth]uint16{}
 
 	// Array that contains current line objects pixels
 	var frameLine = [FrameWidth]uint8{}
@@ -58,8 +56,6 @@ func (ppu *PPU) drawLine() int {
 				tileAddr := ppu.windowTileMapAddr + getTileMapOffset(xWindow, yWindow)
 				tileId := ppu.vRAM.read(tileAddr)
 
-				tilesUnderPixels[x] = tileAddr
-
 				tile := ppu.ReadTileBGWindow(tileId)
 				pixels := tile.getRowPixels(yWindow & 0b111)
 				frameLine[x] = ppu.BGP.getColor(pixels[xWindow&0b111])
@@ -68,8 +64,6 @@ func (ppu *PPU) drawLine() int {
 				xBackground := ppu.SCX + uint8(x) // Auto wrap around
 				tileAddr := ppu.bgTileMapAddr + getTileMapOffset(xBackground, yBackground)
 				tileId := ppu.vRAM.read(tileAddr)
-
-				tilesUnderPixels[x] = tileAddr
 
 				// TODO - obviously optimize
 				tile := ppu.ReadTileBGWindow(tileId)
@@ -92,8 +86,8 @@ func (ppu *PPU) drawLine() int {
 		}
 		var pixelBGPriority = [FrameWidth]bool{} // Pixel priority for BG/Window over obj
 
-		// Indexes of the previous tile considered in the OBJ penalty algorithm
-		var previousTile uint16 = 0
+		// Tiles considered in the OBJ penalty algorithm
+		var tileObjectsPenalties = map[uint8]bool{}
 
 		// Draw objects with priority
 		for i := range ppu.numObjs {
@@ -106,31 +100,22 @@ func (ppu *PPU) drawLine() int {
 			thePixel := 0
 			if obj.x > 8 {
 				thePixel = int(obj.x) - 8
+				if thePixel >= FrameWidth {
+					continue
+				}
 			}
 
-			if thePixel >= FrameWidth {
-				continue
-			}
-
-			tile := tilesUnderPixels[thePixel]
 			// 2. If that tile has not been considered by a previous OBJ yet:
-			if tile != previousTile {
-				pixelsOnTheRight := 0
+			tileId := (obj.x + ppu.SCX) >> 3
+			if _, ok := tileObjectsPenalties[tileId]; !ok {
+				tileObjectsPenalties[tileId] = true
+
 				//    - Count how many of that tile’s pixels are strictly to the right of The Pixel.
-				for px := thePixel + 1; px < min(thePixel+8, FrameWidth); px++ {
-					if tilesUnderPixels[px] != tile {
-						break
-					}
-					pixelsOnTheRight++
-				}
 				//    - Subtract 2.
-				pixelsOnTheRight -= 2
 				//    - Incur this many dots of penalty, or zero if negative (from waiting for the BG fetch to finish).
-				if pixelsOnTheRight > 0 {
-					penaltyDots += pixelsOnTheRight
-				}
+				penaltyDots += max(5-int(obj.x&7), 0)
 			}
-			previousTile = tile
+
 			// 3. Incur a flat, 6-dot penalty (from fetching the OBJ’s tile).
 			penaltyDots += 6
 
