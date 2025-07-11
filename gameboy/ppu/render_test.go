@@ -43,8 +43,8 @@ func TestDrawLineObj(t *testing.T) {
 	expectedFrameLine := [160]uint8{}
 	copy(expectedFrameLine[0:16], []uint8{0b10, 0b10, 0b01, 0b01, 0b11, 0b00, 0b11, 0b11, 0b00, 0b11, 0b01, 0b01, 0b10, 0b10})
 
-	// Call drawLine
-	ppu.drawLine()
+	// Call renderLine
+	ppu.renderLine()
 
 	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {
@@ -85,8 +85,8 @@ func TestDrawLineBG(t *testing.T) {
 	copy(expectedFrameLine[0:3], tileRow[5:])
 	copy(expectedFrameLine[155:160], tileRow[:5])
 
-	// Call drawLine
-	ppu.drawLine()
+	// Call renderLine
+	ppu.renderLine()
 
 	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {
@@ -141,8 +141,8 @@ func TestDrawLineWindow(t *testing.T) {
 	copy(expectedFrameLine[8:10], bgTileRow[:2])
 	copy(expectedFrameLine[10:18], windowTileRow[:])
 
-	// Call drawLine
-	ppu.drawLine()
+	// Call renderLine
+	ppu.renderLine()
 
 	frameLine := ppu.backBuffer[ppu.LY]
 	for x := 0; x < FrameWidth; x++ {

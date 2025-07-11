@@ -214,7 +214,7 @@ func (ppu *PPU) setMode(mode uint8) {
 		}
 
 		ppu.selectObjects()
-		ppu.mode3ExtraDots = ppu.drawLine()
+		ppu.mode3ExtraDots = ppu.renderLine()
 	case hBlank:
 		// OAM and vRAM are re-enabled 4 ticks later
 		// ppu.oam.readDisabled = false
