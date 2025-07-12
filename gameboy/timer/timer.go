@@ -29,17 +29,6 @@ type Timer struct {
 	RequestInterrupt func()
 }
 
-func (t *Timer) Reset() {
-	t.TIMA = 0
-	t.TMA = 0
-	t.TAC = 0
-	t.systemCounter = 0
-	t.prevState = 0
-	t.prevBit12 = 0
-	t.timaOverflow = false
-	t.timaReloaded = false
-}
-
 func (t *Timer) Tick(ticks uint) {
 	for range ticks {
 		// Update DIV

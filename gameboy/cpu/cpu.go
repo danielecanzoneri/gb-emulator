@@ -43,27 +43,6 @@ type CPU struct {
 	steps   uint
 }
 
-func (cpu *CPU) Reset() {
-	cpu.A = 0x01
-	cpu.F = 0xB0
-	cpu.B = 0x00
-	cpu.C = 0x13
-	cpu.D = 0x00
-	cpu.E = 0xD8
-	cpu.H = 0x01
-	cpu.L = 0x4D
-	cpu.SP = 0xFFFE
-	cpu.PC = 0x0100
-
-	cpu.IME = false
-	cpu._EIDelayed = false
-	cpu.interruptMaskRequested = 0
-	cpu.writeIEHasCancelledInterrupt = false
-	cpu.interruptCancelled = false
-	cpu.halted = false
-	cpu.steps = 0
-}
-
 func (cpu *CPU) AddCycler(cyclers ...Ticker) {
 	for _, c := range cyclers {
 		cpu.cyclers = append(cpu.cyclers, c)

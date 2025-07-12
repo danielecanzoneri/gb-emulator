@@ -28,6 +28,12 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 		sampleBuff: audioSampleBuffer,
 	}
 
+	gb.initComponents()
+
+	return gb
+}
+
+func (gb *GameBoy) initComponents() {
 	gb.PPU = ppu.New()
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
@@ -41,17 +47,18 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 	// Set interrupt request for PPU
 	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
 	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
-
-	return gb
 }
 
 func (gb *GameBoy) Reset() {
-	gb.CPU.Reset()
-	gb.Timer.Reset()
-	gb.Memory.Reset()
-	gb.PPU.Reset()
-	gb.Joypad.Reset()
-	gb.APU.Reset()
+	rom := gb.Memory.Cartridge
+	bootRom := gb.Memory.BootRom
+
+	// Reset all components
+	gb.initComponents()
+
+	// Load ROM and boot ROM
+	gb.Load(rom)
+	gb.LoadBootROM(bootRom)
 }
 
 func (gb *GameBoy) Load(rom cartridge.Cartridge) {

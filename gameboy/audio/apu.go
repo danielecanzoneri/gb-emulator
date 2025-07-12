@@ -28,27 +28,6 @@ type APU struct {
 	Ch4Enabled bool
 }
 
-func (apu *APU) Reset() {
-	apu.channel1.Reset()
-	apu.channel2.Reset()
-	apu.channel3.Reset()
-	apu.channel4.Reset()
-
-	apu.nr50 = 0
-	apu.nr51 = 0
-	apu.active = false
-
-	apu.frameSequencer.Reset()
-	apu.sampleCounter = 0
-	for {
-		select {
-		case <-apu.sampleBuffer:
-		default:
-			return
-		}
-	}
-}
-
 func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 	apu := &APU{
 		sampleRate:   sampleRate,

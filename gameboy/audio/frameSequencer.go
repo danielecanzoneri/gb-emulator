@@ -4,10 +4,6 @@ type frameSequencer struct {
 	position uint8
 }
 
-func (fs *frameSequencer) Reset() {
-	fs.position = 0
-}
-
 func (fs *frameSequencer) ShouldClockLength() bool {
 	return fs.position%2 == 0
 }

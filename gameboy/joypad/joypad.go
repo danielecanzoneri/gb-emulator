@@ -10,15 +10,6 @@ type Joypad struct {
 	aRight    uint8
 }
 
-func (j *Joypad) Reset() {
-	j.selectButtons = 0
-	j.selectDPad = 0
-	j.startDown = 0
-	j.selectUp = 0
-	j.bLeft = 0
-	j.aRight = 0
-}
-
 func New() *Joypad {
 	return &Joypad{startDown: 1, selectUp: 1, bLeft: 1, aRight: 1}
 }

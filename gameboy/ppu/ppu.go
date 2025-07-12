@@ -71,48 +71,6 @@ type delayedSTATUpdate struct {
 	update func()
 }
 
-func (ppu *PPU) Reset() {
-	ppu.mode = 0
-	ppu.Dots = 0
-	ppu.mode3ExtraDots = 0
-	ppu.objsLY = [objsLimit]*Object{}
-	ppu.numObjs = 0
-	ppu.frontBuffer = &[FrameHeight][FrameWidth]uint8{}
-	ppu.backBuffer = &[FrameHeight][FrameWidth]uint8{}
-	ppu.LCDC = 0
-	ppu.STAT = 0x84 // Unused bit and LY=LYC
-	ppu.SCY = 0
-	ppu.SCX = 0
-	ppu.LY = 0
-	ppu.LYC = 0
-	ppu.BGP = 0
-	ppu.OBP[0] = 0
-	ppu.OBP[1] = 0
-	ppu.WY = 0
-	ppu.WX = 0
-	ppu.wyCounter = 0
-	ppu.active = false
-	ppu.windowTileMapAddr = 0
-	ppu.windowEnabled = false
-	ppu.bgWindowTileDataArea = 0
-	ppu.bgTileMapAddr = 0
-	ppu.obj8x16Size = false
-	ppu.objEnabled = false
-	ppu.bgWindowEnabled = false
-	ppu.lcdJustEnabled = false
-	ppu.STATInterruptState = false
-
-	ppu.oam.readDisabled = false
-	ppu.vRAM.readDisabled = false
-	ppu.oam.writeDisabled = false
-	ppu.vRAM.writeDisabled = false
-
-	ppu.Write(0xFF40, 0x91) // LCDC
-	ppu.STAT = 0x85         // STAT
-	// ppu.mode = 1
-	ppu.Write(0xFF47, 0xFC) // BGP
-}
-
 func (ppu *PPU) Tick(ticks uint) {
 	if !ppu.active {
 		return

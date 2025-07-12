@@ -37,20 +37,6 @@ type MMU struct {
 	BootRom         []uint8
 }
 
-func (mmu *MMU) Reset() {
-	mmu.wRAM = [0x2000]uint8{}
-	mmu.hRAM = [0x7F]uint8{}
-
-	mmu.dmaReg = 0
-	mmu.ifReg = 0xE1 // IF
-	mmu.ieReg = 0
-	mmu.delayDmaTicks = 0
-	mmu.dmaTicks = 0
-	mmu.dmaTransfer = false
-	mmu.dmaOffset = 0
-	mmu.dmaValue = 0
-}
-
 func (mmu *MMU) Tick(ticks uint) {
 	if mmu.dmaTransfer {
 		mmu.dmaTicks += int(ticks)
