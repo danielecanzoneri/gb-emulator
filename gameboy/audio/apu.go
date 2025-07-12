@@ -1,8 +1,6 @@
 package audio
 
 type APU struct {
-	// TODO - Pass blargg dmg_sound 9/10/12 (wave ram)
-
 	channel1 *SquareChannel
 	channel2 *SquareChannel
 	channel3 *WaveChannel
@@ -126,8 +124,8 @@ func (apu *APU) disable() {
 	apu.active = false
 
 	// Reset all registers except NR52 and wave RAM
-	apu.channel1.Reset()
-	apu.channel2.Reset()
-	apu.channel3.Reset()
-	apu.channel4.Reset()
+	apu.channel1.disable()
+	apu.channel2.disable()
+	apu.channel3.disable()
+	apu.channel4.disable()
 }

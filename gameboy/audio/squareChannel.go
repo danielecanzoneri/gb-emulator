@@ -4,6 +4,14 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
+var squareWaveforms = [4][8]bool{
+	//                       waveform                         | wave duty | duty cycle
+	{false, false, false, false, false, false, false, true}, //        00 |     12.5 %
+	{true, false, false, false, false, false, false, true},  //        01 |       25 %
+	{true, false, false, false, false, true, true, true},    //        10 |       50 %
+	{false, true, true, true, true, true, true, false},      //        11 |       75 %
+}
+
 type SquareChannel struct {
 	dacEnabled bool
 	active     bool
@@ -57,7 +65,7 @@ func (ch *SquareChannel) Output() (sample float32) {
 	}
 
 	// Each channel outputs a value between 0 and 1
-	if waveforms[ch.waveDuty][ch.wavePosition] {
+	if squareWaveforms[ch.waveDuty][ch.wavePosition] {
 		sample = float32(ch.envelope.Volume()) / 15
 	}
 	return
@@ -87,8 +95,6 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 
 	case ch.addrNRx1:
 		ch.waveDuty = (v >> 6) & 0b11
-
-		// TODO - check if should be ^v ^ 0x3F
 		ch.lengthTimer.Set(uint(64 - v&0x3F))
 
 	case ch.addrNRx2:
@@ -144,7 +150,7 @@ func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 	}
 }
 
-func (ch *SquareChannel) Reset() {
+func (ch *SquareChannel) disable() {
 	ch.WriteRegister(ch.addrNRx0, 0)
 	// On the DMG, length counters are unaffected by power
 	// ch.WriteRegister(ch.addrNRx1, 0)

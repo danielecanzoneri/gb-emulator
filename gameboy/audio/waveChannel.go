@@ -107,7 +107,6 @@ func (ch *WaveChannel) WriteRegister(addr uint16, v uint8) {
 
 	case nr31Addr:
 		// Timer should count up to 256, but we make it count down to 0
-		// TODO - check if should be ^v
 		ch.lengthTimer.Set(256 - uint(v))
 
 	case nr32Addr:
@@ -185,7 +184,7 @@ func (ch *WaveChannel) ReadWRAM(addr uint16) uint8 {
 	return ch.WaveRam[addr-waveRAMAddr]
 }
 
-func (ch *WaveChannel) Reset() {
+func (ch *WaveChannel) disable() {
 	ch.WriteRegister(nr30Addr, 0)
 	// On the DMG, length counters are unaffected by power
 	// ch.WriteRegister(nr31Addr, 0)

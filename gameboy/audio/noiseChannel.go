@@ -4,7 +4,6 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
-// TODO - fix incorrect noise
 type NoiseChannel struct {
 	dacEnabled bool
 	active     bool
@@ -88,7 +87,6 @@ func (ch *NoiseChannel) Tick(ticks uint) {
 func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case nr41Addr:
-		// TODO - check if should be ^v ^ 0x3F
 		ch.lengthTimer.Set(uint(64 - v&0x3F))
 
 	case nr42Addr:
@@ -137,7 +135,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 	}
 }
 
-func (ch *NoiseChannel) Reset() {
+func (ch *NoiseChannel) disable() {
 	// On the DMG, length counters are unaffected by power
 	// ch.WriteRegister(nr41Addr, 0)
 	ch.WriteRegister(nr42Addr, 0)
