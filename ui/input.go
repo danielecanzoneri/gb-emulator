@@ -8,11 +8,7 @@ import (
 
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		ui.debugger.Toggle()
-
-		// Resize window
-		newWidth, newHeight := ui.Layout(0, 0)
-		ebiten.SetWindowSize(newWidth, newHeight)
+		ui.ToggleDebugger()
 	}
 
 	// Ctrl+L to load a new game
@@ -86,4 +82,12 @@ func (ui *UI) handleAudioToggle() {
 		ui.debugString = debugString
 		ui.debugStringTimer = 60
 	}
+}
+
+func (ui *UI) ToggleDebugger() {
+	ui.debugger.Toggle()
+
+	// Resize window
+	newWidth, newHeight := ui.Layout(0, 0)
+	ebiten.SetWindowSize(newWidth, newHeight)
 }
