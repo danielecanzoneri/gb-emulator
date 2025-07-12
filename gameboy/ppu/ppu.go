@@ -124,11 +124,11 @@ func (ppu *PPU) Tick(ticks uint) {
 		d.delay -= int(ticks)
 		if d.delay <= 0 {
 			d.update()
-			ppu.checkSTATInterruptState()
 		} else {
 			remaining = append(remaining, d)
 		}
 	}
+	ppu.checkSTATInterruptState()
 	ppu.delayedSTATUpdates = remaining
 
 	ppu.Dots += int(ticks) // M-cycles -> T-states
