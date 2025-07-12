@@ -108,7 +108,8 @@ func (ppu *PPU) Reset() {
 	ppu.vRAM.writeDisabled = false
 
 	ppu.Write(0xFF40, 0x91) // LCDC
-	ppu.Write(0xFF41, 0x81) // STAT
+	ppu.STAT = 0x85         // STAT
+	// ppu.mode = 1
 	ppu.Write(0xFF47, 0xFC) // BGP
 }
 
