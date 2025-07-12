@@ -31,6 +31,10 @@ type MMU struct {
 	dmaTransfer   bool
 	dmaOffset     uint16
 	dmaValue      uint8
+
+	// Boot ROM
+	BootRomDisabled bool
+	BootRom         []uint8
 }
 
 func (mmu *MMU) Reset() {
@@ -89,6 +93,11 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 }
 
 func (mmu *MMU) read(addr uint16) uint8 {
+	// Map boot ROM over memory
+	if !mmu.BootRomDisabled && addr < 0x100 {
+		return mmu.BootRom[addr]
+	}
+
 	switch {
 	// MBC addresses
 	case addr < 0x8000:

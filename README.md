@@ -104,6 +104,7 @@ or, if built:
 - [GBops](https://izik1.github.io/gbops/) (opcode timing)
 - [Blargg](https://github.com/retrio/gb-test-roms), [Gekkio](https://github.com/Gekkio/mooneye-test-suite), [DMG acid](https://github.com/mattcurrie/dmg-acid2), [MBC3 RTC test](https://github.com/aaaaaa123456789/rtc3test) (test ROMs)
 - [This reddit post](https://www.reddit.com/r/EmuDev/comments/59pawp/gb_mode3_sprite_timing/) for fixing PPU timing with sprites
+- [Bootix](https://github.com/Hacktix/Bootix) for the copyright-free boot ROM
 
 ## TODO
 

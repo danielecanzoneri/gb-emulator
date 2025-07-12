@@ -47,6 +47,18 @@ func (ui *UI) Save() {
 	}
 }
 
+func (ui *UI) LoadBootROM(bootRom string) (err error) {
+	var data []uint8
+
+	if bootRom != "" {
+		// Open the ROM file
+		data, err = os.ReadFile(bootRom)
+	}
+
+	ui.gameBoy.LoadBootROM(data)
+	return
+}
+
 func loadROM(romPath string) (cartridge.Cartridge, error) {
 	// Open the ROM file
 	cartridgeData, err := os.ReadFile(romPath)

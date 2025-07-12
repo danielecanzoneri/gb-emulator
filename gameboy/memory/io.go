@@ -45,6 +45,8 @@ const (
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
 
+	BANKAddr = 0xFF50
+
 	IFAddr              = 0xFF0F
 	IEAddr              = 0xFFFF
 	interruptMask uint8 = 0b00011111
@@ -75,6 +77,10 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	// DMA transfer
 	case DMAAddr:
 		mmu.DMA(v)
+
+	// Disable BOOT ROM
+	case BANKAddr:
+		mmu.BootRomDisabled = true
 
 	// Interrupt flags
 	case IFAddr:

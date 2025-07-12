@@ -42,10 +42,6 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
 	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
 
-	gb.CPU.Reset()
-	gb.Memory.Reset()
-	gb.PPU.Reset()
-
 	return gb
 }
 
@@ -66,4 +62,17 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	if c, ok := rom.(interface{ Tick(uint) }); ok {
 		gb.CPU.AddCycler(c)
 	}
+}
+
+func (gb *GameBoy) LoadBootROM(bootRom []uint8) {
+	if bootRom == nil {
+		gb.skipBootROM()
+		return
+	}
+
+	gb.Memory.BootRomDisabled = false
+	gb.Memory.BootRom = bootRom
+}
+
+func (gb *GameBoy) skipBootROM() {
 }
