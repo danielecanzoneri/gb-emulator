@@ -40,6 +40,10 @@ func (oam *OAM) Write(addr uint16, value uint8) {
 	oam.objectsData[objectId].write(addr%objectsSize, value)
 }
 
+func (ppu *PPU) DMAWrite(index uint16, value uint8) {
+	ppu.oam.Write(OAMStartAddr+index, value)
+}
+
 const (
 	objsLimit = 10
 

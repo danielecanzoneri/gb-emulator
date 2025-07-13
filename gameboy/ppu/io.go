@@ -165,7 +165,3 @@ func (ppu *PPU) disable() {
 	// Blank screen
 	ppu.emptyFrame()
 }
-
-func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.oam.Write(OAMStartAddr+index, value)
-}
