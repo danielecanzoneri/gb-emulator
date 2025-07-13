@@ -19,8 +19,8 @@ func (ui *UI) handleInput() {
 		// Save game before switching
 		ui.Save()
 
-		ui.gameBoy.Reset()
 		ui.LoadNewGame()
+		ui.gameBoy.Reset()
 
 		// Start running
 		ui.audioPlayer.Play()
