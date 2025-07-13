@@ -82,4 +82,11 @@ func (gb *GameBoy) LoadBootROM(bootRom []uint8) {
 }
 
 func (gb *GameBoy) skipBootROM() {
+	gb.Memory.BootRomDisabled = true
+
+	gb.CPU.SkipBoot()
+	gb.Timer.SkipBoot()
+	gb.Memory.SkipBoot()
+	gb.PPU.SkipBoot()
+	gb.APU.SkipBoot()
 }
