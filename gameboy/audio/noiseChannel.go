@@ -62,6 +62,10 @@ func (ch *NoiseChannel) Output() (sample float32) {
 }
 
 func (ch *NoiseChannel) Tick(ticks uint) {
+	if !ch.active {
+		return
+	}
+
 	ch.ticks += ticks
 
 	// Channel 4 clocks at 1048576 HZ

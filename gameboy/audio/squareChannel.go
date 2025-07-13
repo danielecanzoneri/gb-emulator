@@ -72,6 +72,10 @@ func (ch *SquareChannel) Output() (sample float32) {
 }
 
 func (ch *SquareChannel) Tick(ticks uint) {
+	if !ch.active {
+		return
+	}
+
 	ch.ticks += ticks
 
 	// Channel 1 and 2 clock at 1048576 HZ
