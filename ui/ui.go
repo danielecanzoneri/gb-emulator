@@ -45,19 +45,8 @@ func New() (*UI, error) {
 
 	ui.audioPlayer = player
 
-	// Since game boy is 59.7 FPS but ebiten updates at 60 FPS there are
-	// some frames where nothing is drawn. This avoids screen flickering
-	ebiten.SetScreenClearedEveryFrame(false)
-
 	// Initialize the renderer
-	initRenderer()
-
-	// Initial window size without the debug panel
-	screenWidth, screenHeight := ui.Layout(0, 0)
-	ebiten.SetWindowSize(screenWidth, screenHeight)
-
-	// Save when closing
-	ebiten.SetWindowClosingHandled(true)
+	ui.initRenderer()
 
 	return ui, nil
 }

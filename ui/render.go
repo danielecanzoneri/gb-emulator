@@ -23,14 +23,32 @@ var (
 	frameImage *ebiten.Image
 )
 
-func initRenderer() {
+func (ui *UI) initRenderer() {
+	// Since game boy is 59.7 FPS but ebiten updates at 60 FPS there are
+	// some frames where nothing is drawn. This avoids screen flickering
+	ebiten.SetScreenClearedEveryFrame(false)
+
 	// Create a single image for the entire frame
 	frameImage = ebiten.NewImage(ppu.FrameWidth, ppu.FrameHeight)
+
+	// Initial window size without the debug panel
+	screenWidth, screenHeight := ui.Layout(0, 0)
+	ebiten.SetWindowSize(screenWidth, screenHeight)
+
+	// Save when closing
+	ebiten.SetWindowClosingHandled(true)
 }
 
 // Inherit Ebiten Game interface
 
 func (ui *UI) Update() error {
+	// If window is unfocused, stop the game
+	if !ebiten.IsFocused() {
+		ui.audioPlayer.Pause()
+	} else {
+		ui.audioPlayer.Play()
+	}
+
 	// If closing, save game
 	if ebiten.IsWindowBeingClosed() {
 		ui.Save()
