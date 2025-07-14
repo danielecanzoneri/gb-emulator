@@ -17,16 +17,14 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 
 ```
 .
-├── emulator/         # Main emulator code (CPU, PPU, APU, memory, UI)
-│   ├── cmd/          # Entry point for running the emulator
-│   ├── internal/     # Emulator internals (gameboy, server)
-│   └── ui/           # Ebiten-based GUI and input handling
-├── debugger/         # Standalone graphical debugger (Fyne-based)
-│   ├── cmd/          # Entry point for running the debugger
-│   ├── internal/     # Debugger client logic
-│   └── ui/           # Debugger GUI components
-├── pkg/              # Shared protocol, debug, and utility packages
+├── boot/             # Boot ROMs
+├── gameboy/          # Main emulator code (CPU, PPU, APU, memory, UI)
+├── ui/               # Ebiten-based GUI and input handling
+│   └── debugger/     # Integrated debugger components
+├── util/             # Some simple util functions
+├── main.go           # Entry point
 └── README.md         # This file
+
 ```
 
 ## Getting Started
@@ -34,7 +32,7 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 ### Prerequisites
 
 - **Go 1.24+** (see `go.mod` for version)
-- [Ebiten](https://ebiten.org/) and [Fyne](https://fyne.io/) dependencies are managed via Go modules.
+- [Ebiten](https://ebiten.org/) dependency is managed via Go modules.
 
 ### Building
 
@@ -43,20 +41,17 @@ Clone the repository and build the emulator and debugger:
 ```sh
 git clone https://github.com/danielecanzoneri/gb-emulator.git
 cd gb-emulator
-cd emulator
-go build -o gbemu ./cmd
-cd ../debugger
-go build -o gbdebugger ./cmd
+go build -o gbemu .
 ```
 
 ### Running
 
 #### Emulator
 
-From the `emulator` directory:
+From the root directory:
 
 ```sh
-go run ./cmd
+go run .
 ```
 or, if built:
 ```sh
@@ -76,24 +71,14 @@ or, if built:
 
 #### Debugger
 
-The debugger can be launched automatically from the emulator (press `Esc`), or manually:
-
-From the `debugger` directory:
-
+The debugger can be launched from the emulator (press `Esc`), or at startup with the `-debug` flag:
 ```sh
-go run ./cmd
+./gbemu -debug
 ```
-or, if built:
-```sh
-./gbdebugger
-```
-
-- Connects to the emulator via WebSocket on port 8080.
-- Features:
-  - Disassembly view with breakpoints (click to toggle)
-  - Memory viewer
-  - Register and interrupt viewer
-  - Step (`F3`), Continue (`F8`), and Reset controls
+- Disassembly view with breakpoints (click to toggle)
+- Memory viewer
+- I/O registers viewer
+- Step (`F8`), Continue (`F8`), and Reset controls
 
 ## Resources
 
@@ -108,7 +93,7 @@ or, if built:
 
 ## TODO
 
-- Redesign the debugger using ebitengine/debugui instead of Fyne, to allow for a fully integrated debugger without the need for WebSocket communication.
 - Implement a feature to speed up emulation (fast-forward).
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
+- Allow users to customize controls
