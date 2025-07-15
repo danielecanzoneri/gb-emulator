@@ -151,7 +151,7 @@ func (ppu *PPU) disable() {
 	}
 	ppu.active = false
 	// Reset mode
-	ppu.mode = hBlank
+	ppu.internalMode = hBlank
 	ppu.STAT &= 0xFC
 
 	// Reset to HBlank

@@ -2,7 +2,7 @@ package ppu
 
 func (ppu *PPU) SkipBoot() {
 	ppu.Dots = 404
-	ppu.mode = 1
+	ppu.internalMode = 1
 
 	// vRAM
 	ppu.vRAM.tileData[1] = [16]uint8{0xF0, 0, 0xF0, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xF3, 0, 0xF3, 0}

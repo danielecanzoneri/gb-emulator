@@ -13,7 +13,7 @@ const (
 
 type PPU struct {
 	Dots           int   // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
-	mode           uint8 // (internal) 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
+	internalMode   uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
 	mode3ExtraDots int
 
 	// vRAM and OAM data
@@ -62,13 +62,18 @@ type PPU struct {
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
 
-	// Delay STAT updates by 4 ticks
-	delayedSTATUpdates []delayedSTATUpdate
+	modeTicksElapsed uint
 }
 
-type delayedSTATUpdate struct {
-	delay  int
-	update func()
+func New() *PPU {
+	ppu := new(PPU)
+	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
+
+	// Init buffers
+	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
+	return ppu
 }
 
 func (ppu *PPU) Tick(ticks uint) {
@@ -76,22 +81,31 @@ func (ppu *PPU) Tick(ticks uint) {
 		return
 	}
 
-	// Handle delayed STAT updates
-	var remaining []delayedSTATUpdate
-	for _, d := range ppu.delayedSTATUpdates {
-		d.delay -= int(ticks)
-		if d.delay <= 0 {
-			d.update()
-		} else {
-			remaining = append(remaining, d)
+	ppu.Dots += int(ticks) // M-cycles -> T-states
+	ppu.modeTicksElapsed += ticks
+
+	// Delay STAT updates by 4 ticks
+	if ppu.modeTicksElapsed >= 4 {
+		ppu.STAT = (ppu.STAT & 0xFC) | ppu.internalMode
+		switch ppu.internalMode {
+		case hBlank:
+			ppu.oam.readDisabled = false
+			ppu.vRAM.readDisabled = false
+			ppu.oam.writeDisabled = false
+			ppu.vRAM.writeDisabled = false
+		case oamScan:
+			ppu.oam.writeDisabled = true
+		case drawing:
+			ppu.oam.readDisabled = true
+			ppu.vRAM.readDisabled = true
+			ppu.oam.writeDisabled = true
+			ppu.vRAM.writeDisabled = true
 		}
+		ppu.checkLYLYC()
 	}
 	ppu.checkSTATInterruptState()
-	ppu.delayedSTATUpdates = remaining
 
-	ppu.Dots += int(ticks) // M-cycles -> T-states
-
-	switch ppu.mode {
+	switch ppu.internalMode {
 	case oamScan:
 		if ppu.Dots > 80 {
 			ppu.setMode(drawing)
@@ -130,18 +144,6 @@ func (ppu *PPU) Tick(ticks uint) {
 	}
 }
 
-func New() *PPU {
-	ppu := new(PPU)
-	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
-	ppu.setMode(oamScan)
-
-	// Init buffers
-	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
-	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
-
-	return ppu
-}
-
 func (ppu *PPU) setMode(mode uint8) {
 	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
 	// normally it is blocked 4 ticks before STAT mode changes
@@ -152,7 +154,9 @@ func (ppu *PPU) setMode(mode uint8) {
 	// Write works differently: they are always tied to the STAT register: if it is 2 or 3,
 	// they are blocked for OAM (except for a cycle at the end of mode 2 in the 2 -> 3 transition)
 	// and blocked for vRAM in mode 3
-	ppu.mode = mode
+
+	ppu.internalMode = mode
+	ppu.modeTicksElapsed = 0
 
 	switch mode {
 	case oamScan:
@@ -160,11 +164,6 @@ func (ppu *PPU) setMode(mode uint8) {
 	case drawing:
 		if ppu.lcdJustEnabled {
 			ppu.lcdJustEnabled = false
-			// Ugly hack: delay by 4 ticks
-			ppu.setSTATUpdateHandler(func() {
-				ppu.oam.readDisabled = true
-				ppu.vRAM.readDisabled = true
-			})
 		} else {
 			ppu.oam.readDisabled = true
 			ppu.vRAM.readDisabled = true
@@ -186,23 +185,6 @@ func (ppu *PPU) setMode(mode uint8) {
 		ppu.frontBuffer = ppu.backBuffer
 		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
 	}
-
-	ppu.setSTATUpdateHandler(func() {
-		ppu.STAT = (ppu.STAT & 0xFC) | mode
-		switch mode {
-		case hBlank:
-			ppu.oam.readDisabled = false
-			ppu.vRAM.readDisabled = false
-			ppu.oam.writeDisabled = false
-			ppu.vRAM.writeDisabled = false
-		case oamScan:
-			ppu.oam.writeDisabled = true
-		case drawing:
-			ppu.oam.writeDisabled = true
-			ppu.vRAM.writeDisabled = true
-		}
-	})
-
 }
 
 func (ppu *PPU) newLine() {
@@ -214,18 +196,6 @@ func (ppu *PPU) newLine() {
 	// When LY changes, LY=LYC flag is always set to 0 and then updated
 	// TODO - check if this is true
 	util.SetBit(&ppu.STAT, 2, 0)
-
-	ppu.checkLYLYC()
-}
-
-func (ppu *PPU) setSTATUpdateHandler(statUpdate func()) {
-	// STAT register is updated 4 (or 1 is enough?) T-cycles later
-	// (see https://github.com/Gekkio/mooneye-test-suite/blob/main/acceptance/ppu/lcdon_timing-GS.s)
-
-	ppu.delayedSTATUpdates = append(ppu.delayedSTATUpdates, delayedSTATUpdate{
-		delay:  4,
-		update: statUpdate,
-	})
 }
 
 func (ppu *PPU) checkLYLYC() {
@@ -235,13 +205,9 @@ func (ppu *PPU) checkLYLYC() {
 
 	// Bit 2 of STAT register is set when LY = LYC
 	if ppu.LY == ppu.LYC {
-		ppu.setSTATUpdateHandler(func() {
-			util.SetBit(&ppu.STAT, 2, 1)
-		})
+		util.SetBit(&ppu.STAT, 2, 1)
 	} else {
-		ppu.setSTATUpdateHandler(func() {
-			util.SetBit(&ppu.STAT, 2, 0)
-		})
+		util.SetBit(&ppu.STAT, 2, 0)
 	}
 }
 
