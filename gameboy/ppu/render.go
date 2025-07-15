@@ -135,17 +135,17 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 		penaltyDots += 6
 
 		// Object row to draw is: LY + 16 - y
-		rowPixels := ppu.getObjectRow(obj, ppu.LY+yOffset-obj.y)
+		rowPixels := ppu.getObjectRow(obj, ppu.LY+yObjOffset-obj.y)
 
 		// Draw pixels on the line if no other pixel with higher priority was drawn
 		for i, px := range rowPixels {
 			// Pixel is transparent if color id is 0 (not if the color itself is 0)
 			if px > 0 {
 				x := uint8(i) + obj.x
-				if xOffset <= x && x < FrameWidth+xOffset {
-					if pixelLine[x-xOffset] == 0xFF {
-						pixelLine[x-xOffset] = ppu.OBP[obj.paletteId].getColor(px)
-						pixelBGPriority[x-xOffset] = obj.bgPriority
+				if xObjOffset <= x && x < FrameWidth+xObjOffset {
+					if pixelLine[x-xObjOffset] == 0xFF {
+						pixelLine[x-xObjOffset] = ppu.OBP[obj.paletteId].getColor(px)
+						pixelBGPriority[x-xObjOffset] = obj.bgPriority
 					}
 				}
 			}

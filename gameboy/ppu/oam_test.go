@@ -19,7 +19,7 @@ func TestObjectSelection8x8(t *testing.T) {
 			{y: 19}, // Hidden
 		}
 		writeObjectsOAM(&ppu.oam, objects)
-		ppu.selectObjects()
+		ppu.searchOAM()
 
 		if ppu.numObjs != 3 {
 			t.Errorf("Expected 3 objects, got %d", ppu.numObjs)
@@ -47,7 +47,7 @@ func TestObjectSelection8x8(t *testing.T) {
 			{y: 11, x: 100}, // Hidden because of limit
 		}
 		writeObjectsOAM(&ppu.oam, objects)
-		ppu.selectObjects()
+		ppu.searchOAM()
 
 		if ppu.numObjs != objsLimit {
 			t.Errorf("Expected 3 objects, got %d", ppu.numObjs)
@@ -75,7 +75,7 @@ func TestObjectSelection8x16(t *testing.T) {
 			{y: 19}, // Hidden
 		}
 		writeObjectsOAM(&ppu.oam, objects)
-		ppu.selectObjects()
+		ppu.searchOAM()
 
 		if ppu.numObjs != 3 {
 			t.Errorf("Expected 3 objects, got %d", ppu.numObjs)
@@ -103,7 +103,7 @@ func TestObjectSelection8x16(t *testing.T) {
 			{y: 10}, // Hidden because of limit
 		}
 		writeObjectsOAM(&ppu.oam, objects)
-		ppu.selectObjects()
+		ppu.searchOAM()
 
 		if ppu.numObjs != objsLimit {
 			t.Errorf("Expected 3 objects, got %d", ppu.numObjs)

@@ -8,47 +8,12 @@ import (
 )
 
 const (
-	OAMSize     = 0xA0
-	objectsSize = 4
-)
-
-type OAM struct {
-	objectsData [OAMSize / objectsSize]Object
-
-	// Disabled during mode 2 (OAM scan) and 3 (drawing)
-	readDisabled  bool
-	writeDisabled bool
-}
-
-func (oam *OAM) Read(addr uint16) uint8 {
-	if oam.readDisabled {
-		return 0xFF
-	}
-
-	addr -= OAMStartAddr
-	objectId := addr / objectsSize
-	return oam.objectsData[objectId].read(addr % objectsSize)
-}
-
-func (oam *OAM) Write(addr uint16, value uint8) {
-	if oam.writeDisabled {
-		return
-	}
-
-	addr -= OAMStartAddr
-	objectId := addr / objectsSize
-	oam.objectsData[objectId].write(addr%objectsSize, value)
-}
-
-func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.oam.Write(OAMStartAddr+index, value)
-}
-
-const (
 	objsLimit = 10
 
-	yOffset = 16
-	xOffset = 8
+	yObjOffset = 16
+	xObjOffset = 8
+
+	OAMSize = 0xA0
 )
 
 type Object struct {
@@ -65,7 +30,7 @@ type Object struct {
 }
 
 func (obj *Object) read(addr uint16) uint8 {
-	switch addr {
+	switch addr & 0b11 {
 	case 0:
 		return obj.y
 	case 1:
@@ -80,7 +45,7 @@ func (obj *Object) read(addr uint16) uint8 {
 }
 
 func (obj *Object) write(addr uint16, value uint8) {
-	switch addr {
+	switch addr & 0b11 {
 	case 0:
 		obj.y = value
 	case 1:
@@ -98,6 +63,38 @@ func (obj *Object) write(addr uint16, value uint8) {
 	default:
 		panic("should never happen")
 	}
+}
+
+type OAM struct {
+	objectsData [OAMSize / 4]Object
+
+	// Disabled during mode 2 (OAM scan) and 3 (drawing)
+	readDisabled  bool
+	writeDisabled bool
+}
+
+func (oam *OAM) Read(addr uint16) uint8 {
+	if oam.readDisabled {
+		return 0xFF
+	}
+
+	addr -= OAMStartAddr
+	objectId := addr >> 2
+	return oam.objectsData[objectId].read(addr)
+}
+
+func (oam *OAM) Write(addr uint16, value uint8) {
+	if oam.writeDisabled {
+		return
+	}
+
+	addr -= OAMStartAddr
+	objectId := addr >> 2
+	oam.objectsData[objectId].write(addr, value)
+}
+
+func (ppu *PPU) DMAWrite(index uint16, value uint8) {
+	ppu.oam.Write(OAMStartAddr+index, value)
 }
 
 func (ppu *PPU) getObjectRow(obj *Object, row uint8) [8]uint8 {
@@ -136,7 +133,7 @@ func (ppu *PPU) getObjectRow(obj *Object, row uint8) [8]uint8 {
 	return pixels
 }
 
-func (ppu *PPU) selectObjects() {
+func (ppu *PPU) searchOAM() {
 	// objHeight is used to check which objects are currently on the line
 	var objHeight uint8 = 8
 	if ppu.obj8x16Size {
@@ -148,7 +145,7 @@ func (ppu *PPU) selectObjects() {
 	// Scan OAM and select objects that lie in current line
 	for _, obj := range ppu.oam.objectsData {
 		// obj is on the line if obj.y <= LY+16 < obj.y + height
-		if obj.y <= ppu.LY+yOffset && ppu.LY+yOffset < obj.y+objHeight {
+		if obj.y <= ppu.LY+yObjOffset && ppu.LY+yObjOffset < obj.y+objHeight {
 			ppu.objsLY[ppu.numObjs] = &obj
 			ppu.numObjs++
 
