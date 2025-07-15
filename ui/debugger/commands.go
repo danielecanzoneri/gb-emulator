@@ -17,6 +17,12 @@ func (d *Debugger) Step() {
 	d.gameBoy.CPU.ExecuteInstruction()
 }
 
+func (d *Debugger) Next() {
+	d.Continue()
+	d.NextInstruction = true
+	d.CallDepth = 0
+}
+
 func (d *Debugger) Continue() {
 	d.Continued = true
 

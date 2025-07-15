@@ -72,11 +72,16 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			ui.gameBoy.Joypad.DetectKeysPressed()
 			ui.gameBoy.CPU.ExecuteInstruction()
 
-			if ui.debugger.Active { // && ui.debugger.Continue
-				// Check breakpoint
+			if ui.debugger.Active {
 				pc := ui.gameBoy.CPU.ReadPC()
-				if ui.debugger.CheckBreakpoint(pc) {
-					// Stop
+				switch {
+				// Stop if next instruction
+				case ui.debugger.NextInstruction && ui.debugger.CallDepth <= 0:
+					ui.debugger.NextInstruction = false
+					ui.debugger.Stop()
+
+				// Stop if breakpoint
+				case ui.debugger.CheckBreakpoint(pc):
 					ui.debugger.Stop()
 				}
 			}

@@ -920,8 +920,7 @@ func (cpu *CPU) PUSH_AF() {
 func (cpu *CPU) RET_COND(checkCondition func() bool) {
 	cpu.Tick(4) // Internal (branch decision)
 	if checkCondition() {
-		cpu.PC = cpu.POP_STACK()
-		cpu.Tick(4) // Internal (set PC)
+		cpu.RET()
 	}
 }
 func (cpu *CPU) RET_Z() {
@@ -941,12 +940,15 @@ func (cpu *CPU) RET_NC() {
 func (cpu *CPU) RET() {
 	cpu.PC = cpu.POP_STACK()
 	cpu.Tick(4) // Internal (set PC)
+
+	if cpu.retHook != nil {
+		cpu.retHook()
+	}
 }
 
 // RETI
 func (cpu *CPU) RETI() {
-	cpu.PC = cpu.POP_STACK()
-	cpu.Tick(4) // Internal (set PC)
+	cpu.RET()
 
 	cpu.interruptMaskRequested = 0
 	cpu.IME = true
@@ -983,12 +985,20 @@ func (cpu *CPU) JP_HL() {
 	cpu.PC = cpu.ReadHL()
 }
 
+func (cpu *CPU) CALL(addr uint16) {
+	cpu.PUSH_STACK(cpu.PC)
+	cpu.PC = addr
+
+	if cpu.callHook != nil {
+		cpu.callHook()
+	}
+}
+
 // CALL COND N16
 func (cpu *CPU) CALL_COND_N16(checkCondition func() bool) {
 	addr := cpu.ReadNextWord()
 	if checkCondition() {
-		cpu.PUSH_STACK(cpu.PC)
-		cpu.PC = addr
+		cpu.CALL(addr)
 	}
 }
 func (cpu *CPU) CALL_Z_N16() {
@@ -1006,37 +1016,34 @@ func (cpu *CPU) CALL_NC_N16() {
 
 // CALL N16
 func (cpu *CPU) CALL_N16() {
-	cpu.CALL_COND_N16(func() bool { return true })
+	addr := cpu.ReadNextWord()
+	cpu.CALL(addr)
 }
 
 // RST VEC
-func (cpu *CPU) RST_VEC(addr uint16) {
-	cpu.PUSH_STACK(cpu.PC)
-	cpu.PC = addr
-}
 func (cpu *CPU) RST_00() {
-	cpu.RST_VEC(0x00)
+	cpu.CALL(0x00)
 }
 func (cpu *CPU) RST_08() {
-	cpu.RST_VEC(0x08)
+	cpu.CALL(0x08)
 }
 func (cpu *CPU) RST_10() {
-	cpu.RST_VEC(0x10)
+	cpu.CALL(0x10)
 }
 func (cpu *CPU) RST_18() {
-	cpu.RST_VEC(0x18)
+	cpu.CALL(0x18)
 }
 func (cpu *CPU) RST_20() {
-	cpu.RST_VEC(0x20)
+	cpu.CALL(0x20)
 }
 func (cpu *CPU) RST_28() {
-	cpu.RST_VEC(0x28)
+	cpu.CALL(0x28)
 }
 func (cpu *CPU) RST_30() {
-	cpu.RST_VEC(0x30)
+	cpu.CALL(0x30)
 }
 func (cpu *CPU) RST_38() {
-	cpu.RST_VEC(0x38)
+	cpu.CALL(0x38)
 }
 
 // LDH_C_A

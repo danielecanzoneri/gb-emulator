@@ -56,6 +56,8 @@ func (d *Debugger) newToolbar() *toolbar {
 	// Run menu
 	t.runMenu = t.newMenu("Run")
 	t.stepButton = t.runMenu.newEntryWithShortcut("Step", d.Step,
+		ebiten.KeyF3)
+	t.stepButton = t.runMenu.newEntryWithShortcut("Next", d.Next,
 		ebiten.KeyF8)
 	t.continueButton = t.runMenu.newEntryWithShortcut("Continue", d.Continue,
 		ebiten.KeyF9)

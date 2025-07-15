@@ -22,6 +22,10 @@ type Debugger struct {
 	gameBoy   *gameboy.GameBoy
 	Active    bool
 	Continued bool // True when debugger is active and we are stepping until breakpoint
+
+	// Run until next instruction
+	NextInstruction bool
+	CallDepth       int
 }
 
 func New(gb *gameboy.GameBoy) *Debugger {
@@ -40,6 +44,15 @@ func New(gb *gameboy.GameBoy) *Debugger {
 		UI:      &ebitenui.UI{Container: root},
 		gameBoy: gb,
 	}
+
+	// Set CPU hooks
+	callHook := func() {
+		d.CallDepth++
+	}
+	retHook := func() {
+		d.CallDepth--
+	}
+	gb.CPU.SetHooks(callHook, retHook)
 
 	// Create widgets
 	d.toolbar = d.newToolbar()

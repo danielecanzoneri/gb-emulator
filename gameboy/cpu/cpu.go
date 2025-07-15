@@ -40,6 +40,10 @@ type CPU struct {
 	MMU   *memory.MMU
 
 	cyclers []Ticker
+
+	// Used for debugger
+	callHook func()
+	retHook  func()
 }
 
 func (cpu *CPU) AddCycler(cyclers ...Ticker) {

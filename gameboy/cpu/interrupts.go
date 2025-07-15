@@ -84,6 +84,9 @@ func (cpu *CPU) requestInterrupt(interruptMask uint8) {
 func (cpu *CPU) serveInterrupt(interruptMask uint8) bool {
 	cpu.interruptMaskRequested = interruptMask
 	cpu.IME = false
+	if cpu.callHook != nil {
+		cpu.callHook()
+	}
 
 	// 2 NOP cycles (one is executed in cpu.PUSH_STACK)
 	cpu.Tick(4)
