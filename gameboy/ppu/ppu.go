@@ -4,6 +4,18 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
+type ppuState int
+
+const (
+	line0startingMode0 ppuState = iota // On line 0 after PPU is enabled, mode 2 is replaced by mode 0
+	mode0to2           ppuState = iota
+	mode2              ppuState = iota
+	mode2to3           ppuState = iota
+	mode3              ppuState = iota
+	mode0              ppuState = iota
+	mode1              ppuState = iota
+)
+
 const (
 	oamScan = 2
 	drawing = 3
@@ -12,9 +24,11 @@ const (
 )
 
 type PPU struct {
-	Dots           int   // 2: 80 dots,  3: 172-289, 0: 87-204, 1: 456 * 10
-	internalMode   uint8 // 2: OAM Scan, 3: Drawing, 0: HBlank, 1: VBlank
-	mode3ExtraDots int
+	Dots int // Dots elapsed rendering this line
+
+	// Internal (machine state and length)
+	state       ppuState
+	stateLength int // When it reaches 0, switch to next state
 
 	// vRAM and OAM data
 	vRAM vRAM
@@ -52,9 +66,6 @@ type PPU struct {
 	objEnabled           bool   // Bit 1
 	bgWindowEnabled      bool   // Bit 0
 
-	// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
-	lcdJustEnabled bool
-
 	// Shared STAT interrupt line (STAT interrupt is triggered after low -> high transition)
 	STATInterruptState bool
 
@@ -81,70 +92,6 @@ func (ppu *PPU) Tick(ticks uint) {
 		return
 	}
 
-	ppu.Dots += int(ticks) // M-cycles -> T-states
-	ppu.modeTicksElapsed += ticks
-
-	// Delay STAT updates by 4 ticks
-	if ppu.modeTicksElapsed >= 4 {
-		ppu.STAT = (ppu.STAT & 0xFC) | ppu.internalMode
-		switch ppu.internalMode {
-		case hBlank:
-			ppu.oam.readDisabled = false
-			ppu.vRAM.readDisabled = false
-			ppu.oam.writeDisabled = false
-			ppu.vRAM.writeDisabled = false
-		case oamScan:
-			ppu.oam.writeDisabled = true
-		case drawing:
-			ppu.oam.readDisabled = true
-			ppu.vRAM.readDisabled = true
-			ppu.oam.writeDisabled = true
-			ppu.vRAM.writeDisabled = true
-		}
-		ppu.checkLYLYC()
-	}
-	ppu.checkSTATInterruptState()
-
-	switch ppu.internalMode {
-	case oamScan:
-		if ppu.Dots > 80 {
-			ppu.setMode(drawing)
-		}
-	case drawing:
-		if ppu.Dots > 172+80+ppu.mode3ExtraDots {
-			ppu.setMode(hBlank)
-		}
-	case hBlank:
-		// On line 0 after LCD is enabled mode 2 (OAM scan) is replaced by mode 0 (HBlank)
-		if ppu.lcdJustEnabled && ppu.Dots > 80 {
-			ppu.setMode(drawing)
-		}
-
-		if ppu.Dots > 456 {
-			ppu.Dots -= 456
-			ppu.newLine()
-			if ppu.LY == 144 { // Enter VBlank period
-				ppu.setMode(vBlank)
-
-				// A STAT interrupt can also be triggered at line 144 when vblank starts.
-				ppu.checkSTATInterruptState()
-			} else {
-				ppu.setMode(oamScan)
-			}
-		}
-	case vBlank:
-		if ppu.Dots > 456 {
-			ppu.Dots -= 456
-			ppu.newLine()
-
-			if ppu.LY == 0 {
-				ppu.setMode(oamScan)
-			}
-		}
-	}
-}
-
-func (ppu *PPU) setMode(mode uint8) {
 	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
 	// normally it is blocked 4 ticks before STAT mode changes
 	// (when internal mode flag is updated) but is available again when STAT mode changes
@@ -155,60 +102,109 @@ func (ppu *PPU) setMode(mode uint8) {
 	// they are blocked for OAM (except for a cycle at the end of mode 2 in the 2 -> 3 transition)
 	// and blocked for vRAM in mode 3
 
-	ppu.internalMode = mode
-	ppu.modeTicksElapsed = 0
+	ticksThisMode := min(int(ticks), ppu.stateLength)
+	ppu.Dots += ticksThisMode
+	ppu.stateLength -= ticksThisMode
 
-	switch mode {
-	case oamScan:
-		ppu.oam.readDisabled = true
-	case drawing:
-		if ppu.lcdJustEnabled {
-			ppu.lcdJustEnabled = false
-		} else {
+	// Change internal mode and update state
+	if ppu.stateLength <= 0 {
+		switch ppu.state {
+		case line0startingMode0, mode2to3:
 			ppu.oam.readDisabled = true
 			ppu.vRAM.readDisabled = true
-			// For the 2 -> 3 transition
+			ppu.oam.writeDisabled = true
+			ppu.vRAM.writeDisabled = true
+
+			ppu.stateLength = 172 + ppu.renderLine() // Penalty dots
+			ppu.state = mode3
+			ppu.setMode(drawing)
+
+		case mode0to2:
+			ppu.oam.writeDisabled = true
+
+			ppu.stateLength = 80
+			ppu.state = mode2
+			ppu.setMode(oamScan)
+			ppu.searchOAM()
+
+		case mode2:
+			ppu.vRAM.readDisabled = true
 			ppu.oam.writeDisabled = false
+
+			ppu.stateLength = 4
+			ppu.state = mode2to3
+
+		case mode3:
+			ppu.oam.readDisabled = false
+			ppu.vRAM.readDisabled = false
+			ppu.oam.writeDisabled = false
+			ppu.vRAM.writeDisabled = false
+
+			ppu.stateLength = 456 - ppu.Dots
+			ppu.state = mode0
+			ppu.setMode(hBlank)
+
+		case mode0: // To mode 1 if LY == 144, to mode 2 otherwise
+			ppu.LY++
+			ppu.checkLYLYC()
+			ppu.Dots = 0
+
+			if ppu.LY == 144 {
+				// Enter VBlank period
+				ppu.stateLength = 456
+				ppu.state = mode1
+				ppu.setMode(vBlank)
+
+				ppu.wyCounter = 0
+				ppu.RequestVBlankInterrupt()
+
+				// Frame complete, switch buffers
+				ppu.frontBuffer = ppu.backBuffer
+				ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
+				// A STAT interrupt can also be triggered at line 144 when vblank starts.
+				ppu.checkSTATInterruptState()
+			} else {
+				ppu.oam.readDisabled = true
+				ppu.stateLength = 4
+				ppu.state = mode0to2
+			}
+
+		case mode1:
+			ppu.LY++
+			ppu.Dots = 0
+
+			if ppu.LY > 153 {
+				ppu.LY = 0
+				ppu.oam.readDisabled = true
+				ppu.stateLength = 4
+				ppu.state = mode0to2
+			} else {
+				ppu.stateLength = 456
+			}
+
+			ppu.checkLYLYC()
 		}
+	}
 
-		ppu.searchOAM()
-		ppu.mode3ExtraDots = ppu.renderLine()
-	case hBlank:
-		// OAM and vRAM are re-enabled 4 ticks later
-		// ppu.oam.readDisabled = false
-		// ppu.vRAM.readDisabled = false
-	case vBlank:
-		ppu.wyCounter = 0
-		ppu.RequestVBlankInterrupt()
-
-		// Frame complete, switch buffers
-		ppu.frontBuffer = ppu.backBuffer
-		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+	if ticksThisMode < int(ticks) {
+		ppu.Tick(ticks - uint(ticksThisMode))
 	}
 }
 
-func (ppu *PPU) newLine() {
-	ppu.LY++
-	if ppu.LY > 153 {
-		ppu.LY = 0
-	}
-
-	// When LY changes, LY=LYC flag is always set to 0 and then updated
-	// TODO - check if this is true
-	util.SetBit(&ppu.STAT, 2, 0)
+func (ppu *PPU) setMode(mode uint8) {
+	ppu.STAT = (ppu.STAT & 0xFC) | mode
+	ppu.checkSTATInterruptState()
 }
 
 func (ppu *PPU) checkLYLYC() {
-	if !ppu.active {
-		return
-	}
-
 	// Bit 2 of STAT register is set when LY = LYC
 	if ppu.LY == ppu.LYC {
 		util.SetBit(&ppu.STAT, 2, 1)
 	} else {
 		util.SetBit(&ppu.STAT, 2, 0)
 	}
+	ppu.checkSTATInterruptState()
 }
 
 func (ppu *PPU) checkSTATInterruptState() {

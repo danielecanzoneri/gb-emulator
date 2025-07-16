@@ -1,8 +1,9 @@
 package ppu
 
 func (ppu *PPU) SkipBoot() {
-	ppu.Dots = 404
-	ppu.internalMode = 1
+	ppu.Dots = 132
+	ppu.state = mode1
+	ppu.stateLength = 324
 
 	// vRAM
 	ppu.vRAM.tileData[1] = [16]uint8{0xF0, 0, 0xF0, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xF3, 0, 0xF3, 0}
