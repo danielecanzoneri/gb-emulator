@@ -71,9 +71,6 @@ func (cpu *CPU) Tick(ticks uint) {
 }
 
 func (cpu *CPU) ExecuteInstruction() {
-	// Service all interrupts (they may be cancelled)
-	cpu.handleInterrupts()
-
 	if !cpu.halted {
 		opcode := cpu.ReadNextByte()
 
@@ -635,6 +632,9 @@ func (cpu *CPU) ExecuteInstruction() {
 	} else { // Cycle if halted
 		cpu.Tick(4)
 	}
+
+	// Service eventual interrupts
+	cpu.handleInterrupts()
 }
 
 func (cpu *CPU) prefixedOpcode() {
