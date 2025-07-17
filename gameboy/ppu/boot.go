@@ -41,6 +41,7 @@ func (ppu *PPU) SkipBoot() {
 
 	ppu.LCDC = 0x91
 	ppu.STAT = 0x81
+	ppu.active = true
 	ppu.LY = 153
 	ppu.BGP = 0xFC
 	ppu.windowTileMapAddr = 0x9800
