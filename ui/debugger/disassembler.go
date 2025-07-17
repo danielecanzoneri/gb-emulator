@@ -167,7 +167,7 @@ func newDisassembler() *disassembler {
 	)
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
-			amount := computeRowsToScroll(a.Y, 4096)
+			amount := computeRowsToScroll(a.Y)
 			dis.scrollTo(dis.first + amount)
 		}
 	})

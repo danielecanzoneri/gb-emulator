@@ -11,28 +11,15 @@ import (
 // keyboard shortcuts for debugger operations.
 var InputHandlers = []func(){}
 
-func computeRowsToScroll(variation float64, maxScroll int) int {
+func computeRowsToScroll(variation float64) int {
 	direction := 1
 	if variation < 0 {
 		direction = -1
 	}
 
 	var amount int
-	switch int(math.Abs(variation)) {
-	case 0:
-		amount = 0
-	case 1:
-		amount = 1
-	case 2:
-		amount = 4
-	case 3:
-		amount = 32
-	case 4:
-		amount = 128
-	case 5:
-		amount = 512
-	default: // >= 6
-		amount = maxScroll
+	if v := int(math.Abs(variation)); v > 0 {
+		amount = 1 << (v - 1)
 	}
 	return -amount * direction
 }
