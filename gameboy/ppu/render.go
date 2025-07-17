@@ -107,21 +107,17 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 	// Draw objects with priority
 	for i := range ppu.numObjs {
 		obj := ppu.objsLY[i]
-
-		// OBJ penalty algorithm
-		// Only the OBJ’s leftmost pixel matters here, transparent or not; it is designated as “The Pixel” in the following.
-		// TODO - Understand if "The Pixel" of objects with x < 8 is the leftmost pixel of the object or the leftmost pixel on the screen.
-		// 1. Determine the tile (background or window) that The Pixel is within. (This is affected by horizontal scrolling and/or the window!)
-		thePixel := 0
-		if obj.x > 8 {
-			thePixel = int(obj.x) - 8
-			if thePixel >= FrameWidth {
-				continue
-			}
+		if obj.x >= 168 {
+			continue
 		}
 
-		// 2. If that tile has not been considered by a previous OBJ yet:
+		// OBJ penalty algorithm
+
+		// Only the OBJ’s leftmost pixel matters here.
+		// 1. Determine the tile (background or window) that the pixel is within. (This is affected by horizontal scrolling and/or the window!)
 		tileId := (obj.x + ppu.SCX) >> 3
+
+		// 2. If that tile has not been considered by a previous OBJ yet:
 		if _, ok := tileObjectsPenalties[tileId]; !ok {
 			tileObjectsPenalties[tileId] = true
 
