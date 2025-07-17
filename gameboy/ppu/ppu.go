@@ -177,8 +177,10 @@ func (ppu *PPU) Tick(ticks uint) {
 			if ppu.LY > 153 {
 				ppu.LY = 0
 				ppu.oam.readDisabled = true
-				ppu.stateLength = 4
-				ppu.state = mode0to2
+				ppu.oam.writeDisabled = true
+				ppu.stateLength = 80
+				ppu.state = mode2
+				ppu.setMode(oamScan)
 			} else {
 				ppu.stateLength = 456
 			}
