@@ -66,7 +66,9 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		panic("should not write LY")
 	case LYCAddr:
 		ppu.LYC = v
-		ppu.checkLYLYC()
+		if ppu.active { // Changing LYC while PPU is inactive doesn't update STAT
+			ppu.checkLYLYC()
+		}
 	case STATAddr:
 		// Spurious STAT interrupt: http://www.devrs.com/gb/files/faqs.html#GBBugs
 		// Writing anything to the STAT register while the Game Boy is either in mode 0 or 1,
