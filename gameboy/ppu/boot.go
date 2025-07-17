@@ -2,7 +2,7 @@ package ppu
 
 func (ppu *PPU) SkipBoot() {
 	ppu.Dots = 400
-	ppu.state = mode1Line153
+	ppu.state = line153LYLYC0
 	ppu.stateLength = 56
 
 	// vRAM

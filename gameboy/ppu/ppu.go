@@ -13,11 +13,13 @@ const (
 	mode2to3
 	mode3
 	mode0
-	startingMode1
+	mode0to1
 	mode1
-	startingMode1Line153
-	mode1Line153LYCCheck
-	mode1Line153
+	startingMode1
+	line153Start
+	line153LY0
+	line153LYLYCUnset
+	line153LYLYC0
 )
 
 const (
@@ -108,14 +110,11 @@ func (ppu *PPU) Tick(ticks uint) {
 	//
 	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ticksThisMode := min(ticks, uint(ppu.stateLength))
-	ppu.stateLength -= int(ticksThisMode)
-
-	ticksNextMode := ticks - ticksThisMode
-	ppu.Dots += int(ticksThisMode)
+	ppu.stateLength -= int(ticks)
+	ppu.Dots += int(ticks)
 
 	// Change internal mode and update state
-	if ppu.stateLength == 0 {
+	for ppu.stateLength <= 0 {
 		switch ppu.state {
 		case line0startingMode0, mode2to3:
 			ppu.oam.readDisabled = true
@@ -123,7 +122,7 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.oam.writeDisabled = true
 			ppu.vRAM.writeDisabled = true
 
-			ppu.stateLength = 172 + ppu.renderLine() // Penalty dots
+			ppu.stateLength += 172 + ppu.renderLine() // Penalty dots
 			ppu.state = mode3
 			ppu.setMode(drawing)
 
@@ -131,7 +130,7 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.checkLYLYC()
 			ppu.oam.writeDisabled = true
 
-			ppu.stateLength = 76
+			ppu.stateLength += 76
 			ppu.state = mode2
 			ppu.setMode(oamScan)
 			ppu.searchOAM()
@@ -140,7 +139,7 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.vRAM.readDisabled = true
 			ppu.oam.writeDisabled = false
 
-			ppu.stateLength = 4
+			ppu.stateLength += 4
 			ppu.state = mode2to3
 
 		case mode3:
@@ -149,79 +148,84 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.oam.writeDisabled = false
 			ppu.vRAM.writeDisabled = false
 
-			ppu.stateLength = 456 - ppu.Dots
+			ppu.stateLength += 456 - ppu.Dots
 			ppu.state = mode0
 			ppu.setMode(hBlank)
 
 		case mode0: // To mode 1 if LY == 144, to mode 2 otherwise
 			ppu.LY++
 			util.SetBit(&ppu.STAT, 2, 0)
-			ppu.Dots = 0
+			ppu.Dots -= 456
 
 			if ppu.LY == 144 {
-				// Enter VBlank period
-				ppu.stateLength = 456
-				ppu.state = mode1
-				ppu.setMode(vBlank)
-
-				ppu.wyCounter = 0
-				ppu.RequestVBlankInterrupt()
-
-				// Frame complete, switch buffers
-				ppu.frontBuffer = ppu.backBuffer
-				ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
-
-				// A STAT interrupt can also be triggered at line 144 when vblank starts.
-				ppu.checkSTATInterruptState()
+				ppu.stateLength += 4
+				ppu.state = mode0to1
 			} else {
 				ppu.oam.readDisabled = true
-				ppu.stateLength = 4
+				ppu.stateLength += 4
 				ppu.state = mode0to2
 			}
 
-		case startingMode1:
+		case mode0to1:
 			ppu.checkLYLYC()
-			ppu.stateLength = 456 - 4
+			ppu.stateLength += 456 - 4
 			ppu.state = mode1
+			ppu.setMode(vBlank)
+
+			ppu.wyCounter = 0
+			ppu.RequestVBlankInterrupt()
+
+			// Frame complete, switch buffers
+			ppu.frontBuffer = ppu.backBuffer
+			ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
+			// A STAT interrupt can also be triggered at line 144 when vblank starts.
+			ppu.checkSTATInterruptState()
 
 		case mode1:
 			ppu.LY++
 			util.SetBit(&ppu.STAT, 2, 0)
-			ppu.Dots = 0
+			ppu.Dots -= 456
 
 			if ppu.LY == 153 {
-				ppu.stateLength = 2
-				ppu.state = startingMode1Line153
+				ppu.stateLength += 4
+				ppu.state = line153Start
 			} else {
-				ppu.stateLength = 4
+				ppu.stateLength += 4
 				ppu.state = startingMode1
 			}
 
+		case startingMode1:
 			ppu.checkLYLYC()
+			ppu.stateLength += 456 - 4
+			ppu.state = mode1
 
 		// These timings were inferred from SameBoy, more tests must be run
-		case startingMode1Line153:
-			ppu.LY = 0
-			ppu.stateLength = 10
-			ppu.state = mode1Line153LYCCheck
-
-		case mode1Line153LYCCheck:
+		case line153Start:
 			ppu.checkLYLYC()
-			ppu.stateLength = 456 - 12
-			ppu.state = mode1Line153
 
-		case mode1Line153:
+			ppu.LY = 0
+			ppu.stateLength += 4
+			ppu.state = line153LY0
+
+		case line153LY0:
+			util.SetBit(&ppu.STAT, 2, 0)
+			ppu.stateLength += 4
+			ppu.state = line153LYLYCUnset
+
+		case line153LYLYCUnset:
+			ppu.checkLYLYC()
+			ppu.stateLength += 456 - 12
+			ppu.state = line153LYLYC0
+
+		case line153LYLYC0:
 			ppu.oam.readDisabled = true
 			ppu.oam.writeDisabled = true
-			ppu.Dots = 0
-			ppu.stateLength = 80
-			ppu.state = mode2
-			ppu.setMode(oamScan)
+			ppu.Dots -= 456
+			ppu.stateLength += 4
+			ppu.state = mode0to2
+			ppu.setMode(hBlank)
 		}
-	}
-
-	if ticksNextMode > 0 {
-		ppu.Tick(ticksNextMode)
 	}
 }
 
