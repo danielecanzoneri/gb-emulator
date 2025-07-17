@@ -1,9 +1,9 @@
 package ppu
 
 func (ppu *PPU) SkipBoot() {
-	ppu.Dots = 132
-	ppu.state = mode1
-	ppu.stateLength = 324
+	ppu.Dots = 400
+	ppu.state = mode1Line153
+	ppu.stateLength = 56
 
 	// vRAM
 	ppu.vRAM.tileData[1] = [16]uint8{0xF0, 0, 0xF0, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xF3, 0, 0xF3, 0}
@@ -42,7 +42,7 @@ func (ppu *PPU) SkipBoot() {
 	ppu.LCDC = 0x91
 	ppu.STAT = 0x81
 	ppu.active = true
-	ppu.LY = 153
+	ppu.LY = 0
 	ppu.BGP = 0xFC
 	ppu.windowTileMapAddr = 0x9800
 	ppu.bgWindowTileDataArea = 1

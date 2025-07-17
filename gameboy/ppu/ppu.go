@@ -8,12 +8,16 @@ type ppuState int
 
 const (
 	line0startingMode0 ppuState = iota // On line 0 after PPU is enabled, mode 2 is replaced by mode 0
-	mode0to2           ppuState = iota
-	mode2              ppuState = iota
-	mode2to3           ppuState = iota
-	mode3              ppuState = iota
-	mode0              ppuState = iota
-	mode1              ppuState = iota
+	mode0to2
+	mode2
+	mode2to3
+	mode3
+	mode0
+	startingMode1
+	mode1
+	startingMode1Line153
+	mode1Line153LYCCheck
+	mode1Line153
 )
 
 const (
@@ -101,13 +105,17 @@ func (ppu *PPU) Tick(ticks uint) {
 	// Write works differently: they are always tied to the STAT register: if it is 2 or 3,
 	// they are blocked for OAM (except for a cycle at the end of mode 2 in the 2 -> 3 transition)
 	// and blocked for vRAM in mode 3
+	//
+	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ticksThisMode := min(int(ticks), ppu.stateLength)
-	ppu.Dots += ticksThisMode
-	ppu.stateLength -= ticksThisMode
+	ticksThisMode := min(ticks, uint(ppu.stateLength))
+	ppu.stateLength -= int(ticksThisMode)
+
+	ticksNextMode := ticks - ticksThisMode
+	ppu.Dots += int(ticksThisMode)
 
 	// Change internal mode and update state
-	if ppu.stateLength <= 0 {
+	if ppu.stateLength == 0 {
 		switch ppu.state {
 		case line0startingMode0, mode2to3:
 			ppu.oam.readDisabled = true
@@ -120,6 +128,7 @@ func (ppu *PPU) Tick(ticks uint) {
 			ppu.setMode(drawing)
 
 		case mode0to2:
+			ppu.checkLYLYC()
 			ppu.oam.writeDisabled = true
 
 			ppu.stateLength = 76
@@ -146,7 +155,7 @@ func (ppu *PPU) Tick(ticks uint) {
 
 		case mode0: // To mode 1 if LY == 144, to mode 2 otherwise
 			ppu.LY++
-			ppu.checkLYLYC()
+			util.SetBit(&ppu.STAT, 2, 0)
 			ppu.Dots = 0
 
 			if ppu.LY == 144 {
@@ -170,27 +179,49 @@ func (ppu *PPU) Tick(ticks uint) {
 				ppu.state = mode0to2
 			}
 
+		case startingMode1:
+			ppu.checkLYLYC()
+			ppu.stateLength = 456 - 4
+			ppu.state = mode1
+
 		case mode1:
 			ppu.LY++
+			util.SetBit(&ppu.STAT, 2, 0)
 			ppu.Dots = 0
 
-			if ppu.LY > 153 {
-				ppu.LY = 0
-				ppu.oam.readDisabled = true
-				ppu.oam.writeDisabled = true
-				ppu.stateLength = 80
-				ppu.state = mode2
-				ppu.setMode(oamScan)
+			if ppu.LY == 153 {
+				ppu.stateLength = 2
+				ppu.state = startingMode1Line153
 			} else {
-				ppu.stateLength = 456
+				ppu.stateLength = 4
+				ppu.state = startingMode1
 			}
 
 			ppu.checkLYLYC()
+
+		// These timings were inferred from SameBoy, more tests must be run
+		case startingMode1Line153:
+			ppu.LY = 0
+			ppu.stateLength = 10
+			ppu.state = mode1Line153LYCCheck
+
+		case mode1Line153LYCCheck:
+			ppu.checkLYLYC()
+			ppu.stateLength = 456 - 12
+			ppu.state = mode1Line153
+
+		case mode1Line153:
+			ppu.oam.readDisabled = true
+			ppu.oam.writeDisabled = true
+			ppu.Dots = 0
+			ppu.stateLength = 80
+			ppu.state = mode2
+			ppu.setMode(oamScan)
 		}
 	}
 
-	if ticksThisMode < int(ticks) {
-		ppu.Tick(ticks - uint(ticksThisMode))
+	if ticksNextMode > 0 {
+		ppu.Tick(ticksNextMode)
 	}
 }
 
