@@ -122,7 +122,7 @@ func (ppu *PPU) Tick(ticks uint) {
 		case mode0to2:
 			ppu.oam.writeDisabled = true
 
-			ppu.stateLength = 80
+			ppu.stateLength = 76
 			ppu.state = mode2
 			ppu.setMode(oamScan)
 			ppu.searchOAM()
