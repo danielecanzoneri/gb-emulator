@@ -46,13 +46,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	}
 
 	// Set CPU hooks
-	callHook := func() {
-		d.CallDepth++
-	}
-	retHook := func() {
-		d.CallDepth--
-	}
-	gb.CPU.SetHooks(callHook, retHook)
+	d.initHooks()
 
 	// Create widgets
 	d.toolbar = d.newToolbar()

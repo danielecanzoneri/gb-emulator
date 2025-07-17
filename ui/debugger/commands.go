@@ -44,4 +44,15 @@ func (d *Debugger) Reset() {
 	defer d.Sync()
 
 	d.gameBoy.Reset()
+	d.initHooks()
+}
+
+func (d *Debugger) initHooks() {
+	callHook := func() {
+		d.CallDepth++
+	}
+	retHook := func() {
+		d.CallDepth--
+	}
+	d.gameBoy.CPU.SetHooks(callHook, retHook)
 }
