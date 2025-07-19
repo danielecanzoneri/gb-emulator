@@ -4,24 +4,6 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
-type ppuState int
-
-const (
-	line0startingMode0 ppuState = iota // On line 0 after PPU is enabled, mode 2 is replaced by mode 0
-	mode0to2
-	mode2
-	mode2to3
-	mode3
-	mode0
-	mode0to1
-	mode1
-	startingMode1
-	line153Start
-	line153LY0
-	line153LYLYCUnset
-	line153LYLYC0
-)
-
 const (
 	oamScan = 2
 	drawing = 3
@@ -33,8 +15,8 @@ type PPU struct {
 	Dots int // Dots elapsed rendering this line
 
 	// Internal (machine state and length)
-	state       ppuState
-	stateLength int // When it reaches 0, switch to next state
+	internalState ppuInternalState
+	stateLength   int // When it reaches 0, switch to next state
 
 	// vRAM and OAM data
 	vRAM vRAM
@@ -115,117 +97,9 @@ func (ppu *PPU) Tick(ticks uint) {
 
 	// Change internal mode and update state
 	for ppu.stateLength <= 0 {
-		switch ppu.state {
-		case line0startingMode0, mode2to3:
-			ppu.oam.readDisabled = true
-			ppu.vRAM.readDisabled = true
-			ppu.oam.writeDisabled = true
-			ppu.vRAM.writeDisabled = true
-
-			ppu.stateLength += 172 + ppu.renderLine() // Penalty dots
-			ppu.state = mode3
-			ppu.setMode(drawing)
-
-		case mode0to2:
-			ppu.checkLYLYC()
-			ppu.oam.writeDisabled = true
-
-			ppu.stateLength += 76
-			ppu.state = mode2
-			ppu.setMode(oamScan)
-			ppu.searchOAM()
-
-		case mode2:
-			ppu.vRAM.readDisabled = true
-			ppu.oam.writeDisabled = false
-
-			ppu.stateLength += 4
-			ppu.state = mode2to3
-
-		case mode3:
-			ppu.oam.readDisabled = false
-			ppu.vRAM.readDisabled = false
-			ppu.oam.writeDisabled = false
-			ppu.vRAM.writeDisabled = false
-
-			ppu.stateLength += 456 - ppu.Dots
-			ppu.state = mode0
-			ppu.setMode(hBlank)
-
-		case mode0: // To mode 1 if LY == 144, to mode 2 otherwise
-			ppu.LY++
-			util.SetBit(&ppu.STAT, 2, 0)
-			ppu.Dots -= 456
-
-			if ppu.LY == 144 {
-				ppu.stateLength += 4
-				ppu.state = mode0to1
-			} else {
-				ppu.oam.readDisabled = true
-				ppu.stateLength += 4
-				ppu.state = mode0to2
-			}
-
-		case mode0to1:
-			ppu.checkLYLYC()
-			ppu.stateLength += 456 - 4
-			ppu.state = mode1
-			ppu.setMode(vBlank)
-
-			ppu.wyCounter = 0
-			ppu.RequestVBlankInterrupt()
-
-			// Frame complete, switch buffers
-			ppu.frontBuffer = ppu.backBuffer
-			ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
-
-			// A STAT interrupt can also be triggered at line 144 when vblank starts.
-			ppu.checkSTATInterruptState()
-
-		case mode1:
-			ppu.LY++
-			util.SetBit(&ppu.STAT, 2, 0)
-			ppu.Dots -= 456
-
-			if ppu.LY == 153 {
-				ppu.stateLength += 4
-				ppu.state = line153Start
-			} else {
-				ppu.stateLength += 4
-				ppu.state = startingMode1
-			}
-
-		case startingMode1:
-			ppu.checkLYLYC()
-			ppu.stateLength += 456 - 4
-			ppu.state = mode1
-
-		// These timings were inferred from SameBoy, more tests must be run
-		case line153Start:
-			ppu.checkLYLYC()
-
-			ppu.LY = 0
-			ppu.stateLength += 4
-			ppu.state = line153LY0
-
-		case line153LY0:
-			util.SetBit(&ppu.STAT, 2, 0)
-			ppu.stateLength += 4
-			ppu.state = line153LYLYCUnset
-
-		case line153LYLYCUnset:
-			ppu.checkLYLYC()
-			ppu.stateLength += 456 - 12
-			ppu.state = line153LYLYC0
-
-		case line153LYLYC0:
-			ppu.oam.readDisabled = true
-			ppu.oam.writeDisabled = true
-			ppu.Dots -= 456
-			ppu.stateLength += 4
-			ppu.state = mode0to2
-			ppu.setMode(hBlank)
-		}
+		nextState := ppu.internalState.Next(ppu)
+		ppu.setState(nextState)
+		ppu.stateLength += ppu.internalState.Duration()
 	}
 }
 

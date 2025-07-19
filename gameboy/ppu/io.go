@@ -139,11 +139,7 @@ func (ppu *PPU) enable() {
 	ppu.active = true
 	ppu.checkLYLYC()
 
-	// Line 0 has different timing after enabling, it starts with mode 0 and goes straight to mode 3
-	// Moreover, mode 0 is shorter by 8 dots (here we subtract 4 because the other 4 dots will pass when ticking the CPU)
-	ppu.state = line0startingMode0
-	ppu.stateLength = 78 // (2 dots longer on line 0)
-	ppu.Dots = 4
+	ppu.setState(new(line0startingMode0))
 
 	ppu.emptyFrame()
 }
