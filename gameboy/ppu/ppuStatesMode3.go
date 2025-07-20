@@ -11,7 +11,9 @@ func (st *mode3) Init(ppu *PPU) {
 	ppu.vRAM.writeDisabled = true
 
 	st.penaltyDots = ppu.renderLine() // Penalty dots
-	ppu.setMode(drawing)
+	ppu.interruptMode = 3
+	ppu.STAT = (ppu.STAT & 0xFC) | drawing
+	ppu.checkSTATInterruptState()
 }
 func (st *mode3) Next(_ *PPU) ppuInternalState {
 	return new(mode0)

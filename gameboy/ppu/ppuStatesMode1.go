@@ -11,7 +11,15 @@ type line144M1 struct{}
 
 func (st *line144M1) Init(ppu *PPU) {
 	ppu.checkLYLYC()
-	ppu.setMode(vBlank)
+
+	// If bit 5 (mode 2 OAM interrupt) is set, an interrupt is also triggered
+	// at line 144 when vblank starts.
+	ppu.interruptMode = oamScan
+	ppu.checkSTATInterruptState()
+
+	ppu.interruptMode = vBlank
+	ppu.STAT = (ppu.STAT & 0xFC) | vBlank
+	ppu.checkSTATInterruptState()
 
 	ppu.wyCounter = 0
 	ppu.RequestVBlankInterrupt()

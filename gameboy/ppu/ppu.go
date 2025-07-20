@@ -16,7 +16,8 @@ type PPU struct {
 
 	// Internal (machine state and length)
 	InternalState       ppuInternalState
-	InternalStateLength int // When it reaches 0, switch to next state
+	InternalStateLength int   // When it reaches 0, switch to next state
+	interruptMode       uint8 // Mode used for the STAT interrupt line
 
 	// vRAM and OAM data
 	vRAM vRAM
@@ -96,16 +97,11 @@ func (ppu *PPU) Tick(ticks uint) {
 	ppu.Dots += int(ticks)
 
 	// Switch PPU internal state
-	for ppu.InternalStateLength < 0 {
+	for ppu.InternalStateLength <= 0 {
 		// Given the PPU state, we compute the next state
 		nextState := ppu.InternalState.Next(ppu)
 		ppu.setState(nextState)
 	}
-}
-
-func (ppu *PPU) setMode(mode uint8) {
-	ppu.STAT = (ppu.STAT & 0xFC) | mode
-	ppu.checkSTATInterruptState()
 }
 
 func (ppu *PPU) checkLYLYC() {
@@ -124,21 +120,14 @@ func (ppu *PPU) checkSTATInterruptState() {
 	}
 	state := false
 
-	mode := ppu.STAT & 3
 	// LYC == LY int (bit 6)
 	if (ppu.LY == ppu.LYC && (util.ReadBit(ppu.STAT, 6) > 0)) ||
 		// Mode 2 int (bit 5)
-		(mode == 2 && (util.ReadBit(ppu.STAT, 5) > 0)) ||
+		(ppu.interruptMode == 2 && (util.ReadBit(ppu.STAT, 5) > 0)) ||
 		// Mode 1 int (bit 4)
-		(mode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
+		(ppu.interruptMode == 1 && (util.ReadBit(ppu.STAT, 4) > 0)) ||
 		// Mode 0 int (bit 3)
-		(mode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
-		state = true
-	}
-
-	// If bit 5 (mode 2 OAM interrupt) is set, an interrupt is also triggered
-	// at line 144 when vblank starts.
-	if ppu.LY == 144 && util.ReadBit(ppu.STAT, 5) > 0 {
+		(ppu.interruptMode == 0 && (util.ReadBit(ppu.STAT, 3) > 0)) {
 		state = true
 	}
 

@@ -22,19 +22,33 @@ func (st *enabledLine0) Duration() int { return 78 }
 // Usual states of the PPU for mode 0
 //
 
-// Ticks 0-4 mode 0 -> 2 transition
+// Ticks 0,1,2 mode 0 -> 2 transition
 type mode0to2 struct{}
 
 func (st *mode0to2) Init(ppu *PPU) {
 	ppu.oam.readDisabled = true
 	util.SetBit(&ppu.STAT, 2, 0)
 
-	ppu.setMode(hBlank)
+	ppu.interruptMode = hBlank
+	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
+	ppu.checkSTATInterruptState()
 }
-func (st *mode0to2) Next(_ *PPU) ppuInternalState {
-	return new(mode2)
+func (st *mode0to2) Next(_ *PPU) ppuInternalState { return new(mode2Interrupt) }
+func (st *mode0to2) Duration() int                { return 3 }
+
+// Tick 3 mode 0 -> 2 transition
+//
+// The OAM STAT interrupt occurs 1 T-cycle before STAT actually changes, except on line 0.
+type mode2Interrupt struct{}
+
+func (st *mode2Interrupt) Init(ppu *PPU) {
+	if ppu.LY != 0 {
+		ppu.interruptMode = oamScan
+		ppu.checkSTATInterruptState()
+	}
 }
-func (st *mode0to2) Duration() int { return 4 }
+func (st *mode2Interrupt) Next(_ *PPU) ppuInternalState { return new(mode2) }
+func (st *mode2Interrupt) Duration() int                { return 1 }
 
 // HBlank state until end of line
 type mode0 struct {
@@ -49,7 +63,9 @@ func (st *mode0) Init(ppu *PPU) {
 
 	// Here we have to reset the previous state length so that each line is 456 dots
 	st.length = 456 - ppu.Dots - ppu.InternalStateLength
-	ppu.setMode(hBlank)
+	ppu.interruptMode = hBlank
+	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
+	ppu.checkSTATInterruptState()
 }
 func (st *mode0) Next(ppu *PPU) ppuInternalState {
 	// To mode 1 if LY == 144, to mode 2 otherwise

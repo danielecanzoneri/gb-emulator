@@ -6,7 +6,9 @@ func (st *mode2) Init(ppu *PPU) {
 	ppu.checkLYLYC()
 	ppu.oam.writeDisabled = true
 
-	ppu.setMode(oamScan)
+	ppu.interruptMode = oamScan
+	ppu.STAT = (ppu.STAT & 0xFC) | oamScan
+	ppu.checkSTATInterruptState()
 	ppu.searchOAM()
 }
 func (st *mode2) Next(_ *PPU) ppuInternalState {
