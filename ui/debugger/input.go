@@ -4,6 +4,11 @@ import (
 	"math"
 )
 
+const (
+	keyRepeatDelay    = 24 // 400 millisecond delay
+	keyRepeatInterval = 4  // Repeat 15 times a second
+)
+
 // InputHandlers stores a collection of input handler functions that are called
 // during each frame update to process keyboard shortcuts for debugger controls.
 // These handlers are registered by toolbar menu entries

@@ -2,14 +2,13 @@ package debugger
 
 import (
 	"fmt"
-	goimage "image"
-
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	goimage "image"
 )
 
 var (
@@ -145,7 +144,11 @@ func (t *toolbarMenu) newEntryWithShortcut(label string, onClick func(), shortcu
 				return
 			}
 		}
-		if inpututil.IsKeyJustPressed(shortcutKeys[len(shortcutKeys)-1]) {
+		d := inpututil.KeyPressDuration(shortcutKeys[len(shortcutKeys)-1])
+		if d == 1 { // Key just pressed
+			onClick()
+		}
+		if d > keyRepeatDelay && (d-keyRepeatDelay)%keyRepeatInterval == 0 { // Repeat if held down
 			onClick()
 		}
 	}
