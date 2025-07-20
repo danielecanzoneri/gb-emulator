@@ -96,7 +96,7 @@ func (ppu *PPU) Tick(ticks uint) {
 	ppu.Dots += int(ticks)
 
 	// Switch PPU internal state
-	for ppu.InternalStateLength <= 0 {
+	for ppu.InternalStateLength < 0 {
 		nextState := ppu.InternalState.Next(ppu)
 		ppu.setState(nextState)
 	}
