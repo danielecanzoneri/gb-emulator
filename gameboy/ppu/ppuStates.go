@@ -8,6 +8,6 @@ type ppuInternalState interface {
 
 func (ppu *PPU) setState(state ppuInternalState) {
 	ppu.InternalState = state
-	state.Init(ppu)
+	state.Init(ppu) // Here it's where the actual state switching happens
 	ppu.InternalStateLength += state.Duration()
 }
