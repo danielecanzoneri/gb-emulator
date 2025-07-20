@@ -139,7 +139,9 @@ func (ppu *PPU) enable() {
 	ppu.active = true
 	ppu.checkLYLYC()
 
-	ppu.setState(new(line0startingMode0))
+	ppu.Dots = 0
+	ppu.InternalStateLength = 0
+	ppu.setState(new(enabledLine0))
 
 	ppu.emptyFrame()
 }

@@ -7,6 +7,7 @@ type ppuInternalState interface {
 }
 
 func (ppu *PPU) setState(state ppuInternalState) {
-	ppu.internalState = state
+	ppu.InternalState = state
 	state.Init(ppu)
+	ppu.InternalStateLength += state.Duration()
 }

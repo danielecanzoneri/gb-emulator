@@ -6,53 +6,82 @@ import "github.com/danielecanzoneri/gb-emulator/util"
 // VBlank mode for lines 144-152
 //
 
-// Ticks 4-456
-type mode1 struct{}
+// Ticks 4-456 for line 144
+type line144M1 struct{}
 
-func (st *mode1) Init(_ *PPU) {}
-func (st *mode1) Next(ppu *PPU) ppuInternalState {
+func (st *line144M1) Init(ppu *PPU) {
+	ppu.checkLYLYC()
+	ppu.setMode(vBlank)
+
+	ppu.wyCounter = 0
+	ppu.RequestVBlankInterrupt()
+
+	// Frame complete, switch buffers
+	ppu.frontBuffer = ppu.backBuffer
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
+	// A STAT interrupt can also be triggered at line 144 when vblank starts.
+	ppu.checkSTATInterruptState()
+}
+func (st *line144M1) Next(ppu *PPU) ppuInternalState {
 	ppu.LY++
 	util.SetBit(&ppu.STAT, 2, 0)
 	ppu.Dots -= 456
 
+	return new(startM1)
+}
+func (st *line144M1) Duration() int { return 456 - 4 }
+
+// Ticks 0-4 for lines 145-152
+type startM1 struct{}
+
+func (st *startM1) Init(ppu *PPU) {
+	util.SetBit(&ppu.STAT, 2, 0)
+}
+func (st *startM1) Next(_ *PPU) ppuInternalState {
+	return new(mode1)
+}
+func (st *startM1) Duration() int { return 4 }
+
+// Ticks 4-456 for lines 145-152
+type mode1 struct{}
+
+func (st *mode1) Init(ppu *PPU) {
+	ppu.checkLYLYC()
+}
+func (st *mode1) Next(ppu *PPU) ppuInternalState {
+	ppu.LY++
+	ppu.Dots -= 456
+
 	if ppu.LY == 153 {
-		return new(line153Start)
+		return new(startLine153)
 	} else {
-		return new(startingMode1)
+		return new(startM1)
 	}
 }
 func (st *mode1) Duration() int { return 456 - 4 }
-
-// Ticks 0-4 for lines 145-152
-type startingMode1 struct{}
-
-func (st *startingMode1) Init(_ *PPU) {}
-func (st *startingMode1) Next(ppu *PPU) ppuInternalState {
-	ppu.checkLYLYC()
-	return new(mode1)
-}
-func (st *startingMode1) Duration() int { return 4 }
 
 //
 // VBlank mode for line 153
 //
 
 // Ticks 0-4 for line 153
-type line153Start struct{}
+type startLine153 struct{}
 
-func (st *line153Start) Init(_ *PPU) {}
-func (st *line153Start) Next(_ *PPU) ppuInternalState {
+func (st *startLine153) Init(ppu *PPU) {
+	util.SetBit(&ppu.STAT, 2, 0)
+}
+func (st *startLine153) Next(_ *PPU) ppuInternalState {
 	return new(line153LY0)
 }
-func (st *line153Start) Duration() int { return 4 }
+func (st *startLine153) Duration() int { return 4 }
 
 // Ticks 4-8 for line 153
 type line153LY0 struct{}
 
 func (st *line153LY0) Init(ppu *PPU) {
-	ppu.checkLYLYC()
-
 	ppu.LY = 0
+	ppu.checkLYLYC()
 }
 func (st *line153LY0) Next(_ *PPU) ppuInternalState {
 	return new(line153LYLYCUnset)
@@ -76,7 +105,8 @@ type line153LYLYC0 struct{}
 func (st *line153LYLYC0) Init(ppu *PPU) {
 	ppu.checkLYLYC()
 }
-func (st *line153LYLYC0) Next(_ *PPU) ppuInternalState {
+func (st *line153LYLYC0) Next(ppu *PPU) ppuInternalState {
+	ppu.Dots -= 456
 	return new(mode0to2)
 }
 func (st *line153LYLYC0) Duration() int { return 456 - 12 }

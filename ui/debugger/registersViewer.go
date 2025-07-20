@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/widget"
@@ -126,6 +127,13 @@ func newLcdInternalPanel() *panel {
 	entries := []panelEntry{
 		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.Dots) }},
 		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.STAT&3) }},
+		{name: "State", valueSync: func(gb *gameboy.GameBoy) string {
+			if gb.PPU.InternalState == nil {
+				return " "
+			}
+			return reflect.TypeOf(gb.PPU.InternalState).String()[5:]
+		}},
+		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.InternalStateLength) }},
 	}
 	return newPanel("LCD (internal)", entries...)
 }

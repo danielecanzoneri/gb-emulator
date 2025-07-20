@@ -15,8 +15,8 @@ type PPU struct {
 	Dots int // Dots elapsed rendering this line
 
 	// Internal (machine state and length)
-	internalState ppuInternalState
-	stateLength   int // When it reaches 0, switch to next state
+	InternalState       ppuInternalState
+	InternalStateLength int // When it reaches 0, switch to next state
 
 	// vRAM and OAM data
 	vRAM vRAM
@@ -92,14 +92,13 @@ func (ppu *PPU) Tick(ticks uint) {
 	//
 	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ppu.stateLength -= int(ticks)
+	ppu.InternalStateLength -= int(ticks)
 	ppu.Dots += int(ticks)
 
-	// Change internal mode and update state
-	for ppu.stateLength <= 0 {
-		nextState := ppu.internalState.Next(ppu)
+	// Switch PPU internal state
+	for ppu.InternalStateLength <= 0 {
+		nextState := ppu.InternalState.Next(ppu)
 		ppu.setState(nextState)
-		ppu.stateLength += ppu.internalState.Duration()
 	}
 }
 
