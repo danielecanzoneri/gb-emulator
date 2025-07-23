@@ -1,9 +1,14 @@
 package ppu
 
-// When PPU is enabled, mode 2 of the first line is replaced with mode 0
+// When PPU is enabled:
+//   - line 0 starts with mode 0 and goes straight to mode 3
+//   - line 0 has different timings because the PPU is late by 2 T-cycles
 type glitchedMode2 struct{}
 
 func (st *glitchedMode2) Init(ppu *PPU) {
+	// This line is 8 ticks shorter (4 ticks already passed when enabling PPU)
+	ppu.Dots += 4
+
 	ppu.interruptMode = 0xFF
 	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
 	ppu.checkSTATInterrupt()
