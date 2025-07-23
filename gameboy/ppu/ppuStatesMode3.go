@@ -5,13 +5,8 @@ type mode3 struct {
 }
 
 func (st *mode3) Init(ppu *PPU) {
-	ppu.oam.readDisabled = true
-	ppu.vRAM.readDisabled = true
-	ppu.oam.writeDisabled = true
-	ppu.vRAM.writeDisabled = true
-
 	st.penaltyDots = ppu.renderLine() // Penalty dots
-	ppu.interruptMode = 3
+	ppu.interruptMode = drawing
 	ppu.STAT = (ppu.STAT & 0xFC) | drawing
 	ppu.checkSTATInterruptState()
 }

@@ -141,7 +141,7 @@ func (ppu *PPU) enable() {
 
 	ppu.Dots = 0
 	ppu.InternalStateLength = 0
-	ppu.setState(new(enabledLine0))
+	ppu.setState(new(mode2))
 
 	ppu.emptyFrame()
 }
@@ -158,6 +158,8 @@ func (ppu *PPU) disable() {
 	// Reset to HBlank
 	ppu.LY = 0
 	ppu.Dots = 0
+	ppu.InternalStateLength = 0
+	ppu.InternalState = nil
 
 	// Blank screen
 	ppu.emptyFrame()
