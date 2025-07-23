@@ -67,17 +67,17 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 	case LYCAddr:
 		ppu.LYC = v
 		if ppu.active { // Changing LYC while PPU is inactive doesn't update STAT
-			ppu.checkLYLYC()
+			ppu.checkSTATInterrupt()
 		}
 	case STATAddr:
 		// Spurious STAT interrupt: http://www.devrs.com/gb/files/faqs.html#GBBugs
 		// Writing anything to the STAT register while the Game Boy is either in mode 0 or 1,
 		// cause bit 1 of the IF register ($ff0f) to be set.
-		if !ppu.STATInterruptState && (ppu.STAT&3 < 2) {
+		if !ppu.STATInterruptLine && (ppu.STAT&3 < 2) {
 			ppu.RequestSTATInterrupt()
 		}
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
-		ppu.checkSTATInterruptState()
+		ppu.checkSTATInterrupt()
 	case BGPAddr:
 		ppu.BGP = Palette(v)
 	case OBP0Addr:
@@ -137,11 +137,11 @@ func (ppu *PPU) enable() {
 		return
 	}
 	ppu.active = true
-	ppu.checkLYLYC()
-
 	ppu.Dots = 0
 	ppu.InternalStateLength = 0
-	ppu.setState(new(mode2))
+
+	ppu.setState(new(glitchedMode2))
+	ppu.checkSTATInterrupt()
 
 	ppu.emptyFrame()
 }

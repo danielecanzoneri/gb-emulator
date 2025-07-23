@@ -3,17 +3,15 @@ package ppu
 type mode1 struct{}
 
 func (st *mode1) Init(ppu *PPU) {
-	ppu.checkLYLYC()
-
 	if ppu.LY == 144 {
 		// If bit 5 (mode 2 OAM interrupt) is set, an interrupt is also triggered
 		// at line 144 when vblank starts.
 		ppu.interruptMode = oamScan
-		ppu.checkSTATInterruptState()
+		ppu.checkSTATInterrupt()
 
 		ppu.interruptMode = vBlank
 		ppu.STAT = (ppu.STAT & 0xFC) | vBlank
-		ppu.checkSTATInterruptState()
+		ppu.checkSTATInterrupt()
 
 		ppu.wyCounter = 0
 		ppu.RequestVBlankInterrupt()

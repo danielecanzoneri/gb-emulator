@@ -56,7 +56,7 @@ type PPU struct {
 	bgWindowEnabled      bool   // Bit 0
 
 	// Shared STAT interrupt line (STAT interrupt is triggered after low -> high transition)
-	STATInterruptState bool
+	STATInterruptLine bool
 
 	// Callbacks to request interrupt
 	RequestVBlankInterrupt func()
@@ -104,21 +104,18 @@ func (ppu *PPU) Tick(ticks uint) {
 	}
 }
 
-func (ppu *PPU) checkLYLYC() {
+func (ppu *PPU) checkSTATInterrupt() {
+	if !ppu.active {
+		return
+	}
+	state := false
+
 	// Bit 2 of STAT register is set when LY = LYC
 	if ppu.LY == ppu.LYC {
 		util.SetBit(&ppu.STAT, 2, 1)
 	} else {
 		util.SetBit(&ppu.STAT, 2, 0)
 	}
-	ppu.checkSTATInterruptState()
-}
-
-func (ppu *PPU) checkSTATInterruptState() {
-	if !ppu.active {
-		return
-	}
-	state := false
 
 	// LYC == LY int (bit 6)
 	if (ppu.LY == ppu.LYC && (util.ReadBit(ppu.STAT, 6) > 0)) ||
@@ -132,8 +129,8 @@ func (ppu *PPU) checkSTATInterruptState() {
 	}
 
 	// Detect low -> high transition
-	if !ppu.STATInterruptState && state {
+	if !ppu.STATInterruptLine && state {
 		ppu.RequestSTATInterrupt()
 	}
-	ppu.STATInterruptState = state
+	ppu.STATInterruptLine = state
 }

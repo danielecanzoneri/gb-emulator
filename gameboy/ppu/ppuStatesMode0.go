@@ -5,12 +5,17 @@ type mode0 struct {
 }
 
 func (st *mode0) Init(ppu *PPU) {
+	ppu.oam.readDisabled = false
+	ppu.oam.writeDisabled = false
+	ppu.vRAM.readDisabled = false
+	ppu.vRAM.writeDisabled = false
+
 	// Here we have to reset the previous state length so that each line is 456 dots
 	st.length = lineLength - ppu.Dots - ppu.InternalStateLength
 
 	ppu.interruptMode = hBlank
 	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
-	ppu.checkSTATInterruptState()
+	ppu.checkSTATInterrupt()
 }
 func (st *mode0) Next(ppu *PPU) ppuInternalState {
 	// To mode 1 if LY == 144, to mode 2 otherwise
