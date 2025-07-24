@@ -101,8 +101,8 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 	}
 	var pixelBGPriority = [FrameWidth]bool{} // Pixel priority for BG/Window over obj
 
-	// Tiles considered in the OBJ penalty algorithm
-	var tileObjectsPenalties = map[uint8]bool{}
+	// Tiles considered in the OBJ penalty algorithm (x ranges from 0 to 167+7, so we have at most 22 tiles
+	var tileObjectsPenalties [(167 + 7) >> 3]bool
 
 	// Draw objects with priority
 	for i := range ppu.numObjs {
@@ -112,19 +112,20 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 		}
 
 		// OBJ penalty algorithm
+		x := obj.x + (ppu.SCX & 0b111)
 
 		// Only the OBJ’s leftmost pixel matters here.
 		// 1. Determine the tile (background or window) that the pixel is within. (This is affected by horizontal scrolling and/or the window!)
-		tileId := (obj.x + ppu.SCX) >> 3
+		tileId := x >> 3
 
 		// 2. If that tile has not been considered by a previous OBJ yet:
-		if _, ok := tileObjectsPenalties[tileId]; !ok {
+		if !tileObjectsPenalties[tileId] {
 			tileObjectsPenalties[tileId] = true
 
 			//    - Count how many of that tile’s pixels are strictly to the right of The Pixel.
 			//    - Subtract 2.
 			//    - Incur this many dots of penalty, or zero if negative (from waiting for the BG fetch to finish).
-			penaltyDots += max(5-int(obj.x&7), 0)
+			penaltyDots += max(5-int(x&7), 0)
 		}
 
 		// 3. Incur a flat, 6-dot penalty (from fetching the OBJ’s tile).

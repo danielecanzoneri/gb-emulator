@@ -19,5 +19,6 @@ func (st *mode3) Next(_ *PPU) ppuInternalState {
 	return new(mode0)
 }
 func (st *mode3) Duration() int {
-	return 172 + st.penaltyDots
+	// Round to M-cycle (TODO - investigate why it doesn't work otherwise)
+	return 172 + st.penaltyDots & ^3
 }
