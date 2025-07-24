@@ -23,9 +23,9 @@ func (st *mode0) Next(ppu *PPU) ppuInternalState {
 	ppu.Dots -= lineLength
 
 	if ppu.LY == 144 {
-		return new(mode1)
+		return new(mode1Start)
 	} else {
-		return new(mode2)
+		return new(mode0ToMode2)
 	}
 }
 func (st *mode0) Duration() int {

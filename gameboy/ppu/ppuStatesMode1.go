@@ -1,5 +1,19 @@
 package ppu
 
+import "github.com/danielecanzoneri/gb-emulator/util"
+
+// First 4 ticks
+type mode1Start struct{}
+
+func (st *mode1Start) Init(ppu *PPU) {
+	util.SetBit(&ppu.STAT, 2, 0)
+}
+func (st *mode1Start) Next(ppu *PPU) ppuInternalState {
+	return new(mode1)
+}
+func (st *mode1Start) Duration() int { return 4 }
+
+// Remaining ticks for vBlank state
 type mode1 struct{}
 
 func (st *mode1) Init(ppu *PPU) {
@@ -27,9 +41,9 @@ func (st *mode1) Next(ppu *PPU) ppuInternalState {
 
 	if ppu.LY == 154 {
 		ppu.LY = 0
-		return new(mode2)
+		return new(mode0ToMode2)
 	} else {
-		return new(mode1)
+		return new(mode1Start)
 	}
 }
-func (st *mode1) Duration() int { return lineLength }
+func (st *mode1) Duration() int { return lineLength - 4 }

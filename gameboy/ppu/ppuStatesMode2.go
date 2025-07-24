@@ -1,5 +1,9 @@
 package ppu
 
+import (
+	"github.com/danielecanzoneri/gb-emulator/util"
+)
+
 // When PPU is enabled:
 //   - line 0 starts with mode 0 and goes straight to mode 3
 //   - line 0 has different timings because the PPU is late by 2 T-cycles
@@ -34,3 +38,15 @@ func (st *mode2) Next(_ *PPU) ppuInternalState {
 	return new(mode3)
 }
 func (st *mode2) Duration() int { return mode2Length }
+
+// Mode 2 first 4 ticks
+type mode0ToMode2 struct {
+}
+
+func (st *mode0ToMode2) Init(ppu *PPU) {
+	util.SetBit(&ppu.STAT, 2, 0)
+}
+func (st *mode0ToMode2) Next(_ *PPU) ppuInternalState {
+	return new(mode2)
+}
+func (st *mode0ToMode2) Duration() int { return 4 }
