@@ -1126,8 +1126,8 @@ func Test_HALT(t *testing.T) {
 		cpu.MMU.Write(ieAddr, timerMask)
 		cpu.ExecuteInstruction()
 
-		if cpu.PC != timerHandler+1 {
-			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, timerHandler+1)
+		if cpu.PC != timerHandler {
+			t.Errorf("CPU was not woken up by interrupt, got PC=%02X, expected %02X", cpu.PC, timerHandler)
 		}
 	})
 
@@ -1138,7 +1138,7 @@ func Test_HALT(t *testing.T) {
 		cpu.halted = false
 		cpu.MMU.Write(ifAddr, 0)
 		cpu.MMU.Write(ieAddr, 0)
-		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE)
+		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE, NOP_OPCODE)
 		cpu.ExecuteInstruction()
 		cpu.ExecuteInstruction()
 
@@ -1148,6 +1148,7 @@ func Test_HALT(t *testing.T) {
 
 		cpu.MMU.Write(ifAddr, timerMask)
 		cpu.MMU.Write(ieAddr, timerMask)
+		cpu.ExecuteInstruction()
 		cpu.ExecuteInstruction()
 
 		if cpu.PC != PC+2 {
@@ -2639,17 +2640,19 @@ func Test_DI(t *testing.T) {
 func Test_EI(t *testing.T) {
 	cpu := mockCPU()
 	cpu.IME = false
+	cpu.MMU.Write(ifAddr, timerMask)
+	cpu.MMU.Write(ieAddr, timerMask)
 
 	writeTestProgram(cpu, EI_OPCODE, NOP_OPCODE)
 
 	cpu.ExecuteInstruction()
-	if cpu.IME == true {
+	if cpu.PC != 1 {
 		t.Error("EI instruction was not delayed")
 	}
 
 	cpu.ExecuteInstruction()
-	if cpu.IME == false {
-		t.Fatal("IME was not set")
+	if cpu.PC != timerHandler {
+		t.Errorf("Interrupts not enabled, got PC=%02X, expected %02X", cpu.PC, timerHandler)
 	}
 }
 
