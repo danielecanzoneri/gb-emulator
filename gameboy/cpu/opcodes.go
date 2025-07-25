@@ -69,7 +69,10 @@ func (cpu *CPU) LD_A_HLDmem() {
 // LD N16 SP
 func (cpu *CPU) LD_N16_SP() {
 	addr := cpu.ReadNextWord()
-	cpu.WriteWord(addr, cpu.SP)
+	high, low := util.SplitWord(cpu.SP)
+
+	cpu.WriteByte(addr, low)
+	cpu.WriteByte(addr+1, high)
 }
 
 // INC R16
@@ -883,8 +886,13 @@ func (cpu *CPU) CP_A_N8() {
 
 // POP R16stk
 func (cpu *CPU) POP_STACK() uint16 {
-	cpu.SP += 2
-	return cpu.ReadWord(cpu.SP - 2)
+	cpu.PPU.TriggerOAMBug(cpu.SP)
+	lowAddr := cpu.ReadByte(cpu.SP)
+	cpu.SP++
+	cpu.PPU.TriggerOAMBug(cpu.SP)
+	highAddr := cpu.ReadByte(cpu.SP)
+	cpu.SP++
+	return util.CombineBytes(highAddr, lowAddr)
 }
 func (cpu *CPU) POP_BC() {
 	cpu.writeBC(cpu.POP_STACK())
@@ -905,8 +913,10 @@ func (cpu *CPU) PUSH_STACK(v uint16) {
 
 	// Write first high then low
 	high, low := util.SplitWord(v)
+	cpu.PPU.TriggerOAMBug(cpu.SP)
 	cpu.SP--
 	cpu.WriteByte(cpu.SP, high)
+	cpu.PPU.TriggerOAMBug(cpu.SP)
 	cpu.SP--
 	cpu.WriteByte(cpu.SP, low)
 }

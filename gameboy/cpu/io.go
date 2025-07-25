@@ -34,20 +34,6 @@ func (cpu *CPU) WriteNextByte(v uint8) {
 	cpu.PC++
 }
 
-// ReadWord uses 2 M-Cycles
-func (cpu *CPU) ReadWord(addr uint16) uint16 {
-	lowAddr := cpu.ReadByte(addr)
-	highAddr := cpu.ReadByte(addr + 1)
-	return util.CombineBytes(highAddr, lowAddr)
-
-}
-func (cpu *CPU) WriteWord(addr uint16, v uint16) {
-	high, low := util.SplitWord(v)
-
-	cpu.WriteByte(addr, low)
-	cpu.WriteByte(addr+1, high)
-}
-
 func (cpu *CPU) ReadNextWord() uint16 {
 	lowAddr := cpu.ReadNextByte()
 	highAddr := cpu.ReadNextByte()
