@@ -15,6 +15,9 @@ type UI struct {
 	gameTitle string
 	fileName  string
 
+	// When true, stop emulation
+	Paused bool
+
 	// Audio player
 	audioBuffer chan float32
 	audioPlayer *oto.Player

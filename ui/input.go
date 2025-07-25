@@ -14,7 +14,7 @@ func (ui *UI) handleInput() {
 	// Ctrl+L to load a new game
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		// Stop running
-		ui.audioPlayer.Pause()
+		ui.Paused = true
 
 		// Save game before switching
 		ui.Save()
@@ -23,7 +23,7 @@ func (ui *UI) handleInput() {
 		ui.gameBoy.Reset()
 
 		// Start running
-		ui.audioPlayer.Play()
+		ui.Paused = false
 	}
 
 	ui.handleAudioToggle()

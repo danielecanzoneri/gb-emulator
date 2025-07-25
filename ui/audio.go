@@ -63,7 +63,7 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 
 		default:
 			// If debugger is active and paused, return silence
-			if ui.debugger.Active && !ui.debugger.Continued { // If paused, return silence
+			if ui.Paused || (ui.debugger.Active && !ui.debugger.Continued) { // If paused, return silence
 				binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(0))
 				bufferPosition += 4
 				continue
