@@ -24,8 +24,8 @@ type oamViewerObject struct {
 	drawOptions *ebiten.DrawImageOptions
 	graphic     *widget.Graphic
 
-	xLabel         *widget.Text
 	yLabel         *widget.Text
+	xLabel         *widget.Text
 	tileLabel      *widget.Text
 	attributeLabel *widget.Text
 }
@@ -46,13 +46,13 @@ func newOamViewerObject(index int) *oamViewerObject {
 	)
 
 	// Object data
-	obj.xLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.yLabel = newLabel("00", theme.Debugger.LabelColor)
+	obj.xLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.tileLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.attributeLabel = newLabel("00", theme.Debugger.LabelColor)
 
 	dataContainer := newContainer(widget.DirectionVertical,
-		obj.xLabel, obj.yLabel, obj.tileLabel, obj.attributeLabel,
+		obj.yLabel, obj.xLabel, obj.tileLabel, obj.attributeLabel,
 	)
 
 	obj.Container = widget.NewContainer(widget.ContainerOpts.Layout(
@@ -70,8 +70,8 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 	oamObj := &gb.PPU.OAM.Data[obj.index]
 
 	// Update data
-	obj.xLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
-	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(1))
+	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
+	obj.xLabel.Label = fmt.Sprintf("%02X", oamObj.Read(1))
 	obj.tileLabel.Label = fmt.Sprintf("%02X", oamObj.Read(2))
 	obj.attributeLabel.Label = fmt.Sprintf("%02X", oamObj.Read(3))
 
