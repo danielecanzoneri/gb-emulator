@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"image/color"
 
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
@@ -59,8 +60,8 @@ func newMemoryViewer() *memoryViewer {
 	// Slider
 	mv.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
-			Idle: image.NewNineSliceColor(sliderTrackColor),
-		}, buttonImage),
+			Idle: image.NewNineSliceColor(theme.Debugger.Slider.TrackColor),
+		}, theme.Debugger.Button.Image),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),
 		widget.SliderOpts.MinMax(0, len(mv.entries)-mv.length),
@@ -84,7 +85,7 @@ func newMemoryViewer() *memoryViewer {
 			Idle: image.NewNineSliceColor(color.RGBA{}),
 			Mask: image.NewNineSliceColor(color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
 		}),
-		widget.ScrollContainerOpts.Padding(widget.NewInsetsSimple(padding)),
+		widget.ScrollContainerOpts.Padding(widget.NewInsetsSimple(theme.Debugger.Padding)),
 	)
 	scrollContainer.GetWidget().ScrolledEvent.AddHandler(func(args any) {
 		if a, ok := args.(*widget.WidgetScrolledEventArgs); ok {
@@ -96,7 +97,7 @@ func newMemoryViewer() *memoryViewer {
 	mv.Container = newContainer(widget.DirectionHorizontal,
 		scrollContainer, mv.slider,
 	)
-	mv.Container.BackgroundImage = image.NewNineSliceColor(mainColor)
+	mv.Container.BackgroundImage = image.NewNineSliceColor(theme.Debugger.Main.Color)
 
 	return mv
 }

@@ -2,10 +2,10 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
-	"image/color"
 )
 
 const (
@@ -29,17 +29,17 @@ func newOamViewerObject() *oamViewerObject {
 
 	// Object image
 	obj.sprite = ebiten.NewImage(8*objectsScale, 8*objectsScale)
-	obj.sprite.Fill(color.RGBA{R: 198, G: 222, B: 140, A: 255})
+	obj.sprite.Fill(theme.GameBoyPalette[0])
 
 	sprite := widget.NewGraphic(
 		widget.GraphicOpts.Image(obj.sprite),
 	)
 
 	// Object data
-	obj.xLabel = newLabel("00", labelColor)
-	obj.yLabel = newLabel("00", labelColor)
-	obj.tileLabel = newLabel("00", labelColor)
-	obj.attributeLabel = newLabel("00", labelColor)
+	obj.xLabel = newLabel("00", theme.Debugger.LabelColor)
+	obj.yLabel = newLabel("00", theme.Debugger.LabelColor)
+	obj.tileLabel = newLabel("00", theme.Debugger.LabelColor)
+	obj.attributeLabel = newLabel("00", theme.Debugger.LabelColor)
 
 	dataContainer := newContainer(widget.DirectionVertical,
 		obj.xLabel, obj.yLabel, obj.tileLabel, obj.attributeLabel,
@@ -78,9 +78,9 @@ func (d *Debugger) newOamViewer() *oamViewer {
 	root := widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewGridLayout(
 			widget.GridLayoutOpts.Columns(8), // Display as 5x8 grid
-			widget.GridLayoutOpts.Padding(insets),
+			widget.GridLayoutOpts.Padding(theme.Debugger.Insets),
 			//Define how far apart the rows and columns should be
-			widget.GridLayoutOpts.Spacing(padding, padding*2),
+			widget.GridLayoutOpts.Spacing(theme.Debugger.Padding, theme.Debugger.Padding*2),
 		)),
 	)
 

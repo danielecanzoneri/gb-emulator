@@ -1,10 +1,12 @@
 package debugger
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"image/color"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"image/color"
 )
 
 type panelEntry struct {
@@ -22,17 +24,17 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p := new(panel)
 
 	// Create container (background image should account for padding)
-	backgroundImage := image.NewBorderedNineSliceColor(mainColor, color.Transparent, padding)
+	backgroundImage := image.NewBorderedNineSliceColor(theme.Debugger.Main.Color, color.Transparent, theme.Debugger.Padding)
 	p.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(padding)),
+			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(theme.Debugger.Padding)),
 		)),
 		widget.ContainerOpts.BackgroundImage(backgroundImage),
 	)
 
 	// Panel title
-	titleLabel := newLabel(title, titleColor)
+	titleLabel := newLabel(title, theme.Debugger.TitleColor)
 	p.AddChild(titleLabel)
 
 	// Two vertical containers: one with labels and one with values
@@ -42,7 +44,7 @@ func newPanel(title string, entries ...panelEntry) *panel {
 			continue
 		}
 
-		l := newLabel(entry.name+":", labelColor)
+		l := newLabel(entry.name+":", theme.Debugger.LabelColor)
 		labels.AddChild(l)
 	}
 
@@ -50,7 +52,7 @@ func newPanel(title string, entries ...panelEntry) *panel {
 	p.Sync = func(gb *gameboy.GameBoy) {}
 	values := newContainer(widget.DirectionVertical)
 	for _, entry := range entries {
-		l := newLabel("", labelColor)
+		l := newLabel("", theme.Debugger.LabelColor)
 		values.AddChild(l)
 
 		oldSync := p.Sync

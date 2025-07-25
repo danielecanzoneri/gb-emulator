@@ -2,6 +2,7 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
@@ -36,7 +37,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 
 	// Main container
 	root := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(backgroundColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.BackgroundColor)),
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
 		)),

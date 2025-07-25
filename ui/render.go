@@ -1,9 +1,8 @@
 package ui
 
 import (
-	"image/color"
-
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -14,12 +13,6 @@ const (
 
 var (
 	// Original palette
-	GameBoyScreenPalette = [4]color.Color{
-		color.RGBA{R: 198, G: 222, B: 140, A: 255},
-		color.RGBA{R: 132, G: 165, B: 99, A: 255},
-		color.RGBA{R: 57, G: 97, B: 57, A: 255},
-		color.RGBA{R: 8, G: 24, B: 16, A: 255},
-	}
 	frameImage *ebiten.Image
 )
 
@@ -73,7 +66,7 @@ func (ui *UI) Draw(screen *ebiten.Image) {
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {
 			colorId := frameBuffer[y][x]
-			frameImage.Set(x, y, GameBoyScreenPalette[colorId])
+			frameImage.Set(x, y, theme.GameBoyPalette[colorId])
 		}
 	}
 

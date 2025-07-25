@@ -2,32 +2,34 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"image/color"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
-	"image/color"
 )
 
 var (
 	entryImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(mainColor),
-		Hover:   image.NewNineSliceColor(mainHoverColor),
-		Pressed: image.NewNineSliceColor(mainPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Main.Color),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Main.HoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Main.PressedColor),
 	}
 	entryBreakpointImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(breakpointColor),
-		Hover:   image.NewNineSliceColor(breakpointHoverColor),
-		Pressed: image.NewNineSliceColor(breakpointPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointColor),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointHoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointPressedColor),
 	}
 	entryCurrentImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(currInstrColor),
-		Hover:   image.NewNineSliceColor(currInstrHoverColor),
-		Pressed: image.NewNineSliceColor(currInstrPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Disassembler.CurrInstrColor),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Disassembler.CurrInstrHoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Disassembler.CurrInstrPressedColor),
 	}
 	entryBreakpointAndCurrentImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(breakpointCurrColor),
-		Hover:   image.NewNineSliceColor(breakpointCurrHoverColor),
-		Pressed: image.NewNineSliceColor(breakpointCurrPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointCurrColor),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointCurrHoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Disassembler.BreakpointCurrPressedColor),
 	}
 )
 
@@ -137,8 +139,8 @@ func newDisassembler() *disassembler {
 	// Slider
 	dis.slider = widget.NewSlider(
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
-			Idle: image.NewNineSliceColor(sliderTrackColor),
-		}, buttonImage),
+			Idle: image.NewNineSliceColor(theme.Debugger.Slider.TrackColor),
+		}, theme.Debugger.Button.Image),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
 		widget.SliderOpts.Direction(widget.DirectionVertical),
 		widget.SliderOpts.MinMax(0, dis.totalEntries-dis.length),
@@ -193,10 +195,8 @@ func (d *disassembler) IsBreakpoint(addr uint16) bool {
 
 func (d *disassembler) createControlButton(name string, f func()) *widget.Button {
 	return widget.NewButton(
-		widget.ButtonOpts.Image(buttonImage),                // Background
-		widget.ButtonOpts.Text(name, font, buttonTextColor), // Font and text
-		// widget.ButtonOpts.TextPadding(buttonTextPadding),
-		// widget.ButtonOpts.TextPosition(0, 0),
+		widget.ButtonOpts.Image(theme.Debugger.Button.Image),                // Background
+		widget.ButtonOpts.Text(name, font, theme.Debugger.Button.TextColor), // Font and text
 
 		// Click handler
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
@@ -207,8 +207,8 @@ func (d *disassembler) createControlButton(name string, f func()) *widget.Button
 
 func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {
 	button := widget.NewButton(
-		widget.ButtonOpts.Image(entryImage),               // Background
-		widget.ButtonOpts.Text("", font, buttonTextColor), // Font and text
+		widget.ButtonOpts.Image(entryImage),                               // Background
+		widget.ButtonOpts.Text("", font, theme.Debugger.Button.TextColor), // Font and text
 		widget.ButtonOpts.TextPosition(0, 0),
 
 		// Click handler

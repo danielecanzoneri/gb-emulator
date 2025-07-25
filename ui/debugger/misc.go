@@ -2,12 +2,14 @@ package debugger
 
 import (
 	"bytes"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"image/color"
+	"log"
+
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"golang.org/x/image/font/gofont/gomono"
-	"image/color"
-	"log"
 )
 
 var font text.Face
@@ -43,13 +45,13 @@ func newLabel(text string, color color.Color) *widget.Text {
 
 func newWindow(title string, content *widget.Container, closeWindow *widget.RemoveWindowFunc) *widget.Window {
 	c := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(windowColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Window.Color)),
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
 	)
 	c.AddChild(content)
 
 	titleBar := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(titleBarColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Window.TitleBarColor)),
 		widget.ContainerOpts.Layout(widget.NewGridLayout(
 			widget.GridLayoutOpts.Columns(2),
 			widget.GridLayoutOpts.Stretch([]bool{true, false}, []bool{true}),
@@ -57,15 +59,15 @@ func newWindow(title string, content *widget.Container, closeWindow *widget.Remo
 	)
 
 	titleBar.AddChild(widget.NewText(
-		widget.TextOpts.Text(title, font, titleColor),
-		widget.TextOpts.Padding(insets),
+		widget.TextOpts.Text(title, font, theme.Debugger.TitleColor),
+		widget.TextOpts.Padding(theme.Debugger.Insets),
 		widget.TextOpts.Position(widget.TextPositionCenter, widget.TextPositionStart),
 	))
 
 	titleBar.AddChild(widget.NewButton(
-		widget.ButtonOpts.Image(buttonImage),
-		widget.ButtonOpts.TextPadding(insets),
-		widget.ButtonOpts.Text("X", font, buttonTextColor),
+		widget.ButtonOpts.Image(theme.Debugger.Button.Image),
+		widget.ButtonOpts.TextPadding(theme.Debugger.Insets),
+		widget.ButtonOpts.Text("X", font, theme.Debugger.Button.TextColor),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			(*closeWindow)()
 		}),

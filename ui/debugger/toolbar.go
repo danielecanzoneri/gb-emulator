@@ -2,28 +2,30 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	goimage "image"
+
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	goimage "image"
 )
 
 var (
 	toolbarMenuImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(toolbarMenuColor),
-		Hover:   image.NewNineSliceColor(toolbarMenuHoverColor),
-		Pressed: image.NewNineSliceColor(toolbarMenuPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Toolbar.MenuColor),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Toolbar.MenuHoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Toolbar.MenuPressedColor),
 	}
 	toolbarEntryImage = &widget.ButtonImage{
-		Idle:    image.NewNineSliceColor(toolbarEntryColor),
-		Hover:   image.NewNineSliceColor(toolbarEntryHoverColor),
-		Pressed: image.NewNineSliceColor(toolbarEntryPressedColor),
+		Idle:    image.NewNineSliceColor(theme.Debugger.Toolbar.EntryColor),
+		Hover:   image.NewNineSliceColor(theme.Debugger.Toolbar.EntryHoverColor),
+		Pressed: image.NewNineSliceColor(theme.Debugger.Toolbar.EntryPressedColor),
 	}
 	toolbarButtonTextColor = &widget.ButtonTextColor{
-		Idle: toolbarTextColor,
+		Idle: theme.Debugger.Toolbar.TextColor,
 	}
 )
 
@@ -37,7 +39,7 @@ type toolbar struct {
 func (d *Debugger) newToolbar() *toolbar {
 	t := &toolbar{ui: d.UI}
 	t.Container = widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(toolbarBackgroundColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Toolbar.BackgroundColor)),
 		widget.ContainerOpts.Layout(widget.NewRowLayout()),
 		widget.ContainerOpts.WidgetOpts(
 			// Make the toolbar fill the whole horizontal space of the screen.
@@ -86,7 +88,7 @@ func (t *toolbar) newMenu(title string) *toolbarMenu {
 		widget.ButtonOpts.Image(toolbarMenuImage),
 		widget.ButtonOpts.Text(title, font, toolbarButtonTextColor),
 		widget.ButtonOpts.TextPosition(widget.TextPositionStart, widget.TextPositionCenter), // Align text on the left
-		widget.ButtonOpts.TextPadding(widget.NewInsetsSimple(padding)),
+		widget.ButtonOpts.TextPadding(widget.NewInsetsSimple(theme.Debugger.Padding)),
 		widget.ButtonOpts.WidgetOpts(
 			widget.WidgetOpts.MinSize(64, 0),
 		),
@@ -170,12 +172,12 @@ func (t *toolbarMenu) relayout() {
 
 func (t *toolbar) openMenu(menu *toolbarMenu) {
 	c := widget.NewContainer(
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(toolbarMenuColor)),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Toolbar.MenuColor)),
 		widget.ContainerOpts.Layout(
 			widget.NewRowLayout(
 				widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-				widget.RowLayoutOpts.Spacing(padding),
-				widget.RowLayoutOpts.Padding(widget.Insets{Top: padding, Bottom: padding}),
+				widget.RowLayoutOpts.Spacing(theme.Debugger.Padding),
+				widget.RowLayoutOpts.Padding(theme.Debugger.Insets),
 			),
 		),
 		// Set minimum width for the menu.
