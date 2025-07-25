@@ -11,7 +11,7 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 - **Joypad Input**: Keyboard-mapped controls for all Game Boy buttons and D-Pad.
 - **Save States**: Automatically loads and saves `.sav` files alongside ROMs.
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
-- **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/) for the emulator and [Fyne](https://fyne.io/) for the debugger.
+- **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
 
 ## Project Structure
 
@@ -32,7 +32,6 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 ### Prerequisites
 
 - **Go 1.24+** (see `go.mod` for version)
-- [Ebiten](https://ebiten.org/) dependency is managed via Go modules.
 
 ### Building
 
@@ -78,7 +77,8 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 - Disassembly view with breakpoints (click to toggle)
 - Memory viewer
 - I/O registers viewer
-- Step (`F8`), Continue (`F8`), and Reset controls
+- Step (`F3`), Next (`F8`), Continue (`F9`), and Reset controls
+- OAM viewer
 
 ## Resources
 
@@ -91,6 +91,7 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 - [This reddit post](https://www.reddit.com/r/EmuDev/comments/59pawp/gb_mode3_sprite_timing/) for fixing PPU timing with sprites
 - [Bootix](https://github.com/Hacktix/Bootix) for the copyright-free boot ROM
 - [AntonioND's Cycle-Accurate Gameboy Docs](https://github.com/AntonioND/giibiiadvance/blob/master/docs/TCAGBD.pdf) (very useful for some PPU timing issues)
+- Multiple emulators were of inspiration, particularly [SameBoy](https://github.com/LIJI32/SameBoy) and [binjgb](https://github.com/binji/binjgb)
 
 ## TODO
 
