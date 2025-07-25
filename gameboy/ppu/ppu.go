@@ -68,6 +68,8 @@ type PPU struct {
 func New() *PPU {
 	ppu := new(PPU)
 	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
+	ppu.OBP[0] = 0xFF
+	ppu.OBP[1] = 0xFF
 
 	// Init buffers
 	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
