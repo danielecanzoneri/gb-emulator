@@ -1,6 +1,7 @@
 package debugger
 
 import (
+	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
@@ -15,8 +16,13 @@ const (
 type oamViewerObject struct {
 	*widget.Container
 
+	// Index (from 0 to 39) in OAM data
+	index int
+
 	// Image displaying the object
-	sprite *ebiten.Image
+	sprite      *ebiten.Image
+	drawOptions *ebiten.DrawImageOptions
+	graphic     *widget.Graphic
 
 	xLabel         *widget.Text
 	yLabel         *widget.Text
@@ -24,15 +30,19 @@ type oamViewerObject struct {
 	attributeLabel *widget.Text
 }
 
-func newOamViewerObject() *oamViewerObject {
-	obj := new(oamViewerObject)
+func newOamViewerObject(index int) *oamViewerObject {
+	obj := &oamViewerObject{index: index}
 
 	// Object image
-	obj.sprite = ebiten.NewImage(8*objectsScale, 8*objectsScale)
+	obj.sprite = ebiten.NewImage(8, 8)
 	obj.sprite.Fill(theme.GameBoyPalette[0])
+	obj.drawOptions = &ebiten.DrawImageOptions{}
+	obj.drawOptions.GeoM.Scale(objectsScale, objectsScale)
 
-	sprite := widget.NewGraphic(
-		widget.GraphicOpts.Image(obj.sprite),
+	scaledSprite := ebiten.NewImage(8*objectsScale, 8*objectsScale)
+	scaledSprite.DrawImage(obj.sprite, obj.drawOptions)
+	obj.graphic = widget.NewGraphic(
+		widget.GraphicOpts.Image(scaledSprite),
 	)
 
 	// Object data
@@ -51,13 +61,28 @@ func newOamViewerObject() *oamViewerObject {
 			widget.RowLayoutOpts.Spacing(2),
 		),
 	))
-	obj.Container.AddChild(sprite, dataContainer)
+	obj.Container.AddChild(obj.graphic, dataContainer)
 
 	return obj
 }
 
 func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
-	// TODO
+	oamObj := &gb.PPU.OAM.Data[obj.index]
+
+	// Update data
+	obj.xLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
+	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(1))
+	obj.tileLabel.Label = fmt.Sprintf("%02X", oamObj.Read(2))
+	obj.attributeLabel.Label = fmt.Sprintf("%02X", oamObj.Read(3))
+
+	// Update image
+	for row := range 8 {
+		pixels := gb.PPU.GetObjectRow(oamObj, uint8(row))
+		for col := range 8 {
+			obj.sprite.Set(col, row, theme.GameBoyPalette[pixels[col]])
+		}
+	}
+	obj.graphic.Image.DrawImage(obj.sprite, obj.drawOptions)
 }
 
 type oamViewer struct {
@@ -86,7 +111,7 @@ func (d *Debugger) newOamViewer() *oamViewer {
 
 	// Initialize empty objects
 	for i := range o.objects {
-		o.objects[i] = newOamViewerObject()
+		o.objects[i] = newOamViewerObject(i)
 		root.AddChild(o.objects[i])
 	}
 

@@ -86,4 +86,6 @@ func (d *Debugger) ShowOAM() {
 
 	closeWindow := d.AddWindow(d.oamViewer.Window)
 	d.oamViewer.closeWindow = closeWindow
+
+	d.oamViewer.Sync(d.gameBoy)
 }
