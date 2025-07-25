@@ -5,8 +5,8 @@ type mode0 struct {
 }
 
 func (st *mode0) Init(ppu *PPU) {
-	ppu.oam.readDisabled = false
-	ppu.oam.writeDisabled = false
+	ppu.OAM.readDisabled = false
+	ppu.OAM.writeDisabled = false
 	ppu.vRAM.readDisabled = false
 	ppu.vRAM.writeDisabled = false
 

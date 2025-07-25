@@ -21,7 +21,7 @@ type PPU struct {
 
 	// vRAM and OAM data
 	vRAM vRAM
-	oam  OAM
+	OAM  OAM
 
 	// objects on current line
 	objsLY  [objsLimit]*Object

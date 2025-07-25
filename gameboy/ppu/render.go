@@ -132,7 +132,7 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 		penaltyDots += 6
 
 		// Object row to draw is: LY + 16 - y
-		rowPixels := ppu.getObjectRow(obj, ppu.LY+yObjOffset-obj.y)
+		rowPixels := ppu.GetObjectRow(obj, ppu.LY+yObjOffset-obj.y)
 
 		// Draw pixels on the line if no other pixel with higher priority was drawn
 		for i, px := range rowPixels {

@@ -29,7 +29,7 @@ type mode0ToMode2 struct {
 func (st *mode0ToMode2) Init(ppu *PPU) {
 	util.SetBit(&ppu.STAT, 2, 0)
 
-	ppu.oam.readDisabled = true
+	ppu.OAM.readDisabled = true
 }
 func (st *mode0ToMode2) Next(_ *PPU) ppuInternalState {
 	return new(mode2)
@@ -40,8 +40,8 @@ func (st *mode0ToMode2) Duration() int { return 4 }
 type mode2 struct{}
 
 func (st *mode2) Init(ppu *PPU) {
-	ppu.oam.readDisabled = true
-	ppu.oam.writeDisabled = true
+	ppu.OAM.readDisabled = true
+	ppu.OAM.writeDisabled = true
 
 	ppu.interruptMode = oamScan
 	ppu.STAT = (ppu.STAT & 0xFC) | oamScan
@@ -56,7 +56,7 @@ func (st *mode2) Duration() int { return mode2Length - 4 }
 type mode2ToMode3 struct{}
 
 func (st *mode2ToMode3) Init(ppu *PPU) {
-	ppu.oam.writeDisabled = false
+	ppu.OAM.writeDisabled = false
 	ppu.vRAM.readDisabled = true
 }
 func (st *mode2ToMode3) Next(_ *PPU) ppuInternalState {

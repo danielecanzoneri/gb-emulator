@@ -5,8 +5,8 @@ type mode3 struct {
 }
 
 func (st *mode3) Init(ppu *PPU) {
-	ppu.oam.readDisabled = true
-	ppu.oam.writeDisabled = true
+	ppu.OAM.readDisabled = true
+	ppu.OAM.writeDisabled = true
 	ppu.vRAM.readDisabled = true
 	ppu.vRAM.writeDisabled = true
 

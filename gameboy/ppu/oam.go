@@ -29,7 +29,7 @@ type Object struct {
 	tileIndex uint8 // Byte 2
 }
 
-func (obj *Object) read(addr uint16) uint8 {
+func (obj *Object) Read(addr uint16) uint8 {
 	switch addr & 0b11 {
 	case 0:
 		return obj.y
@@ -66,7 +66,7 @@ func (obj *Object) write(addr uint16, value uint8) {
 }
 
 type OAM struct {
-	objectsData [OAMSize / 4]Object
+	Data [OAMSize / 4]Object
 
 	// Disabled during mode 2 (OAM scan) and 3 (drawing)
 	readDisabled  bool
@@ -80,7 +80,7 @@ func (oam *OAM) Read(addr uint16) uint8 {
 
 	addr -= OAMStartAddr
 	objectId := addr >> 2
-	return oam.objectsData[objectId].read(addr)
+	return oam.Data[objectId].Read(addr)
 }
 
 func (oam *OAM) Write(addr uint16, value uint8) {
@@ -90,14 +90,14 @@ func (oam *OAM) Write(addr uint16, value uint8) {
 
 	addr -= OAMStartAddr
 	objectId := addr >> 2
-	oam.objectsData[objectId].write(addr, value)
+	oam.Data[objectId].write(addr, value)
 }
 
 func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.oam.Write(OAMStartAddr+index, value)
+	ppu.OAM.Write(OAMStartAddr+index, value)
 }
 
-func (ppu *PPU) getObjectRow(obj *Object, row uint8) [8]uint8 {
+func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 	if (!ppu.obj8x16Size && row >= 8) || (ppu.obj8x16Size && row >= 16) {
 		panic("Invalid row: " + strconv.Itoa(int(row)))
 	}
@@ -143,7 +143,7 @@ func (ppu *PPU) searchOAM() {
 	ppu.numObjs = 0
 
 	// Scan OAM and select objects that lie in current line
-	for _, obj := range ppu.oam.objectsData {
+	for _, obj := range ppu.OAM.Data {
 		// obj is on the line if obj.y <= LY+16 < obj.y + height
 		if obj.y <= ppu.LY+yObjOffset && ppu.LY+yObjOffset < obj.y+objHeight {
 			ppu.objsLY[ppu.numObjs] = &obj
