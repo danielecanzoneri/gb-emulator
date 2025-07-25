@@ -30,13 +30,6 @@ var (
 type toolbar struct {
 	*widget.Container
 
-	// Menu containing run options
-	runMenu        *toolbarMenu
-	stepButton     *toolbarMenuEntry
-	continueButton *toolbarMenuEntry
-	stopButton     *toolbarMenuEntry
-	resetButton    *toolbarMenuEntry
-
 	// Pointer to the UI for showing the window
 	ui *ebitenui.UI
 }
@@ -53,18 +46,18 @@ func (d *Debugger) newToolbar() *toolbar {
 	)
 
 	// Run menu
-	t.runMenu = t.newMenu("Run")
-	t.stepButton = t.runMenu.newEntryWithShortcut("Step", d.Step,
+	runMenu := t.newMenu("Run")
+	runMenu.addEntryWithShortcut("Step", d.Step,
 		ebiten.KeyF3)
-	t.stepButton = t.runMenu.newEntryWithShortcut("Next", d.Next,
+	runMenu.addEntryWithShortcut("Next", d.Next,
 		ebiten.KeyF8)
-	t.continueButton = t.runMenu.newEntryWithShortcut("Continue", d.Continue,
+	runMenu.addEntryWithShortcut("Continue", d.Continue,
 		ebiten.KeyF9)
-	t.stopButton = t.runMenu.newEntryWithShortcut("Stop", d.Stop,
+	runMenu.addEntryWithShortcut("Stop", d.Stop,
 		ebiten.KeyShift, ebiten.KeyF9)
-	t.resetButton = t.runMenu.newEntryWithShortcut("Reset", d.Reset,
+	runMenu.addEntryWithShortcut("Reset", d.Reset,
 		ebiten.KeyControl, ebiten.KeyR)
-	t.AddChild(t.runMenu)
+
 	return t
 }
 
@@ -99,10 +92,12 @@ func (t *toolbar) newMenu(title string) *toolbarMenu {
 	tMenu.Button.ClickedEvent.AddHandler(event.WrapHandler(func(args *widget.ButtonClickedEventArgs) {
 		t.openMenu(tMenu)
 	}))
+	t.AddChild(tMenu)
+
 	return tMenu
 }
 
-func (t *toolbarMenu) createEntry(label string, shortcut string, onClick func()) *toolbarMenuEntry {
+func (t *toolbarMenu) createEntry(label string, shortcut string, onClick func()) {
 	entry := &toolbarMenuEntry{title: label, shortcut: shortcut, onClick: onClick}
 	t.entries = append(t.entries, entry)
 
@@ -120,15 +115,14 @@ func (t *toolbarMenu) createEntry(label string, shortcut string, onClick func())
 			onClick()
 		}),
 	)
-	return entry
 }
 
-func (t *toolbarMenu) newEntry(label string, onClick func()) *toolbarMenuEntry {
+func (t *toolbarMenu) addEntry(label string, onClick func()) {
 	defer t.relayout()
-	return t.createEntry(label, "", onClick)
+	t.createEntry(label, "", onClick)
 }
 
-func (t *toolbarMenu) newEntryWithShortcut(label string, onClick func(), shortcutKeys ...ebiten.Key) *toolbarMenuEntry {
+func (t *toolbarMenu) addEntryWithShortcut(label string, onClick func(), shortcutKeys ...ebiten.Key) {
 	defer t.relayout()
 
 	// Shortcut mnemonic
@@ -154,7 +148,7 @@ func (t *toolbarMenu) newEntryWithShortcut(label string, onClick func(), shortcu
 	}
 	InputHandlers = append(InputHandlers, shortcutHandler)
 
-	return t.createEntry(label, shortcut, onClick)
+	t.createEntry(label, shortcut, onClick)
 }
 
 // relayout toolbar entries text
