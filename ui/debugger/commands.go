@@ -75,11 +75,13 @@ func (d *Debugger) ShowOAM() {
 	winSize := input.GetWindowSize()
 
 	// Get the preferred size of the content
-	x, y := d.oamViewer.Contents.PreferredSize()
-	remainingSize := winSize.Sub(image.Pt(x, y))
+	x1, y1 := d.oamViewer.Contents.PreferredSize()
+	x2, y2 := d.oamViewer.TitleBar.PreferredSize()
+	xWindow, yWindow := max(x1, x2), y1+y2
+	remainingSize := winSize.Sub(image.Pt(xWindow, yWindow))
 
 	// Set the windows location at center of window
-	r := image.Rect(0, 0, x, y).Add(remainingSize.Div(2))
+	r := image.Rect(0, 0, xWindow, yWindow).Add(remainingSize.Div(2))
 	d.oamViewer.SetLocation(r)
 
 	closeWindow := d.AddWindow(d.oamViewer.Window)
