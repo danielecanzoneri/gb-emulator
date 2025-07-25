@@ -58,6 +58,9 @@ func (d *Debugger) newToolbar() *toolbar {
 	runMenu.addEntryWithShortcut("Reset", d.Reset,
 		ebiten.KeyControl, ebiten.KeyR)
 
+	// PPU menu
+	ppuMenu := t.newMenu("PPU")
+	ppuMenu.addEntry("OAM Viewer", d.ShowOAM)
 	return t
 }
 

@@ -1,5 +1,10 @@
 package debugger
 
+import (
+	"github.com/ebitenui/ebitenui/input"
+	"image"
+)
+
 func (d *Debugger) Toggle() {
 	d.Active = !d.Active
 	if d.Active {
@@ -10,6 +15,8 @@ func (d *Debugger) Toggle() {
 func (d *Debugger) CheckBreakpoint(addr uint16) bool {
 	return d.disassembler.IsBreakpoint(addr)
 }
+
+// Run commands
 
 func (d *Debugger) Step() {
 	defer d.Sync()
@@ -55,4 +62,26 @@ func (d *Debugger) initHooks() {
 		d.CallDepth--
 	}
 	d.gameBoy.CPU.SetHooks(callHook, retHook)
+}
+
+// PPU commands
+
+func (d *Debugger) ShowOAM() {
+	if d.IsWindowOpen(d.oamViewer.Window) {
+		return
+	}
+
+	// Current window size
+	winSize := input.GetWindowSize()
+
+	// Get the preferred size of the content
+	x, y := d.oamViewer.Contents.PreferredSize()
+	remainingSize := winSize.Sub(image.Pt(x, y))
+
+	// Set the windows location at center of window
+	r := image.Rect(0, 0, x, y).Add(remainingSize.Div(2))
+	d.oamViewer.SetLocation(r)
+
+	closeWindow := d.AddWindow(d.oamViewer.Window)
+	d.oamViewer.closeWindow = closeWindow
 }

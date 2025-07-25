@@ -18,6 +18,8 @@ type Debugger struct {
 	memoryViewer    *memoryViewer
 	registersViewer *registersViewer
 
+	oamViewer *oamViewer
+
 	// State
 	gameBoy   *gameboy.GameBoy
 	Active    bool
@@ -55,6 +57,8 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.memoryViewer = newMemoryViewer()
 	d.registersViewer = newRegisterViewer()
 
+	d.oamViewer = d.newOamViewer()
+
 	// Add widgets to the root container
 	main := newContainer(widget.DirectionHorizontal,
 		d.disassembler,
@@ -74,6 +78,8 @@ func (d *Debugger) Sync() {
 	d.disassembler.Sync(d.gameBoy)
 	d.memoryViewer.Sync(d.gameBoy)
 	d.registersViewer.Sync(d.gameBoy)
+
+	d.oamViewer.Sync(d.gameBoy)
 }
 
 func (d *Debugger) Update() error {

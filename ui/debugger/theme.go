@@ -51,6 +51,10 @@ var (
 
 	// Slider
 	sliderTrackColor = color.NRGBA{R: 255, G: 255, B: 255, A: 48} // semi-transparent white
+
+	// Floating window
+	windowColor   = color.NRGBA{R: 28, G: 30, B: 42, A: 255}
+	titleBarColor = color.NRGBA{R: 22, G: 24, B: 34, A: 255}
 )
 
 var (
@@ -63,4 +67,5 @@ var (
 		Idle: buttonLabelColor,
 	}
 	padding = 5
+	insets  = widget.NewInsetsSimple(padding)
 )
