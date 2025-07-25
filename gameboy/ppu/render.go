@@ -157,7 +157,8 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 		}
 	}
 
-	return penaltyDots
+	// Round to M-cycle (TODO - investigate why it doesn't work otherwise)
+	return penaltyDots & ^3
 }
 
 func getTileMapOffset(x, y uint8) uint16 {
