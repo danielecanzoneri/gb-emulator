@@ -29,7 +29,10 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 	if 0x8000 <= addr && addr < 0xA000 { // vRAM
 		ppu.vRAM.Write(addr, v)
 		return
-	} else if 0xFE00 <= addr && addr < 0xFEA0 { // OAM
+	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
+		if ppu.oamBugTriggered(addr) {
+			// TODO - trigger bug
+		}
 		ppu.OAM.Write(addr, v)
 		return
 	}
@@ -100,7 +103,10 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 func (ppu *PPU) Read(addr uint16) uint8 {
 	if 0x8000 <= addr && addr < 0xA000 { // vRAM
 		return ppu.vRAM.Read(addr)
-	} else if 0xFE00 <= addr && addr < 0xFEA0 { // OAM
+	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
+		if ppu.oamBugTriggered(addr) {
+			// TODO - trigger bug
+		}
 		return ppu.OAM.Read(addr)
 	}
 

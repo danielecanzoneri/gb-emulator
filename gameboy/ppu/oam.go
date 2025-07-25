@@ -74,7 +74,7 @@ type OAM struct {
 }
 
 func (oam *OAM) Read(addr uint16) uint8 {
-	if oam.readDisabled {
+	if addr >= 0xFEA0 || oam.readDisabled {
 		return 0xFF
 	}
 
@@ -84,7 +84,7 @@ func (oam *OAM) Read(addr uint16) uint8 {
 }
 
 func (oam *OAM) Write(addr uint16, value uint8) {
-	if oam.writeDisabled {
+	if addr >= 0xFEA0 || oam.writeDisabled {
 		return
 	}
 

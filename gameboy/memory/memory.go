@@ -96,11 +96,8 @@ func (mmu *MMU) read(addr uint16) uint8 {
 		return mmu.wRAM[addr-0xC000]
 	case addr < 0xFE00: // Echo RAM
 		return mmu.read(addr - 0x2000)
-	case addr < 0xFEA0: // OAM
+	case addr < 0xFF00: // OAM
 		return mmu.PPU.Read(addr)
-	case addr < 0xFF00:
-		//panic("Can't read reserved memory: " + strconv.FormatUint(uint64(addr), 16))
-		return 0xFF
 	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		return mmu.readIO(addr)
 	default: // hRAM
@@ -134,10 +131,8 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 		mmu.wRAM[addr-0xC000] = value
 	case addr < 0xFE00: // Echo RAM
 		mmu.Write(addr-0x2000, value)
-	case addr < 0xFEA0: // OAM
+	case addr < 0xFF00: // OAM
 		mmu.PPU.Write(addr, value)
-	case addr < 0xFF00:
-		//panic("Can't write reserved memory: " + strconv.FormatUint(uint64(addr), 16))
 	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		mmu.writeIO(addr, value)
 	default: // hRAM

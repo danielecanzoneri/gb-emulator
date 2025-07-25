@@ -3,6 +3,7 @@ package cpu
 import (
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
 
@@ -38,6 +39,7 @@ type CPU struct {
 	// Other components
 	Timer *timer.Timer
 	MMU   *memory.MMU
+	PPU   *ppu.PPU
 
 	cyclers []Ticker
 

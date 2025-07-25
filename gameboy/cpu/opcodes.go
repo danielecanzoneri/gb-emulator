@@ -74,7 +74,10 @@ func (cpu *CPU) LD_N16_SP() {
 
 // INC R16
 func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	writeR16(readR16() + 1)
+	v := readR16()
+	cpu.PPU.TriggerOAMBug(v)
+
+	writeR16(v + 1)
 	cpu.Tick(4)
 }
 func (cpu *CPU) INC_BC() {
@@ -92,7 +95,10 @@ func (cpu *CPU) INC_SP() {
 
 // DEC R16
 func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	writeR16(readR16() - 1)
+	v := readR16()
+	cpu.PPU.TriggerOAMBug(v)
+
+	writeR16(v - 1)
 	cpu.Tick(4)
 }
 func (cpu *CPU) DEC_BC() {
@@ -339,6 +345,7 @@ func (cpu *CPU) JR_E8() {
 
 // STOP
 func (cpu *CPU) STOP() {
+	cpu.PPU.TriggerOAMBug(cpu.PC)
 	cpu.PC++
 }
 

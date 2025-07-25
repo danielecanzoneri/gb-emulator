@@ -20,12 +20,17 @@ func (cpu *CPU) ReadNextByte() uint8 {
 		// Do not increment PC
 		cpu.haltBug = false
 	} else {
+		// Increment PC (may cause OAM bug)
+		cpu.PPU.TriggerOAMBug(cpu.PC)
 		cpu.PC++
 	}
 	return b
 }
 func (cpu *CPU) WriteNextByte(v uint8) {
 	cpu.WriteByte(cpu.PC, v)
+
+	// Increment PC (may cause OAM bug)
+	cpu.PPU.TriggerOAMBug(cpu.PC)
 	cpu.PC++
 }
 
