@@ -37,9 +37,9 @@ func (ui *UI) initRenderer() {
 func (ui *UI) Update() error {
 	// If window is unfocused, stop the game
 	if !ebiten.IsFocused() {
-		ui.audioPlayer.Pause()
+		ui.Paused = true
 	} else {
-		ui.audioPlayer.Play()
+		ui.Paused = false
 	}
 
 	// If closing, save game

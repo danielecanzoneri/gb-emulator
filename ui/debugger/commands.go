@@ -50,6 +50,9 @@ func (d *Debugger) Stop() {
 func (d *Debugger) Reset() {
 	defer d.Sync()
 
+	// Stop if active
+	d.Stop()
+
 	d.gameBoy.Reset()
 	d.initHooks()
 }

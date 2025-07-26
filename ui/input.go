@@ -29,8 +29,10 @@ func (ui *UI) handleInput() {
 	ui.handleAudioToggle()
 
 	// Handle debugger input
-	for _, handler := range debugger.InputHandlers {
-		handler()
+	if ui.debugger.Active {
+		for _, handler := range debugger.InputHandlers {
+			handler()
+		}
 	}
 }
 
