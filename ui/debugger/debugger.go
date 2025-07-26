@@ -22,9 +22,9 @@ type Debugger struct {
 	oamViewer *oamViewer
 
 	// State
-	gameBoy   *gameboy.GameBoy
-	Active    bool
-	Continued bool // True when debugger is active and we are stepping until breakpoint
+	gameBoy *gameboy.GameBoy
+	Active  bool
+	Running bool // True when debugger is active and we are stepping until breakpoint
 
 	// Run until next instruction
 	NextInstruction bool

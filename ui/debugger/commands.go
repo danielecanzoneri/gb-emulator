@@ -8,6 +8,7 @@ import (
 func (d *Debugger) Toggle() {
 	d.Active = !d.Active
 	if d.Active {
+		defer d.Sync()
 		d.Stop()
 	}
 }
@@ -19,19 +20,31 @@ func (d *Debugger) CheckBreakpoint(addr uint16) bool {
 // Run commands
 
 func (d *Debugger) Step() {
+	if d.Running {
+		return
+	}
+
 	defer d.Sync()
 
 	d.gameBoy.CPU.ExecuteInstruction()
 }
 
 func (d *Debugger) Next() {
+	if d.Running {
+		return
+	}
+
 	d.Continue()
 	d.NextInstruction = true
 	d.CallDepth = 0
 }
 
 func (d *Debugger) Continue() {
-	d.Continued = true
+	if d.Running {
+		return
+	}
+
+	d.Running = true
 
 	// Unselect current entry
 	d.disassembler.currentInstruction = -1
@@ -41,9 +54,13 @@ func (d *Debugger) Continue() {
 }
 
 func (d *Debugger) Stop() {
+	if !d.Running {
+		return
+	}
+
 	defer d.Sync()
 
-	d.Continued = false
+	d.Running = false
 	// TODO Enable control buttons
 }
 
