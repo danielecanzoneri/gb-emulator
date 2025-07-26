@@ -146,7 +146,7 @@ func (ppu *PPU) enable() {
 	ppu.Dots = 0
 	ppu.InternalStateLength = 0
 
-	ppu.setState(new(glitchedMode2))
+	ppu.setState(new(glitchedOamScan))
 	ppu.checkSTATInterrupt()
 
 	ppu.emptyFrame()

@@ -5,61 +5,63 @@ import "github.com/danielecanzoneri/gb-emulator/util"
 // When PPU is enabled:
 //   - line 0 starts with mode 0 and goes straight to mode 3
 //   - line 0 has different timings because the PPU is late by 2 T-cycles
-type glitchedMode2 struct{}
+type glitchedOamScan struct{}
 
-func (st *glitchedMode2) Init(ppu *PPU) {
+func (st *glitchedOamScan) Init(ppu *PPU) {
 	// This line is 8 ticks shorter (4 ticks already passed when enabling PPU)
 	ppu.Dots += 4
 
 	ppu.interruptMode = 0xFF
-	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
+	ppu.STAT = (ppu.STAT & 0xFC) | 0
 	ppu.checkSTATInterrupt()
 }
-func (st *glitchedMode2) Next(_ *PPU) ppuInternalState {
-	return new(mode3)
+func (st *glitchedOamScan) Next(_ *PPU) ppuInternalState {
+	return new(drawing)
 }
-func (st *glitchedMode2) Duration() int { return mode2Length }
+func (st *glitchedOamScan) Duration() int { return mode2Length }
 
 // ------- Normal mode 2 -------
 
 // Mode 2 first 4 ticks
-type mode0ToMode2 struct {
+type oamScanStart struct {
 }
 
-func (st *mode0ToMode2) Init(ppu *PPU) {
+func (st *oamScanStart) Init(ppu *PPU) {
 	util.SetBit(&ppu.STAT, 2, 0)
 
 	ppu.OAM.readDisabled = true
 }
-func (st *mode0ToMode2) Next(_ *PPU) ppuInternalState {
-	return new(mode2)
+func (st *oamScanStart) Next(_ *PPU) ppuInternalState {
+	return &oamScan{rowAccessed: 0}
 }
-func (st *mode0ToMode2) Duration() int { return 4 }
+func (st *oamScanStart) Duration() int { return 4 }
 
 // Normal mode 2
-type mode2 struct{}
-
-func (st *mode2) Init(ppu *PPU) {
-	ppu.OAM.readDisabled = true
-	ppu.OAM.writeDisabled = true
-
-	ppu.interruptMode = oamScan
-	ppu.STAT = (ppu.STAT & 0xFC) | oamScan
-	ppu.checkSTATInterrupt()
-	ppu.searchOAM()
+type oamScan struct {
+	// OAM is divided in 20 rows of 8 bytes, every M-cycle a different row is read
+	rowAccessed uint8
 }
-func (st *mode2) Next(_ *PPU) ppuInternalState {
-	return new(mode2ToMode3)
-}
-func (st *mode2) Duration() int { return mode2Length - 4 }
 
-type mode2ToMode3 struct{}
+func (st *oamScan) Init(ppu *PPU) {
+	if st.rowAccessed == 0 {
+		ppu.OAM.readDisabled = true
+		ppu.OAM.writeDisabled = true
 
-func (st *mode2ToMode3) Init(ppu *PPU) {
-	ppu.OAM.writeDisabled = false
-	ppu.vRAM.readDisabled = true
+		ppu.interruptMode = 2
+		ppu.STAT = (ppu.STAT & 0xFC) | 2
+		ppu.checkSTATInterrupt()
+		ppu.searchOAM()
+	} else if st.rowAccessed == 19 {
+		ppu.OAM.writeDisabled = false
+		ppu.vRAM.readDisabled = true
+	}
 }
-func (st *mode2ToMode3) Next(_ *PPU) ppuInternalState {
-	return new(mode3)
+func (st *oamScan) Next(_ *PPU) ppuInternalState {
+	// If this was the last row, next mode will render the row pixels
+	if st.rowAccessed == 19 {
+		return new(drawing)
+	}
+
+	return &oamScan{rowAccessed: st.rowAccessed + 1}
 }
-func (st *mode2ToMode3) Duration() int { return 4 }
+func (st *oamScan) Duration() int { return 4 }

@@ -1,10 +1,10 @@
 package ppu
 
-type mode0 struct {
+type hBlank struct {
 	length int
 }
 
-func (st *mode0) Init(ppu *PPU) {
+func (st *hBlank) Init(ppu *PPU) {
 	ppu.OAM.readDisabled = false
 	ppu.OAM.writeDisabled = false
 	ppu.vRAM.readDisabled = false
@@ -13,21 +13,21 @@ func (st *mode0) Init(ppu *PPU) {
 	// Here we have to reset the previous state length so that each line is 456 dots
 	st.length = lineLength - ppu.Dots - ppu.InternalStateLength
 
-	ppu.interruptMode = hBlank
-	ppu.STAT = (ppu.STAT & 0xFC) | hBlank
+	ppu.interruptMode = 0
+	ppu.STAT = (ppu.STAT & 0xFC) | 0
 	ppu.checkSTATInterrupt()
 }
-func (st *mode0) Next(ppu *PPU) ppuInternalState {
+func (st *hBlank) Next(ppu *PPU) ppuInternalState {
 	// To mode 1 if LY == 144, to mode 2 otherwise
 	ppu.LY++
 	ppu.Dots -= lineLength
 
 	if ppu.LY == 144 {
-		return new(mode1Start)
+		return new(vBlankStart)
 	} else {
-		return new(mode0ToMode2)
+		return new(oamScanStart)
 	}
 }
-func (st *mode0) Duration() int {
+func (st *hBlank) Duration() int {
 	return st.length
 }

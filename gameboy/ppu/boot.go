@@ -2,7 +2,7 @@ package ppu
 
 func (ppu *PPU) SkipBoot() {
 	ppu.Dots = 400
-	ppu.InternalState = new(mode1)
+	ppu.InternalState = new(vBlank)
 	ppu.interruptMode = 1
 	ppu.InternalStateLength = 56
 

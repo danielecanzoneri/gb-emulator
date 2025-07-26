@@ -3,28 +3,28 @@ package ppu
 import "github.com/danielecanzoneri/gb-emulator/util"
 
 // First 4 ticks
-type mode1Start struct{}
+type vBlankStart struct{}
 
-func (st *mode1Start) Init(ppu *PPU) {
+func (st *vBlankStart) Init(ppu *PPU) {
 	util.SetBit(&ppu.STAT, 2, 0)
 }
-func (st *mode1Start) Next(ppu *PPU) ppuInternalState {
-	return new(mode1)
+func (st *vBlankStart) Next(ppu *PPU) ppuInternalState {
+	return new(vBlank)
 }
-func (st *mode1Start) Duration() int { return 4 }
+func (st *vBlankStart) Duration() int { return 4 }
 
 // Remaining ticks for vBlank state
-type mode1 struct{}
+type vBlank struct{}
 
-func (st *mode1) Init(ppu *PPU) {
+func (st *vBlank) Init(ppu *PPU) {
 	if ppu.LY == 144 {
 		// If bit 5 (mode 2 OAM interrupt) is set, an interrupt is also triggered
 		// at line 144 when vblank starts.
-		ppu.interruptMode = oamScan
+		ppu.interruptMode = 2
 		ppu.checkSTATInterrupt()
 
-		ppu.interruptMode = vBlank
-		ppu.STAT = (ppu.STAT & 0xFC) | vBlank
+		ppu.interruptMode = 1
+		ppu.STAT = (ppu.STAT & 0xFC) | 1
 		ppu.checkSTATInterrupt()
 
 		ppu.wyCounter = 0
@@ -35,15 +35,15 @@ func (st *mode1) Init(ppu *PPU) {
 		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
 	}
 }
-func (st *mode1) Next(ppu *PPU) ppuInternalState {
+func (st *vBlank) Next(ppu *PPU) ppuInternalState {
 	ppu.LY++
 	ppu.Dots -= lineLength
 
 	if ppu.LY == 154 {
 		ppu.LY = 0
-		return new(mode0ToMode2)
+		return new(oamScanStart)
 	} else {
-		return new(mode1Start)
+		return new(vBlankStart)
 	}
 }
-func (st *mode1) Duration() int { return lineLength - 4 }
+func (st *vBlank) Duration() int { return lineLength - 4 }

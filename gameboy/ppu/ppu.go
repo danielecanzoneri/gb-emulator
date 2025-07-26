@@ -4,13 +4,6 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
-const (
-	oamScan = 2
-	drawing = 3
-	hBlank  = 0
-	vBlank  = 1
-)
-
 type PPU struct {
 	Dots int // Dots elapsed rendering this line
 
