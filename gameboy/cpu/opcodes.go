@@ -40,11 +40,11 @@ func (cpu *CPU) LD_DEmem_A() {
 }
 func (cpu *CPU) LD_HLImem_A() {
 	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.writeHL(cpu.ReadHL() + 1)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
 }
 func (cpu *CPU) LD_HLDmem_A() {
 	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.writeHL(cpu.ReadHL() - 1)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
 }
 
 // LD A [R16]
@@ -59,11 +59,11 @@ func (cpu *CPU) LD_A_DEmem() {
 }
 func (cpu *CPU) LD_A_HLImem() {
 	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.writeHL(cpu.ReadHL() + 1)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
 }
 func (cpu *CPU) LD_A_HLDmem() {
 	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.writeHL(cpu.ReadHL() - 1)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
 }
 
 // LD N16 SP
@@ -76,11 +76,14 @@ func (cpu *CPU) LD_N16_SP() {
 }
 
 // INC R16
-func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
+func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	cpu.PPU.TriggerOAMBug(v)
+	cpu.PPU.TriggerOAMBugWrite(v)
 
 	writeR16(v + 1)
+}
+func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
+	cpu.incR16WithoutTicks(readR16, writeR16)
 	cpu.Tick(4)
 }
 func (cpu *CPU) INC_BC() {
@@ -97,11 +100,14 @@ func (cpu *CPU) INC_SP() {
 }
 
 // DEC R16
-func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
+func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	cpu.PPU.TriggerOAMBug(v)
+	cpu.PPU.TriggerOAMBugWrite(v)
 
 	writeR16(v - 1)
+}
+func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
+	cpu.decR16WithoutTicks(readR16, writeR16)
 	cpu.Tick(4)
 }
 func (cpu *CPU) DEC_BC() {
@@ -348,8 +354,8 @@ func (cpu *CPU) JR_E8() {
 
 // STOP
 func (cpu *CPU) STOP() {
-	cpu.PPU.TriggerOAMBug(cpu.PC)
-	cpu.PC++
+	// Increment PC (may cause OAM bug)
+	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
 }
 
 // LD R8 R8
@@ -886,10 +892,10 @@ func (cpu *CPU) CP_A_N8() {
 
 // POP R16stk
 func (cpu *CPU) POP_STACK() uint16 {
-	cpu.PPU.TriggerOAMBug(cpu.SP)
+	// For some reason, pop will trigger the bug only 3 times (instead of the expected 4 times);
+	// one read, one glitched write, and another read without a glitched write.
 	lowAddr := cpu.ReadByte(cpu.SP)
-	cpu.SP++
-	cpu.PPU.TriggerOAMBug(cpu.SP)
+	cpu.incR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	highAddr := cpu.ReadByte(cpu.SP)
 	cpu.SP++
 	return util.CombineBytes(highAddr, lowAddr)
@@ -913,11 +919,9 @@ func (cpu *CPU) PUSH_STACK(v uint16) {
 
 	// Write first high then low
 	high, low := util.SplitWord(v)
-	cpu.PPU.TriggerOAMBug(cpu.SP)
-	cpu.SP--
+	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	cpu.WriteByte(cpu.SP, high)
-	cpu.PPU.TriggerOAMBug(cpu.SP)
-	cpu.SP--
+	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	cpu.WriteByte(cpu.SP, low)
 }
 func (cpu *CPU) PUSH_BC() {

@@ -118,6 +118,9 @@ func (cpu *CPU) writeHL(word uint16) {
 func (cpu *CPU) writeSP(word uint16) {
 	cpu.SP = word
 }
+func (cpu *CPU) writePC(word uint16) {
+	cpu.PC = word
+}
 
 func (cpu *CPU) readZFlag() uint8 {
 	return util.ReadBit(cpu.F, ZFlagBit)

@@ -1,6 +1,10 @@
 package ppu
 
 func (ppu *PPU) getOamAccessedRow() uint8 {
+	if st, ok := ppu.InternalState.(*oamScan); ok {
+		return st.rowAccessed
+	}
+
 	return 0xFF
 }
 
@@ -13,7 +17,14 @@ func (ppu *PPU) oamBugTriggered(address uint16) bool {
 	return ppu.STAT&3 == 2
 }
 
-func (ppu *PPU) TriggerOAMBug(address uint16) {
+func (ppu *PPU) TriggerOAMBugWrite(address uint16) {
+	if !ppu.oamBugTriggered(address) {
+		return
+	}
+
+	// TODO - trigger bug
+}
+func (ppu *PPU) TriggerOAMBugRead(address uint16) {
 	if !ppu.oamBugTriggered(address) {
 		return
 	}
