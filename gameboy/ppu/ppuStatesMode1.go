@@ -41,7 +41,7 @@ func (st *vBlank) Next(ppu *PPU) ppuInternalState {
 
 	if ppu.LY == 154 {
 		ppu.LY = 0
-		return new(oamScanStart)
+		return new(oamScan)
 	} else {
 		return new(vBlankStart)
 	}

@@ -25,7 +25,7 @@ func (st *hBlank) Next(ppu *PPU) ppuInternalState {
 	if ppu.LY == 144 {
 		return new(vBlankStart)
 	} else {
-		return new(oamScanStart)
+		return new(oamScan)
 	}
 }
 func (st *hBlank) Duration() int {

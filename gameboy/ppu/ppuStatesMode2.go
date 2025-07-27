@@ -22,20 +22,6 @@ func (st *glitchedOamScan) Duration() int { return mode2Length }
 
 // ------- Normal mode 2 -------
 
-// Mode 2 first 4 ticks
-type oamScanStart struct {
-}
-
-func (st *oamScanStart) Init(ppu *PPU) {
-	util.SetBit(&ppu.STAT, 2, 0)
-
-	ppu.OAM.readDisabled = true
-}
-func (st *oamScanStart) Next(_ *PPU) ppuInternalState {
-	return &oamScan{rowAccessed: 0}
-}
-func (st *oamScanStart) Duration() int { return 4 }
-
 // Normal mode 2
 type oamScan struct {
 	// OAM is divided in 20 rows of 8 bytes, every M-cycle a different row is read
@@ -43,7 +29,11 @@ type oamScan struct {
 }
 
 func (st *oamScan) Init(ppu *PPU) {
-	if st.rowAccessed == 0 {
+	if st.rowAccessed == 0 { // Still hBlank
+		util.SetBit(&ppu.STAT, 2, 0)
+		ppu.OAM.readDisabled = true
+
+	} else if st.rowAccessed == 1 {
 		ppu.OAM.readDisabled = true
 		ppu.OAM.writeDisabled = true
 
@@ -51,17 +41,15 @@ func (st *oamScan) Init(ppu *PPU) {
 		ppu.STAT = (ppu.STAT & 0xFC) | 2
 		ppu.checkSTATInterrupt()
 		ppu.searchOAM()
-	} else if st.rowAccessed == 19 {
-		ppu.OAM.writeDisabled = false
-		ppu.vRAM.readDisabled = true
 	}
 }
 func (st *oamScan) Next(_ *PPU) ppuInternalState {
-	// If this was the last row, next mode will render the row pixels
+	// If this was the last row, next mode will transition to drawing state
 	if st.rowAccessed == 19 {
-		return new(drawing)
+		return new(oamScanToDrawing)
 	}
 
-	return &oamScan{rowAccessed: st.rowAccessed + 1}
+	st.rowAccessed++
+	return st
 }
 func (st *oamScan) Duration() int { return 4 }

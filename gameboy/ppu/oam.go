@@ -29,7 +29,7 @@ type Object struct {
 	tileIndex uint8 // Byte 2
 }
 
-func (obj *Object) Read(addr uint16) uint8 {
+func (obj *Object) Read(addr uint8) uint8 {
 	switch addr & 0b11 {
 	case 0:
 		return obj.y
@@ -44,7 +44,7 @@ func (obj *Object) Read(addr uint16) uint8 {
 	}
 }
 
-func (obj *Object) write(addr uint16, value uint8) {
+func (obj *Object) write(addr uint8, value uint8) {
 	switch addr & 0b11 {
 	case 0:
 		obj.y = value
@@ -59,7 +59,6 @@ func (obj *Object) write(addr uint16, value uint8) {
 		obj.yFlip = util.ReadBit(value, 6) > 0
 		obj.xFlip = util.ReadBit(value, 5) > 0
 		obj.paletteId = util.ReadBit(value, 4)
-
 	default:
 		panic("should never happen")
 	}
@@ -77,8 +76,9 @@ func (oam *OAM) Read(addr uint16) uint8 {
 	if addr >= 0xFEA0 || oam.readDisabled {
 		return 0xFF
 	}
-
-	addr -= OAMStartAddr
+	return oam.read(uint8(addr - OAMStartAddr))
+}
+func (oam *OAM) read(addr uint8) uint8 {
 	objectId := addr >> 2
 	return oam.Data[objectId].Read(addr)
 }
@@ -87,8 +87,9 @@ func (oam *OAM) Write(addr uint16, value uint8) {
 	if addr >= 0xFEA0 || oam.writeDisabled {
 		return
 	}
-
-	addr -= OAMStartAddr
+	oam.write(uint8(addr-OAMStartAddr), value)
+}
+func (oam *OAM) write(addr uint8, value uint8) {
 	objectId := addr >> 2
 	oam.Data[objectId].write(addr, value)
 }

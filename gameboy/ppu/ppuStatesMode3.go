@@ -1,5 +1,17 @@
 package ppu
 
+// OAM scan to Drawing transition
+type oamScanToDrawing struct{}
+
+func (st *oamScanToDrawing) Init(ppu *PPU) {
+	ppu.OAM.writeDisabled = false
+	ppu.vRAM.readDisabled = true
+}
+func (st *oamScanToDrawing) Next(_ *PPU) ppuInternalState {
+	return new(drawing)
+}
+func (st *oamScanToDrawing) Duration() int { return 4 }
+
 type drawing struct {
 	penaltyDots int
 }
