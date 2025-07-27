@@ -47,9 +47,9 @@ const (
 
 	BANKAddr = 0xFF50
 
-	IFAddr              = 0xFF0F
-	IEAddr              = 0xFFFF
-	interruptMask uint8 = 0b00011111
+	IFAddr       = 0xFF0F
+	IEAddr       = 0xFFFF
+	ifMask uint8 = 0b00011111
 )
 
 func (mmu *MMU) writeIO(addr uint16, v uint8) {
@@ -124,9 +124,9 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 
 	// Interrupt flags
 	case IFAddr:
-		return ^interruptMask | (mmu.ifReg & interruptMask)
+		return ^ifMask | (mmu.ifReg & ifMask)
 	case IEAddr:
-		return ^interruptMask | (mmu.ieReg & interruptMask)
+		return mmu.ieReg
 
 	default:
 		// Wave RAM
