@@ -2,6 +2,9 @@
 
 A feature-rich, cross-platform Game Boy emulator written in Go, with a modern graphical interface and an integrated graphical debugger.
 
+It currently supports only the original DMG and passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites (except for tests involving Serial Transfer, still in progress).
+Some tests require the original boot rom.
+
 ## Features
 
 - **Accurate CPU Emulation**: Implements the full Game Boy Z80-like CPU, with extensive opcode tests.
@@ -11,6 +14,7 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 - **Joypad Input**: Keyboard-mapped controls for all Game Boy buttons and D-Pad.
 - **Save States**: Automatically loads and saves `.sav` files alongside ROMs.
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
+- **Boot ROM**: Possibility to specify a boot rom with the `-boot-rom` flag, `None` skips it and sets the state of the emulator like after executing the original ROM.
 - **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
 
 ## Project Structure
@@ -100,3 +104,4 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 - Expand support for additional cartridge types and MBC variants.
 - Allow users to customize controls
 - Implement serial data transfer
+- Support Game Boy Color (CGB) and Game Boy Advance (AGB)
