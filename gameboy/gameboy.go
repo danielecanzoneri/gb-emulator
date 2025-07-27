@@ -37,7 +37,8 @@ func (gb *GameBoy) initComponents() {
 	gb.PPU = ppu.New()
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
-	gb.Timer = &timer.Timer{APU: gb.APU}
+	gb.Timer = timer.New()
+	gb.Timer.APU = gb.APU
 	gb.Memory = &memory.MMU{Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
 	gb.CPU = &cpu.CPU{Timer: gb.Timer, MMU: gb.Memory, PPU: gb.PPU}
 	gb.CPU.AddCycler(gb.Timer, gb.PPU, gb.Memory, gb.APU)

@@ -29,6 +29,14 @@ type Timer struct {
 	RequestInterrupt func()
 }
 
+func New() *Timer {
+	// It seems that at startup actual Game Boy timer has elapsed for eight ticks,
+	// (maybe it's for a wrong boot rom emulation)
+	t := new(Timer)
+	t.Tick(8)
+	return t
+}
+
 func (t *Timer) Tick(ticks uint) {
 	for range ticks {
 		// Update DIV
