@@ -70,6 +70,11 @@ type OAM struct {
 	// Disabled during mode 2 (OAM scan) and 3 (drawing)
 	readDisabled  bool
 	writeDisabled bool
+
+	// OAM bug flags
+	buggedRead  bool
+	buggedWrite bool
+	buggedRow   uint8
 }
 
 func (oam *OAM) Read(addr uint16) uint8 {

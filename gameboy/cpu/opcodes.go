@@ -29,41 +29,41 @@ func (cpu *CPU) LD_SP_N16() {
 }
 
 // LD [R16] A
-func (cpu *CPU) LD_R16mem_A(readR16 func() uint16) {
-	cpu.WriteByte(readR16(), cpu.A)
+func (cpu *CPU) LD_R16mem_A(r16 uint16) {
+	cpu.WriteByte(r16, cpu.A)
 }
 func (cpu *CPU) LD_BCmem_A() {
-	cpu.LD_R16mem_A(cpu.ReadBC)
+	cpu.LD_R16mem_A(cpu.ReadBC())
 }
 func (cpu *CPU) LD_DEmem_A() {
-	cpu.LD_R16mem_A(cpu.ReadDE)
+	cpu.LD_R16mem_A(cpu.ReadDE())
 }
 func (cpu *CPU) LD_HLImem_A() {
-	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.LD_R16mem_A(cpu.ReadHL() - 1)
 }
 func (cpu *CPU) LD_HLDmem_A() {
-	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.LD_R16mem_A(cpu.ReadHL() + 1)
 }
 
 // LD A [R16]
-func (cpu *CPU) LD_A_R16mem(readR16 func() uint16) {
-	cpu.A = cpu.ReadByte(readR16())
+func (cpu *CPU) LD_A_R16mem(r16 uint16) {
+	cpu.A = cpu.ReadByte(r16)
 }
 func (cpu *CPU) LD_A_BCmem() {
-	cpu.LD_A_R16mem(cpu.ReadBC)
+	cpu.LD_A_R16mem(cpu.ReadBC())
 }
 func (cpu *CPU) LD_A_DEmem() {
-	cpu.LD_A_R16mem(cpu.ReadDE)
+	cpu.LD_A_R16mem(cpu.ReadDE())
 }
 func (cpu *CPU) LD_A_HLImem() {
-	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.LD_A_R16mem(cpu.ReadHL() - 1)
 }
 func (cpu *CPU) LD_A_HLDmem() {
-	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.LD_A_R16mem(cpu.ReadHL() + 1)
 }
 
 // LD N16 SP
@@ -76,18 +76,14 @@ func (cpu *CPU) LD_N16_SP() {
 }
 
 // INC R16
-func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16), sameCycleOfOAMRead bool) {
+func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	if sameCycleOfOAMRead {
-		cpu.PPU.TriggerOAMBugWriteBeforeRead(v)
-	} else {
-		cpu.PPU.TriggerOAMBugWrite(v)
-	}
+	cpu.PPU.GlitchedOAMAccess(v, false)
 
 	writeR16(v + 1)
 }
 func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	cpu.incR16WithoutTicks(readR16, writeR16, false)
+	cpu.incR16WithoutTicks(readR16, writeR16)
 	cpu.Tick(4)
 }
 func (cpu *CPU) INC_BC() {
@@ -104,17 +100,14 @@ func (cpu *CPU) INC_SP() {
 }
 
 // DEC R16
-func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16), sameCycleOfOAMWrite bool) {
+func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	// Two glitched writes behaves as one (?)
-	if !sameCycleOfOAMWrite {
-		cpu.PPU.TriggerOAMBugWrite(v)
-	}
+	cpu.PPU.GlitchedOAMAccess(v, false)
 
 	writeR16(v - 1)
 }
 func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	cpu.decR16WithoutTicks(readR16, writeR16, false)
+	cpu.decR16WithoutTicks(readR16, writeR16)
 	cpu.Tick(4)
 }
 func (cpu *CPU) DEC_BC() {
@@ -362,7 +355,7 @@ func (cpu *CPU) JR_E8() {
 // STOP
 func (cpu *CPU) STOP() {
 	// Increment PC (may cause OAM bug)
-	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC, false)
+	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
 }
 
 // LD R8 R8
@@ -901,7 +894,7 @@ func (cpu *CPU) CP_A_N8() {
 func (cpu *CPU) POP_STACK() uint16 {
 	// For some reason, pop will trigger the bug only 3 times (instead of the expected 4 times);
 	// one read, one glitched write, and another read without a glitched write.
-	cpu.incR16WithoutTicks(cpu.ReadSP, cpu.writeSP, true)
+	cpu.incR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	lowAddr := cpu.ReadByte(cpu.SP - 1)
 	cpu.SP++
 	highAddr := cpu.ReadByte(cpu.SP - 1)
@@ -927,7 +920,7 @@ func (cpu *CPU) PUSH_STACK(v uint16) {
 	// Write first high then low
 	high, low := util.SplitWord(v)
 	cpu.WriteByte(cpu.SP, high)
-	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP, true)
+	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	cpu.WriteByte(cpu.SP, low)
 }
 func (cpu *CPU) PUSH_BC() {

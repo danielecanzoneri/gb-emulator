@@ -76,6 +76,17 @@ func (ppu *PPU) Tick(ticks uint) {
 		return
 	}
 
+	// OAM bug
+	if ppu.OAM.buggedRead && ppu.OAM.buggedWrite {
+		ppu.triggerOAMBugWriteAndRead()
+	} else if ppu.OAM.buggedRead {
+		ppu.triggerOAMBugRead()
+	} else if ppu.OAM.buggedWrite {
+		ppu.triggerOAMBugWrite()
+	}
+	ppu.OAM.buggedRead = false
+	ppu.OAM.buggedWrite = false
+
 	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
 	// normally it is blocked 4 ticks before STAT mode changes
 	// (when internal mode flag is updated) but is available again when STAT mode changes
