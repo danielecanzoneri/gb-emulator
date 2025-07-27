@@ -4,6 +4,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/memory/serial"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
@@ -15,6 +16,7 @@ type MMU struct {
 	// Cartridge (with MBC and data)
 	Cartridge cartridge.Cartridge
 
+	Serial serial.Port
 	Timer  *timer.Timer
 	PPU    *ppu.PPU
 	Joypad *joypad.Joypad

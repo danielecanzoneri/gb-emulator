@@ -99,3 +99,4 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
 - Allow users to customize controls
+- Implement serial data transfer

@@ -1,5 +1,7 @@
 package memory
 
+import "github.com/danielecanzoneri/gb-emulator/gameboy/memory/serial"
+
 const (
 	JOYPAddr = 0xFF00
 
@@ -58,6 +60,10 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	case JOYPAddr:
 		mmu.Joypad.Write(v)
 
+	// Serial
+	case serial.SBAddr, serial.SCAddr:
+		mmu.Serial.Write(addr, v)
+
 	// Audio I/O
 	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
 		NR21Addr, NR22Addr, NR23Addr, NR24Addr,
@@ -101,6 +107,10 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	// Joypad
 	case JOYPAddr:
 		return mmu.Joypad.Read()
+
+	// Serial
+	case serial.SBAddr, serial.SCAddr:
+		return mmu.Serial.Read(addr)
 
 	// Audio I/O
 	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
