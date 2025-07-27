@@ -44,7 +44,7 @@ func (cpu *CPU) LD_HLImem_A() {
 }
 func (cpu *CPU) LD_HLDmem_A() {
 	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
 }
 
 // LD A [R16]
@@ -63,7 +63,7 @@ func (cpu *CPU) LD_A_HLImem() {
 }
 func (cpu *CPU) LD_A_HLDmem() {
 	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.decR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
 }
 
 // LD N16 SP
@@ -104,14 +104,17 @@ func (cpu *CPU) INC_SP() {
 }
 
 // DEC R16
-func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
+func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16), sameCycleOfOAMWrite bool) {
 	v := readR16()
-	cpu.PPU.TriggerOAMBugWrite(v)
+	// Two glitched writes behaves as one (?)
+	if !sameCycleOfOAMWrite {
+		cpu.PPU.TriggerOAMBugWrite(v)
+	}
 
 	writeR16(v - 1)
 }
 func (cpu *CPU) DEC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	cpu.decR16WithoutTicks(readR16, writeR16)
+	cpu.decR16WithoutTicks(readR16, writeR16, false)
 	cpu.Tick(4)
 }
 func (cpu *CPU) DEC_BC() {
@@ -919,13 +922,12 @@ func (cpu *CPU) POP_AF() {
 
 // PUSH R16STK
 func (cpu *CPU) PUSH_STACK(v uint16) {
-	cpu.Tick(4) // Internal
+	cpu.DEC_SP()
 
 	// Write first high then low
 	high, low := util.SplitWord(v)
-	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
 	cpu.WriteByte(cpu.SP, high)
-	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
+	cpu.decR16WithoutTicks(cpu.ReadSP, cpu.writeSP, true)
 	cpu.WriteByte(cpu.SP, low)
 }
 func (cpu *CPU) PUSH_BC() {
