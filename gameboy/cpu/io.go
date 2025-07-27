@@ -21,7 +21,7 @@ func (cpu *CPU) ReadNextByte() uint8 {
 		cpu.haltBug = false
 	} else {
 		// Increment PC (may cause OAM bug)
-		cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
+		cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC, false)
 	}
 	return b
 }
@@ -29,7 +29,7 @@ func (cpu *CPU) WriteNextByte(v uint8) {
 	cpu.WriteByte(cpu.PC, v)
 
 	// Increment PC (may cause OAM bug)
-	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
+	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC, false)
 }
 
 func (cpu *CPU) ReadNextWord() uint16 {

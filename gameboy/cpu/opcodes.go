@@ -40,7 +40,7 @@ func (cpu *CPU) LD_DEmem_A() {
 }
 func (cpu *CPU) LD_HLImem_A() {
 	cpu.LD_R16mem_A(cpu.ReadHL)
-	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
 }
 func (cpu *CPU) LD_HLDmem_A() {
 	cpu.LD_R16mem_A(cpu.ReadHL)
@@ -59,7 +59,7 @@ func (cpu *CPU) LD_A_DEmem() {
 }
 func (cpu *CPU) LD_A_HLImem() {
 	cpu.LD_A_R16mem(cpu.ReadHL)
-	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL)
+	cpu.incR16WithoutTicks(cpu.ReadHL, cpu.writeHL, false)
 }
 func (cpu *CPU) LD_A_HLDmem() {
 	cpu.LD_A_R16mem(cpu.ReadHL)
@@ -76,14 +76,18 @@ func (cpu *CPU) LD_N16_SP() {
 }
 
 // INC R16
-func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
+func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16), sameCycleOfOAMRead bool) {
 	v := readR16()
-	cpu.PPU.TriggerOAMBugWrite(v)
+	if sameCycleOfOAMRead {
+		cpu.PPU.TriggerOAMBugWriteBeforeRead(v)
+	} else {
+		cpu.PPU.TriggerOAMBugWrite(v)
+	}
 
 	writeR16(v + 1)
 }
 func (cpu *CPU) INC_R16(readR16 func() uint16, writeR16 func(uint16)) {
-	cpu.incR16WithoutTicks(readR16, writeR16)
+	cpu.incR16WithoutTicks(readR16, writeR16, false)
 	cpu.Tick(4)
 }
 func (cpu *CPU) INC_BC() {
@@ -355,7 +359,7 @@ func (cpu *CPU) JR_E8() {
 // STOP
 func (cpu *CPU) STOP() {
 	// Increment PC (may cause OAM bug)
-	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
+	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC, false)
 }
 
 // LD R8 R8
@@ -894,10 +898,10 @@ func (cpu *CPU) CP_A_N8() {
 func (cpu *CPU) POP_STACK() uint16 {
 	// For some reason, pop will trigger the bug only 3 times (instead of the expected 4 times);
 	// one read, one glitched write, and another read without a glitched write.
-	lowAddr := cpu.ReadByte(cpu.SP)
-	cpu.incR16WithoutTicks(cpu.ReadSP, cpu.writeSP)
-	highAddr := cpu.ReadByte(cpu.SP)
+	cpu.incR16WithoutTicks(cpu.ReadSP, cpu.writeSP, true)
+	lowAddr := cpu.ReadByte(cpu.SP - 1)
 	cpu.SP++
+	highAddr := cpu.ReadByte(cpu.SP - 1)
 	return util.CombineBytes(highAddr, lowAddr)
 }
 func (cpu *CPU) POP_BC() {
