@@ -16,6 +16,7 @@ Some tests require the original boot rom.
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
 - **Boot ROM**: Possibility to specify a boot rom with the `-boot-rom` flag, `None` skips it and sets the state of the emulator like after executing the original ROM.
 - **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
+- **Turbo Mode**: By pressing `Space` the game will speed up at 2x
 
 ## Project Structure
 
@@ -99,9 +100,9 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 
 ## TODO
 
-- Implement a feature to speed up emulation (fast-forward).
+- Implement serial data transfer
+- Support Game Boy Color (CGB) and Game Boy Advance (AGB)
+- Let the user specify turbo mode speed (right now it's fixed a 2x).
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
 - Allow users to customize controls
-- Implement serial data transfer
-- Support Game Boy Color (CGB) and Game Boy Advance (AGB)
