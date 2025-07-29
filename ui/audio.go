@@ -56,8 +56,10 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			bufferPosition += 4
 
 			// Write also to file buffer
-			binary.LittleEndian.PutUint32(audioFileBuffer[audioFileBufferPosition:], math.Float32bits(sample))
-			audioFileBufferPosition += 4
+			if ui.audioFile != nil {
+				binary.LittleEndian.PutUint32(audioFileBuffer[audioFileBufferPosition:], math.Float32bits(sample))
+				audioFileBufferPosition += 4
+			}
 
 		default:
 			// If debugger is active and paused, return silence
