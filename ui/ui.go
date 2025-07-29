@@ -2,6 +2,7 @@ package ui
 
 import (
 	"log"
+	"os"
 
 	"github.com/danielecanzoneri/gb-emulator/ui/debugger"
 
@@ -21,6 +22,7 @@ type UI struct {
 	// Audio player
 	audioBuffer chan float32
 	audioPlayer *oto.Player
+	audioFile   *os.File // Record game audio
 
 	debugString      string
 	debugStringTimer uint

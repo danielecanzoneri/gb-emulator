@@ -2,12 +2,10 @@ package ui
 
 import (
 	"encoding/binary"
-	"fmt"
+	"github.com/ebitengine/oto/v3"
 	"io"
 	"math"
-	"os"
-
-	"github.com/ebitengine/oto/v3"
+	"path/filepath"
 )
 
 const (
@@ -18,16 +16,12 @@ const (
 	bufferSize = 8192
 )
 
-var AudioFile *os.File
+var (
+	audioFileBuffer         []byte
+	audioFileBufferPosition int
+)
 
 func newAudioPlayer(r io.Reader) (*oto.Player, error) {
-	file, err := os.OpenFile("audio.dat", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		fmt.Println("Error creating audio file:", err)
-	} else {
-		AudioFile = file
-	}
-
 	op := &oto.NewContextOptions{}
 	op.SampleRate = sampleRate
 	op.ChannelCount = channels
@@ -61,6 +55,10 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(sample))
 			bufferPosition += 4
 
+			// Write also to file buffer
+			binary.LittleEndian.PutUint32(audioFileBuffer[audioFileBufferPosition:], math.Float32bits(sample))
+			audioFileBufferPosition += 4
+
 		default:
 			// If debugger is active and paused, return silence
 			if ui.Paused || (ui.debugger.Active && !ui.debugger.Running) { // If paused, return silence
@@ -87,7 +85,26 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			}
 		}
 	}
-	_, _ = AudioFile.Write(buf[:bufferPosition])
+	if ui.audioFile != nil {
+		_, _ = ui.audioFile.Write(audioFileBuffer[:audioFileBufferPosition])
+		audioFileBufferPosition = 0
+	}
 
 	return bufferPosition, nil
+}
+
+func (ui *UI) RecordAudio() (string, error) {
+	// Extract the relative path
+	fileName := filepath.Base(ui.fileName)
+	f, err := createAudioFile(fileName)
+	if err != nil {
+		ui.audioPlayer = nil
+		return "", err
+	}
+
+	// Create buffer
+	audioFileBuffer = make([]byte, bufferSize)
+
+	ui.audioFile = f
+	return f.Name(), nil
 }

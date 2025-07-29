@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"log"
-
 	"github.com/danielecanzoneri/gb-emulator/ui"
+	"log"
 )
 
 var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
 	bootRom           = flag.String("boot-rom", "boot/bootix_dmg.bin", "Boot ROM filename (\"None\" to skip boot ROM)")
+	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 )
 
 func main() {
@@ -31,6 +31,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if *recordAudio {
+		if filename, err := gui.RecordAudio(); err != nil {
+			log.Println("Could not record game audio:", err)
+		} else {
+			log.Println("Recording game audio to ", filename)
+		}
+	}
 	if *startWithDebugger {
 		gui.ToggleDebugger()
 	}
