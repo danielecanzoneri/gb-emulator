@@ -22,7 +22,7 @@ Some tests require the original boot rom.
 ```
 .
 ├── boot/             # Boot ROMs
-├── gameboy/          # Main emulator code (CPU, PPU, APU, memory, UI)
+├── gameboy/          # Main emulator code (CPU, PPU, APU, memory)
 ├── ui/               # Ebiten-based GUI and input handling
 │   └── debugger/     # Integrated debugger components
 ├── util/             # Some simple util functions
