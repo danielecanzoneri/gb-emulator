@@ -24,6 +24,9 @@ type UI struct {
 	audioPlayer *oto.Player
 	audioFile   *os.File // Record game audio
 
+	// Turbo mode
+	turbo bool
+
 	debugString      string
 	debugStringTimer uint
 

@@ -11,6 +11,9 @@ func (ui *UI) handleInput() {
 		ui.ToggleDebugger()
 	}
 
+	// Turbo (play at max speed)
+	ui.turbo = ebiten.IsKeyPressed(ebiten.KeySpace)
+
 	// Ctrl+L to load a new game
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) && ebiten.IsKeyPressed(ebiten.KeyControl) {
 		// Stop running

@@ -14,6 +14,9 @@ const (
 	format     = oto.FormatFloat32LE
 
 	bufferSize = 8192
+
+	// Turbo is 2x
+	turboModifier = 2
 )
 
 var (
@@ -42,6 +45,9 @@ func newAudioPlayer(r io.Reader) (*oto.Player, error) {
 
 // Implements io.Reader interface for audio playback
 func (ui *UI) Read(buf []byte) (n int, err error) {
+	turbo := ui.turbo
+	turboCounter := 0
+
 	bufferPosition := 0
 
 	for bufferPosition < len(buf) {
@@ -52,14 +58,19 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 				return 0, io.EOF
 			}
 
-			binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(sample))
-			bufferPosition += 4
-
-			// Write also to file buffer
+			// Write to file buffer
 			if ui.audioFile != nil {
 				binary.LittleEndian.PutUint32(audioFileBuffer[audioFileBufferPosition:], math.Float32bits(sample))
 				audioFileBufferPosition += 4
 			}
+
+			// If turbo, skip some samples
+			turboCounter++
+			if turbo && (turboCounter%turboModifier != 0) {
+				continue
+			}
+			binary.LittleEndian.PutUint32(buf[bufferPosition:], math.Float32bits(sample))
+			bufferPosition += 4
 
 		default:
 			// If debugger is active and paused, return silence
