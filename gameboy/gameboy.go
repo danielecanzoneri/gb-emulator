@@ -7,16 +7,18 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
 
 type GameBoy struct {
-	CPU    *cpu.CPU
-	Timer  *timer.Timer
-	Memory *memory.MMU
-	PPU    *ppu.PPU
-	Joypad *joypad.Joypad
-	APU    *audio.APU
+	CPU        *cpu.CPU
+	SerialPort *serial.Port
+	Timer      *timer.Timer
+	Memory     *memory.MMU
+	PPU        *ppu.PPU
+	Joypad     *joypad.Joypad
+	APU        *audio.APU
 
 	sampleRate float64
 	sampleBuff chan float32
@@ -37,17 +39,21 @@ func (gb *GameBoy) initComponents() {
 	gb.PPU = ppu.New()
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
+	gb.SerialPort = new(serial.Port)
 	gb.Timer = timer.New()
 	gb.Timer.APU = gb.APU
-	gb.Memory = &memory.MMU{Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
+
+	gb.Memory = &memory.MMU{Serial: gb.SerialPort, Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
 	gb.CPU = &cpu.CPU{Timer: gb.Timer, MMU: gb.Memory, PPU: gb.PPU}
-	gb.CPU.AddCycler(gb.Timer, gb.PPU, gb.Memory, gb.APU)
+	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
 	// Set interrupt request for timer
 	gb.Timer.RequestInterrupt = cpu.RequestTimerInterruptFunc(gb.CPU)
 	// Set interrupt request for PPU
 	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
 	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
+	// Set interrupt request for serial
+	gb.SerialPort.RequestInterrupt = cpu.RequestSerialInterruptFunc(gb.CPU)
 }
 
 func (gb *GameBoy) Reset() {

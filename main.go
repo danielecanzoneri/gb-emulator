@@ -10,6 +10,7 @@ var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
 	bootRom           = flag.String("boot-rom", "boot/bootix_dmg.bin", "Boot ROM filename (\"None\" to skip boot ROM)")
 	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
+	serial            = flag.String("serial", "", "Serial role (master or slave)")
 )
 
 func main() {
@@ -29,6 +30,21 @@ func main() {
 	}
 	if err = gui.LoadBootROM(*bootRom); err != nil {
 		log.Fatal(err)
+	}
+
+	// Serial port data exchange
+	switch *serial {
+	case "master":
+		if err := gui.CreateSocket("localhost:8000"); err != nil {
+			log.Println(err)
+		}
+	case "slave":
+		if err := gui.ConnectToSocket("localhost:8000"); err != nil {
+			log.Println(err)
+		}
+	case "":
+	default:
+		log.Printf("Invalid serial role %q", *serial)
 	}
 
 	if *recordAudio {

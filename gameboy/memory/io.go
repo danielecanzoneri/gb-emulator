@@ -1,6 +1,8 @@
 package memory
 
-import "github.com/danielecanzoneri/gb-emulator/gameboy/memory/serial"
+import (
+	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
+)
 
 const (
 	JOYPAddr = 0xFF00

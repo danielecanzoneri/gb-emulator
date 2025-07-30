@@ -36,11 +36,11 @@ func (ui *UI) initRenderer() {
 
 func (ui *UI) Update() error {
 	// If window is unfocused, stop the game
-	if !ebiten.IsFocused() {
-		ui.Paused = true
-	} else {
-		ui.Paused = false
-	}
+	//if !ebiten.IsFocused() {
+	//	ui.Paused = true
+	//} else {
+	//	ui.Paused = false
+	//}
 
 	// If closing, save game
 	if ebiten.IsWindowBeingClosed() {

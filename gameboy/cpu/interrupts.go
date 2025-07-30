@@ -29,6 +29,11 @@ var interruptsHandler = map[uint8]uint16{
 }
 
 var (
+	RequestSerialInterruptFunc = func(cpu *CPU) func() {
+		return func() {
+			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|serialMask)
+		}
+	}
 	RequestTimerInterruptFunc = func(cpu *CPU) func() {
 		return func() {
 			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|timerMask)
