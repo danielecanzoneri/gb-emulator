@@ -19,6 +19,13 @@ func (ui *UI) CreateSocket(addr string) error {
 			return
 		}
 
+		// Important for low latency
+		tcpConn := conn.(*net.TCPConn)
+		err = tcpConn.SetNoDelay(true)
+		if err != nil {
+			log.Println("[ERROR] Setting socket no delay: ", err)
+		}
+
 		ui.gameBoy.SerialPort.Conn = conn
 		ui.gameBoy.SerialPort.Listen()
 	}()
@@ -30,6 +37,13 @@ func (ui *UI) ConnectToSocket(addr string) error {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
+	}
+
+	// Important for low latency
+	tcpConn := conn.(*net.TCPConn)
+	err = tcpConn.SetNoDelay(true)
+	if err != nil {
+		log.Println("[ERROR] Setting socket no delay: ", err)
 	}
 
 	ui.gameBoy.SerialPort.Conn = conn
