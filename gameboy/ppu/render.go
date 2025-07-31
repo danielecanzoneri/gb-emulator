@@ -102,7 +102,7 @@ func (ppu *PPU) renderObjects(pixels []uint8) int {
 	var pixelBGPriority = [FrameWidth]bool{} // Pixel priority for BG/Window over obj
 
 	// Tiles considered in the OBJ penalty algorithm (x ranges from 0 to 167+7, so we have at most 22 tiles
-	var tileObjectsPenalties [(167 + 7) >> 3]bool
+	var tileObjectsPenalties [(167+7)>>3 + 1]bool
 
 	// Draw objects with priority
 	for i := range ppu.numObjs {
