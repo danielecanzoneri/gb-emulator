@@ -2,6 +2,7 @@ package serial
 
 import (
 	"net"
+	"sync"
 )
 
 type Port struct {
@@ -13,24 +14,36 @@ type Port struct {
 	SC uint8
 
 	// Counter used to determine serial clock
-	clockCounter int
+	clockTimer int
 	// Exchange one bit at a time, when all bit are exchanged, set SC bit 7 to 0 and request interrupt
-	exchangedBit int
+	bitsTransferred int
+	// Start clock only when master receives a bit from slave
+	waitingForReply bool
+
+	packetCount int
+	lock        sync.Mutex
 
 	RequestInterrupt func()
 }
 
 func (port *Port) Tick(ticks uint) {
+	port.lock.Lock()
+	defer port.lock.Unlock()
+
 	// Only the master determines when an exchange takes place
-	if !port.isMaster() {
+	if !port.isTransferring() || !port.isMaster() {
 		return
 	}
 
-	// Serial clock runs at 8 kHz, since game boy runs at 4 MHz
-	// each serial clock happens once every 4 MHz / 8 kHz = 512 game boy ticks
-	port.clockCounter += int(ticks)
-	if port.clockCounter >= 8*512 {
-		port.clockCounter = 0
-		port.send()
+	port.clockTimer -= int(ticks)
+	if port.clockTimer <= 0 {
+		// If master hasn't received bit from slave, wait
+		if !port.waitingForReply {
+			port.sendBit()
+			port.waitingForReply = true
+
+			// Restart master clock for the next bit
+			port.clockTimer = 512
+		}
 	}
 }

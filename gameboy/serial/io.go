@@ -23,11 +23,22 @@ func (port *Port) Read(addr uint16) uint8 {
 }
 
 func (port *Port) Write(addr uint16, v uint8) {
+	port.lock.Lock()
+	defer port.lock.Unlock()
+
 	switch addr {
 	case SBAddr:
 		port.SB = v
 	case SCAddr:
 		port.SC = v &^ SCMask
+
+		// Start transmission
+		if port.isMaster() && port.isTransferring() {
+			// Serial clock runs at 8 kHz, since game boy runs at 4 MHz
+			// each serial clock happens once every 4 MHz / 8 kHz = 512 game boy ticks
+			port.clockTimer = 512
+		}
+
 	default:
 		panic("Serial: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
