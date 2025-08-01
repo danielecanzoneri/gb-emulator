@@ -23,6 +23,7 @@ type registersViewer struct {
 	lcd         *panel
 	lcdInternal *panel
 	timer       *panel
+	serial      *panel
 }
 
 func newRegisterViewer() *registersViewer {
@@ -38,6 +39,7 @@ func newRegisterViewer() *registersViewer {
 		lcd:         newLcdPanel(),
 		lcdInternal: newLcdInternalPanel(),
 		timer:       newTimerPanel(),
+		serial:      newSerialPanel(),
 	}
 
 	soundRow := newContainer(widget.DirectionHorizontal,
@@ -55,6 +57,7 @@ func newRegisterViewer() *registersViewer {
 			timerSoundControlColumn, // right
 		),
 		rv.waveRam,
+		rv.serial,
 	)
 	secondRow := newContainer(widget.DirectionHorizontal,
 		newContainer(widget.DirectionVertical,
@@ -82,6 +85,7 @@ func (rv *registersViewer) Sync(gb *gameboy.GameBoy) {
 	rv.lcd.Sync(gb)
 	rv.lcdInternal.Sync(gb)
 	rv.timer.Sync(gb)
+	rv.serial.Sync(gb)
 }
 
 func newCpuPanel() *panel {
@@ -228,4 +232,12 @@ func newTimerPanel() *panel {
 		{name: "FF07 TAC", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF07)) }},
 	}
 	return newPanel("Timer", entries...)
+}
+
+func newSerialPanel() *panel {
+	entries := []panelEntry{
+		{name: "FF01 SB", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF01)) }},
+		{name: "FF02 SC", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF02)) }},
+	}
+	return newPanel("Serial Port", entries...)
 }
