@@ -4,13 +4,6 @@ import (
 	"net"
 )
 
-const (
-	SBAddr = 0xFF01
-	SCAddr = 0xFF02
-
-	SCMask = 0x7E
-)
-
 type Port struct {
 	// TCP socket
 	Conn net.Conn
