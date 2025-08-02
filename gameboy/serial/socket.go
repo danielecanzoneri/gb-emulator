@@ -6,14 +6,13 @@ import (
 	"log"
 )
 
-// Listen to incoming bytes from the other port
+// Listen to incoming bytes
 func (port *Port) Listen() {
 	go func() {
 		buf := make([]uint8, 1)
 
 		for {
 			_, err := port.Conn.Read(buf)
-			port.packetCount++
 
 			switch {
 			case err == nil: // Do nothing
@@ -24,28 +23,15 @@ func (port *Port) Listen() {
 				continue
 			}
 
-			if !port.isTransferring() {
-				log.Println("[WARN] Received data outside of serial data transferring")
-				continue
-			}
-
-			// A slave must send a bit back to the master
-			if port.isSlave() {
-				port.sendBit()
-			}
-
-			port.handleIncomingBit(buf[0])
+			port.dataChannel <- buf[0]
 		}
 	}()
 }
 
 func (port *Port) handleIncomingBit(bitIn uint8) {
-	port.lock.Lock()
-	defer port.lock.Unlock()
-
+	// Set bit 0 of SB
 	port.SB = (port.SB << 1) | (bitIn & 1)
 	port.bitsTransferred++
-	port.waitingForReply = false
 
 	if port.bitsTransferred == 8 {
 		port.bitsTransferred = 0

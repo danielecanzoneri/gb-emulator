@@ -2,7 +2,6 @@ package serial
 
 import (
 	"net"
-	"sync"
 )
 
 type Port struct {
@@ -17,33 +16,46 @@ type Port struct {
 	clockTimer int
 	// Exchange one bit at a time, when all bit are exchanged, set SC bit 7 to 0 and request interrupt
 	bitsTransferred int
-	// Start clock only when master receives a bit from slave
-	waitingForReply bool
-
-	packetCount int
-	lock        sync.Mutex
+	// Channel where data is received from socket
+	dataChannel chan uint8
 
 	RequestInterrupt func()
 }
 
-func (port *Port) Tick(ticks uint) {
-	port.lock.Lock()
-	defer port.lock.Unlock()
-
-	// Only the master determines when an exchange takes place
-	if !port.isTransferring() || !port.isMaster() {
-		return
+func NewPort() *Port {
+	return &Port{
+		// Synchronous channel
+		dataChannel: make(chan uint8),
 	}
+}
 
-	port.clockTimer -= int(ticks)
-	if port.clockTimer <= 0 {
-		// If master hasn't received bit from slave, wait
-		if !port.waitingForReply {
+func (port *Port) Tick(ticks uint) {
+	if port.isSlave() {
+		select {
+		// If slave received a bit, immediately send back lower bit of SB
+		case bit := <-port.dataChannel:
 			port.sendBit()
-			port.waitingForReply = true
+			port.handleIncomingBit(bit)
+
+		default: // Non blocking
+		}
+
+	} else {
+		// Only the master determines when an exchange takes place
+		if !port.isTransferring() {
+			return
+		}
+
+		port.clockTimer -= int(ticks)
+		if port.clockTimer <= 0 {
+			port.sendBit() // Send bit to slave
+
+			// Block until receive bit back from slave
+			bitReceived := <-port.dataChannel
+			port.handleIncomingBit(bitReceived)
 
 			// Restart master clock for the next bit
-			port.clockTimer = 512
+			port.clockTimer += 512
 		}
 	}
 }

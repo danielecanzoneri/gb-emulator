@@ -39,7 +39,7 @@ func (gb *GameBoy) initComponents() {
 	gb.PPU = ppu.New()
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
-	gb.SerialPort = new(serial.Port)
+	gb.SerialPort = serial.NewPort()
 	gb.Timer = timer.New()
 	gb.Timer.APU = gb.APU
 
