@@ -31,14 +31,14 @@ func (ui *UI) LoadNewGame() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ui.gameBoy.Load(rom)
+	ui.GameBoy.Load(rom)
 
 	ui.gameTitle = rom.Header().Title
 	ui.fileName = romPath
 }
 
 func (ui *UI) Save() {
-	ramDump := ui.gameBoy.Memory.Cartridge.RAMDump()
+	ramDump := ui.GameBoy.Memory.Cartridge.RAMDump()
 	if ramDump == nil {
 		return
 	}
@@ -58,7 +58,7 @@ func (ui *UI) LoadBootROM(bootRom string) (err error) {
 		data, err = os.ReadFile(bootRom)
 	}
 
-	ui.gameBoy.LoadBootROM(data)
+	ui.GameBoy.LoadBootROM(data)
 	return
 }
 

@@ -80,11 +80,11 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 				continue
 			}
 
-			ui.gameBoy.Joypad.DetectKeysPressed()
-			ui.gameBoy.CPU.ExecuteInstruction()
+			ui.GameBoy.Joypad.DetectKeysPressed()
+			ui.GameBoy.CPU.ExecuteInstruction()
 
 			if ui.debugger.Active {
-				pc := ui.gameBoy.CPU.ReadPC()
+				pc := ui.GameBoy.CPU.ReadPC()
 				switch {
 				// Stop if next instruction
 				case ui.debugger.NextInstruction && ui.debugger.CallDepth <= 0:

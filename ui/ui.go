@@ -12,7 +12,7 @@ import (
 )
 
 type UI struct {
-	gameBoy   *gameboy.GameBoy
+	GameBoy   *gameboy.GameBoy
 	gameTitle string
 	fileName  string
 
@@ -40,7 +40,7 @@ func New() (*UI, error) {
 	// Create audio buffer
 	ui.audioBuffer = make(chan float32, bufferSize)
 	gb := gameboy.New(ui.audioBuffer, sampleRate)
-	ui.gameBoy = gb
+	ui.GameBoy = gb
 
 	// Debugger
 	ui.debugger = debugger.New(gb)

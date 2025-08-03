@@ -62,7 +62,7 @@ func (ui *UI) Update() error {
 
 func (ui *UI) Draw(screen *ebiten.Image) {
 	// Update the frame image with the current frame in the PPU
-	frameBuffer := ui.gameBoy.PPU.GetFrame()
+	frameBuffer := ui.GameBoy.PPU.GetFrame()
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {
 			colorId := frameBuffer[y][x]

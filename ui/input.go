@@ -23,7 +23,7 @@ func (ui *UI) handleInput() {
 		ui.Save()
 
 		ui.LoadNewGame()
-		ui.gameBoy.Reset()
+		ui.GameBoy.Reset()
 
 		// Start running
 		ui.Paused = false
@@ -41,9 +41,9 @@ func (ui *UI) handleInput() {
 
 func (ui *UI) handleAudioToggle() {
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		ui.gameBoy.APU.Ch1Enabled = !ui.gameBoy.APU.Ch1Enabled
+		ui.GameBoy.APU.Ch1Enabled = !ui.GameBoy.APU.Ch1Enabled
 		debugString := "Channel 1 "
-		if ui.gameBoy.APU.Ch1Enabled {
+		if ui.GameBoy.APU.Ch1Enabled {
 			debugString += "enabled"
 		} else {
 			debugString += "muted"
@@ -53,9 +53,9 @@ func (ui *UI) handleAudioToggle() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key2) {
-		ui.gameBoy.APU.Ch2Enabled = !ui.gameBoy.APU.Ch2Enabled
+		ui.GameBoy.APU.Ch2Enabled = !ui.GameBoy.APU.Ch2Enabled
 		debugString := "Channel 2 "
-		if ui.gameBoy.APU.Ch2Enabled {
+		if ui.GameBoy.APU.Ch2Enabled {
 			debugString += "enabled"
 		} else {
 			debugString += "muted"
@@ -65,9 +65,9 @@ func (ui *UI) handleAudioToggle() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		ui.gameBoy.APU.Ch3Enabled = !ui.gameBoy.APU.Ch3Enabled
+		ui.GameBoy.APU.Ch3Enabled = !ui.GameBoy.APU.Ch3Enabled
 		debugString := "Channel 3 "
-		if ui.gameBoy.APU.Ch3Enabled {
+		if ui.GameBoy.APU.Ch3Enabled {
 			debugString += "enabled"
 		} else {
 			debugString += "muted"
@@ -77,9 +77,9 @@ func (ui *UI) handleAudioToggle() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.Key4) {
-		ui.gameBoy.APU.Ch4Enabled = !ui.gameBoy.APU.Ch4Enabled
+		ui.GameBoy.APU.Ch4Enabled = !ui.GameBoy.APU.Ch4Enabled
 		debugString := "Channel 4 "
-		if ui.gameBoy.APU.Ch4Enabled {
+		if ui.GameBoy.APU.Ch4Enabled {
 			debugString += "enabled"
 		} else {
 			debugString += "muted"
