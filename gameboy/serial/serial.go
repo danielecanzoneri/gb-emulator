@@ -4,9 +4,19 @@ import (
 	"net"
 )
 
+type LinkState int
+
+const (
+	Disconnected LinkState = iota
+	Connecting
+	Connected
+)
+
 type Port struct {
 	// TCP socket
 	Conn net.Conn
+	// Connection state
+	State LinkState
 
 	SB uint8
 	// Serial control (bit 7: transfer enable, bit 0: clock select)
@@ -48,11 +58,16 @@ func (port *Port) Tick(ticks uint) {
 
 		port.clockTimer -= int(ticks)
 		if port.clockTimer <= 0 {
-			port.sendBit() // Send bit to slave
+			if port.State == Connected {
+				port.sendBit() // Send bit to slave
 
-			// Block until receive bit back from slave
-			bitReceived := <-port.dataChannel
-			port.handleIncomingBit(bitReceived)
+				// Block until receive bit back from slave
+				bitReceived := <-port.dataChannel
+				port.handleIncomingBit(bitReceived)
+			} else {
+				// Emulate disconnected cable
+				port.handleIncomingBit(1)
+			}
 
 			// Restart master clock for the next bit
 			port.clockTimer += 512

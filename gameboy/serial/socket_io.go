@@ -6,26 +6,27 @@ import (
 	"log"
 )
 
-// Listen to incoming bytes
+// Listen to incoming packets
 func (port *Port) Listen() {
-	go func() {
-		buf := make([]uint8, 1)
+	buf := make([]uint8, 1)
 
-		for {
-			_, err := port.Conn.Read(buf)
+	for {
+		_, err := port.Conn.Read(buf)
 
-			switch {
-			case err == nil: // Do nothing
-			case err == io.EOF:
-				return
-			default:
-				log.Println("Connection error:", err)
-				continue
-			}
-
-			port.dataChannel <- buf[0]
+		switch {
+		case err == nil: // Do nothing
+		case err == io.EOF:
+			// Connection closed, set state to disconnected and notify channel
+			port.State = Disconnected
+			port.dataChannel <- 1
+			return
+		default:
+			log.Println("Connection error:", err)
+			continue
 		}
-	}()
+
+		port.dataChannel <- buf[0]
+	}
 }
 
 func (port *Port) handleIncomingBit(bitIn uint8) {

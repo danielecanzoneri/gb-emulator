@@ -6,6 +6,10 @@ import (
 	"log"
 )
 
+const (
+	socketPort = "4321"
+)
+
 var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
 	bootRom           = flag.String("boot-rom", "boot/bootix_dmg.bin", "Boot ROM filename (\"None\" to skip boot ROM)")
@@ -35,13 +39,9 @@ func main() {
 	// Serial port data exchange
 	switch *serial {
 	case "master":
-		if err := gui.CreateSocket("localhost:8000"); err != nil {
-			log.Println(err)
-		}
+		gui.Listen(socketPort)
 	case "slave":
-		if err := gui.ConnectToSocket("localhost:8000"); err != nil {
-			log.Println(err)
-		}
+		gui.Connect(socketPort)
 	case "":
 	default:
 		log.Printf("Invalid serial role %q", *serial)
