@@ -9,10 +9,7 @@ Some tests require the original boot rom.
 
 - **Accurate CPU Emulation**: Implements the full Game Boy Z80-like CPU, with extensive opcode tests.
 - **PPU (Graphics) Emulation**: Renders original Game Boy graphics with accurate timing and palette.
-- **APU (Audio) Emulation**: Emulates all four Game Boy sound channels.
-- **Memory and MBC Support**: Supports various Memory Bank Controllers (MBC0, MBC1, MBC2, MBC3 with RTC, MBC5).
-- **Joypad Input**: Keyboard-mapped controls for all Game Boy buttons and D-Pad.
-- **Save States**: Automatically loads and saves `.sav` files alongside ROMs.
+- **Serial data transfer**: Emulates with high accuracy Game Link Cable (must start one instance with `-serial master` flag and the other with `-serial slave`).
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
 - **Boot ROM**: Possibility to specify a boot rom with the `-boot-rom` flag, `None` skips it and sets the state of the emulator like after executing the original ROM.
 - **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
@@ -100,9 +97,6 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 
 ## TODO
 
-- Implement serial data transfer
-- Support Game Boy Color (CGB) and Game Boy Advance (AGB)
-- Let the user specify turbo mode speed (right now it's fixed a 2x).
+- Support Game Boy Color (CGB).
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
-- Allow users to customize controls
