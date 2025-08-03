@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"github.com/danielecanzoneri/gb-emulator/util"
 	"slices"
-	"strconv"
 )
 
 const (
@@ -104,8 +103,10 @@ func (ppu *PPU) DMAWrite(index uint16, value uint8) {
 }
 
 func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
-	if (!ppu.obj8x16Size && row >= 8) || (ppu.obj8x16Size && row >= 16) {
-		panic("Invalid row: " + strconv.Itoa(int(row)))
+	if ppu.obj8x16Size { // 16-row object
+		row &= 0xF
+	} else { // 8-row object
+		row &= 0x7
 	}
 
 	if obj.yFlip {
