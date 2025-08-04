@@ -3,7 +3,6 @@ package cpu
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
 )
 
 // Ticker describes hardware components that needs clock synchronization
@@ -36,9 +35,8 @@ type CPU struct {
 	haltBug bool
 
 	// Other components
-	Timer *timer.Timer
-	MMU   *memory.MMU
-	PPU   *ppu.PPU
+	mmu *memory.MMU
+	ppu *ppu.PPU
 
 	cyclers []Ticker
 
@@ -51,8 +49,11 @@ type CPU struct {
 	prefixedOpcodesTable [32]func(uint8)
 }
 
-func New() *CPU {
-	cpu := new(CPU)
+func New(mmu *memory.MMU, ppu *ppu.PPU) *CPU {
+	cpu := &CPU{
+		mmu: mmu,
+		ppu: ppu,
+	}
 	cpu.initOpcodeTable()
 	return cpu
 }
@@ -72,7 +73,7 @@ func (cpu *CPU) Tick(ticks uint) {
 	}
 
 	cpu.writeIEHasCancelledInterrupt = false
-	if cpu.interruptMaskRequested > 0 && !(cpu.MMU.Read(ieAddr)&cpu.interruptMaskRequested > 0) {
+	if cpu.interruptMaskRequested > 0 && !(cpu.mmu.Read(ieAddr)&cpu.interruptMaskRequested > 0) {
 		cpu.writeIEHasCancelledInterrupt = true
 	}
 

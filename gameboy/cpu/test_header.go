@@ -14,9 +14,8 @@ func mockCPU() *CPU {
 	mem := &memory.MMU{PPU: p, Cartridge: c, Joypad: &joypad.Joypad{}, Timer: timer.New(), BootRomDisabled: true}
 	mem.Write(0, 0x0A) // Enable RAM
 
-	cpu := New()
+	cpu := New(mem, p)
 	cpu.SP = 0xFFFE
-	cpu.MMU = mem
 	return cpu
 }
 
@@ -24,9 +23,9 @@ func writeTestProgram(cpu *CPU, data ...byte) {
 	for i, b := range data {
 		addr := uint16(i) + cpu.PC
 		if addr < 0x8000 {
-			cpu.MMU.Cartridge.(*cartridge.MBC1).ROM[addr] = b
+			cpu.mmu.Cartridge.(*cartridge.MBC1).ROM[addr] = b
 		} else {
-			cpu.MMU.Write(addr, b)
+			cpu.mmu.Write(addr, b)
 		}
 	}
 }

@@ -31,22 +31,22 @@ var interruptsHandler = map[uint8]uint16{
 var (
 	RequestSerialInterruptFunc = func(cpu *CPU) func() {
 		return func() {
-			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|serialMask)
+			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|serialMask)
 		}
 	}
 	RequestTimerInterruptFunc = func(cpu *CPU) func() {
 		return func() {
-			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|timerMask)
+			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|timerMask)
 		}
 	}
 	RequestVBlankInterruptFunc = func(cpu *CPU) func() {
 		return func() {
-			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|vblankMask)
+			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|vblankMask)
 		}
 	}
 	RequestSTATInterruptFunc = func(cpu *CPU) func() {
 		return func() {
-			cpu.MMU.Write(ifAddr, cpu.MMU.Read(ifAddr)|statMask)
+			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|statMask)
 		}
 	}
 )
@@ -55,7 +55,7 @@ func (cpu *CPU) handleInterrupts() {
 	defer cpu.handleIME()
 
 	// Check for pending interrupts
-	triggered := cpu.MMU.Read(ieAddr) & cpu.MMU.Read(ifAddr) & 0x1F
+	triggered := cpu.mmu.Read(ieAddr) & cpu.mmu.Read(ifAddr) & 0x1F
 
 	// Awake if halted
 	if cpu.halted && triggered > 0 {
@@ -80,9 +80,9 @@ func (cpu *CPU) handleInterrupts() {
 }
 
 func (cpu *CPU) requestInterrupt(interruptMask uint8) {
-	IF := cpu.MMU.Read(ifAddr)
+	IF := cpu.mmu.Read(ifAddr)
 	IF |= interruptMask
-	cpu.MMU.Write(ifAddr, IF)
+	cpu.mmu.Write(ifAddr, IF)
 }
 
 // serveInterrupt return false if interrupt is cancelled, true otherwise
@@ -103,9 +103,9 @@ func (cpu *CPU) serveInterrupt(interruptMask uint8) bool {
 	if !cpu.interruptCancelled {
 		cpu.PC = interruptsHandler[interruptMask]
 
-		IF := cpu.MMU.Read(ifAddr)
+		IF := cpu.mmu.Read(ifAddr)
 		IF &= ^interruptMask
-		cpu.MMU.Write(ifAddr, IF)
+		cpu.mmu.Write(ifAddr, IF)
 		return true
 	} else {
 		cpu.PC = 0

@@ -79,7 +79,7 @@ func (cpu *CPU) LD_N16_SP() {
 // INC R16
 func (cpu *CPU) incR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	cpu.PPU.GlitchedOAMAccess(v, false)
+	cpu.ppu.GlitchedOAMAccess(v, false)
 
 	writeR16(v + 1)
 }
@@ -103,7 +103,7 @@ func (cpu *CPU) INC_SP() {
 // DEC R16
 func (cpu *CPU) decR16WithoutTicks(readR16 func() uint16, writeR16 func(uint16)) {
 	v := readR16()
-	cpu.PPU.GlitchedOAMAccess(v, false)
+	cpu.ppu.GlitchedOAMAccess(v, false)
 
 	writeR16(v - 1)
 }
@@ -563,7 +563,7 @@ func (cpu *CPU) LD_A_A() {
 
 // HALT
 func (cpu *CPU) HALT() {
-	pending := cpu.MMU.Read(ieAddr) & cpu.MMU.Read(ifAddr) & 0x1F
+	pending := cpu.mmu.Read(ieAddr) & cpu.mmu.Read(ifAddr) & 0x1F
 	if !cpu.IME && pending != 0 {
 		// HALT bug, do not enter halt mode
 		cpu.haltBug = true
@@ -1313,6 +1313,6 @@ func (cpu *CPU) PREFIX() {
 }
 
 func (cpu *CPU) INVALID() {
-	opcode := cpu.MMU.Read(cpu.PC - 1)
+	opcode := cpu.mmu.Read(cpu.PC - 1)
 	log.Fatalf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 }

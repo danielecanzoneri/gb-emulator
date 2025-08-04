@@ -9,8 +9,8 @@ func TestInterruptHandlers(t *testing.T) {
 		var PC, SP uint16 = 0x1234, 0xFFFE
 
 		// Enable interrupts
-		cpu.MMU.Write(ieAddr, mask)
-		cpu.MMU.Write(ifAddr, mask)
+		cpu.mmu.Write(ieAddr, mask)
+		cpu.mmu.Write(ifAddr, mask)
 		cpu.PC = PC
 		cpu.SP = SP
 
@@ -31,7 +31,7 @@ func TestInterruptHandlers(t *testing.T) {
 				t.Errorf("PC: got %04X, expected %04X", cpu.PC, handler)
 			}
 
-			retAddr := uint16(cpu.MMU.Read(SP-2)) | uint16(cpu.MMU.Read(SP-1))<<8
+			retAddr := uint16(cpu.mmu.Read(SP-2)) | uint16(cpu.mmu.Read(SP-1))<<8
 			if retAddr != PC {
 				t.Errorf("wrong return address: got %04X, expected %04X", retAddr, PC)
 			}
@@ -40,7 +40,7 @@ func TestInterruptHandlers(t *testing.T) {
 				t.Errorf("IME not disabled")
 			}
 
-			if cpu.MMU.Read(ifAddr)&mask > 0 {
+			if cpu.mmu.Read(ifAddr)&mask > 0 {
 				t.Errorf("interrupt flag not reset")
 			}
 		})
@@ -54,7 +54,7 @@ func TestRequestInterrupt(t *testing.T) {
 	cpu.requestInterrupt(vblankMask)
 
 	// Check if the interrupt flag is set
-	if cpu.MMU.Read(ifAddr)&vblankMask == 0 {
+	if cpu.mmu.Read(ifAddr)&vblankMask == 0 {
 		t.Errorf("VBLANK interrupt not requested")
 	}
 
@@ -62,7 +62,7 @@ func TestRequestInterrupt(t *testing.T) {
 	cpu.requestInterrupt(timerMask)
 
 	// Check if the interrupt flag is set
-	if cpu.MMU.Read(ifAddr)&timerMask == 0 {
+	if cpu.mmu.Read(ifAddr)&timerMask == 0 {
 		t.Errorf("TIMER interrupt not requested")
 	}
 }
@@ -80,8 +80,8 @@ func TestHALTBug(t *testing.T) {
 
 		cpu.IME = false
 		cpu.halted = false
-		cpu.MMU.Write(ifAddr, 1)
-		cpu.MMU.Write(ieAddr, 1)
+		cpu.mmu.Write(ifAddr, 1)
+		cpu.mmu.Write(ieAddr, 1)
 		writeTestProgram(cpu, HALT_OPCODE, NOP_OPCODE, NOP_OPCODE)
 		cpu.ExecuteInstruction() // Should immediately exit HALT mod
 		cpu.ExecuteInstruction() // Should fail to increment PC
