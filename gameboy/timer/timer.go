@@ -41,30 +41,38 @@ func New(apu *audio.APU) *Timer {
 }
 
 func (t *Timer) Tick(ticks int) {
-	for range ticks {
-		// Update DIV
-		t.systemCounter++
+	// Calculate how many ticks until next multiple of 4
+	ticksToNextMultiple := int(4 - (t.systemCounter % 4))
 
-		if t.systemCounter%4 == 0 {
-			t.cycle()
+	// Process ticks in batches
+	for {
+		if ticks < ticksToNextMultiple {
+			t.systemCounter += uint16(ticks)
+			return
 		}
+
+		// Update system counter for this batch
+		t.systemCounter += uint16(ticksToNextMultiple)
+		ticks -= ticksToNextMultiple
+
+		// Happens every 4 ticks
+		t.timaReloaded = false
+		if t.timaOverflow {
+			t.timaOverflow = false
+			t.timaReloaded = true
+			t.RequestInterrupt()
+			t.TIMA = t.TMA
+		}
+
+		// Update TIMA
+		t.detectFallingEdge()
+
+		// Update DIV APU
+		t.detectAPUFallingEdge()
+
+		// Update ticks to next multiple for next iteration
+		ticksToNextMultiple = 4
 	}
-}
-
-func (t *Timer) cycle() {
-	t.timaReloaded = false
-	if t.timaOverflow {
-		t.timaOverflow = false
-		t.timaReloaded = true
-		t.RequestInterrupt()
-		t.TIMA = t.TMA
-	}
-
-	// Update TIMA
-	t.detectFallingEdge()
-
-	// Update DIV APU
-	t.detectAPUFallingEdge()
 }
 
 func (t *Timer) detectFallingEdge() {
