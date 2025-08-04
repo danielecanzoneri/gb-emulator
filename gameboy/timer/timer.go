@@ -18,7 +18,7 @@ type Timer struct {
 	prevState uint8
 
 	// Falling edge detector to detect when to update APU counter
-	APU       *audio.APU
+	apu       *audio.APU
 	prevBit12 uint8
 
 	// Flag to request interrupt at next step
@@ -29,10 +29,13 @@ type Timer struct {
 	RequestInterrupt func()
 }
 
-func New() *Timer {
+func New(apu *audio.APU) *Timer {
 	// It seems that at startup actual Game Boy timer has elapsed for eight ticks,
 	// (maybe it's for a wrong boot rom emulation)
-	t := new(Timer)
+	t := &Timer{
+		apu: apu,
+	}
+
 	t.Tick(8)
 	return t
 }
@@ -98,7 +101,7 @@ func (t *Timer) detectAPUFallingEdge() {
 
 	// Detect falling edge
 	if t.prevBit12 == 1 && currBit == 0 {
-		t.APU.StepFrameSequencer()
+		t.apu.StepFrameSequencer()
 	}
 	t.prevBit12 = uint8(currBit)
 }

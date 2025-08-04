@@ -12,8 +12,9 @@ import (
 
 func mockCPU() *CPU {
 	p := ppu.New()
+	a := audio.NewAPU(48000, make(chan float32, 10))
 	c := &cartridge.MBC1{ROM: make([]uint8, 0x8000), RAM: make([]uint8, 0x2000), RAMBanks: 1, ROMBanks: 1}
-	mem := mmu.New(p, audio.NewAPU(48000, make(chan float32, 10)), timer.New(), joypad.New(), serial.NewPort())
+	mem := mmu.New(p, a, timer.New(a), joypad.New(), serial.NewPort())
 	mem.Cartridge = c
 	mem.BootRomDisabled = true
 	mem.Write(0, 0x0A) // Enable RAM
