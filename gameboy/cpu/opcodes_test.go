@@ -1122,8 +1122,8 @@ func Test_HALT(t *testing.T) {
 			t.Errorf("CPU was not halted, got PC=%02X, expected %02X", cpu.PC, PC+1)
 		}
 
-		cpu.mmu.Write(ifAddr, timerMask)
-		cpu.mmu.Write(ieAddr, timerMask)
+		cpu.mmu.Write(ifAddr, TimerInterruptMask)
+		cpu.mmu.Write(ieAddr, TimerInterruptMask)
 		cpu.ExecuteInstruction()
 
 		if cpu.PC != timerHandler {
@@ -1146,8 +1146,8 @@ func Test_HALT(t *testing.T) {
 			t.Errorf("CPU was not halted, got PC=%02X, expected %02X", cpu.PC, PC+1)
 		}
 
-		cpu.mmu.Write(ifAddr, timerMask)
-		cpu.mmu.Write(ieAddr, timerMask)
+		cpu.mmu.Write(ifAddr, TimerInterruptMask)
+		cpu.mmu.Write(ieAddr, TimerInterruptMask)
 		cpu.ExecuteInstruction()
 		cpu.ExecuteInstruction()
 
@@ -2640,8 +2640,8 @@ func Test_DI(t *testing.T) {
 func Test_EI(t *testing.T) {
 	cpu := mockCPU()
 	cpu.IME = false
-	cpu.mmu.Write(ifAddr, timerMask)
-	cpu.mmu.Write(ieAddr, timerMask)
+	cpu.mmu.Write(ifAddr, TimerInterruptMask)
+	cpu.mmu.Write(ieAddr, TimerInterruptMask)
 
 	writeTestProgram(cpu, EI_OPCODE, NOP_OPCODE)
 

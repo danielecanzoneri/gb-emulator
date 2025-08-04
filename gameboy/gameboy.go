@@ -46,13 +46,11 @@ func (gb *GameBoy) initComponents() {
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
-	// Set interrupt request for timer
-	gb.Timer.RequestInterrupt = cpu.RequestTimerInterruptFunc(gb.CPU)
-	// Set interrupt request for PPU
-	gb.PPU.RequestVBlankInterrupt = cpu.RequestVBlankInterruptFunc(gb.CPU)
-	gb.PPU.RequestSTATInterrupt = cpu.RequestSTATInterruptFunc(gb.CPU)
-	// Set interrupt request for serial
-	gb.SerialPort.RequestInterrupt = cpu.RequestSerialInterruptFunc(gb.CPU)
+	// Set interrupts request handler
+	gb.PPU.RequestVBlankInterrupt = func() { gb.CPU.RequestInterrupt(cpu.VBlankInterruptMask) }
+	gb.PPU.RequestSTATInterrupt = func() { gb.CPU.RequestInterrupt(cpu.STATInterruptMask) }
+	gb.Timer.RequestInterrupt = func() { gb.CPU.RequestInterrupt(cpu.TimerInterruptMask) }
+	gb.SerialPort.RequestInterrupt = func() { gb.CPU.RequestInterrupt(cpu.SerialInterruptMask) }
 }
 
 func (gb *GameBoy) Reset() {

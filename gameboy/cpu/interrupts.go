@@ -4,52 +4,29 @@ const (
 	ifAddr = 0xFF0F
 	ieAddr = 0xFFFF
 
-	vblankMask    = 0b1
-	vblankHandler = 0x40
+	VBlankInterruptMask = 0b1
+	vblankHandler       = 0x40
 
-	statMask    = 0b10
-	statHandler = 0x48
+	STATInterruptMask = 0b10
+	statHandler       = 0x48
 
-	timerMask    = 0b100
-	timerHandler = 0x50
+	TimerInterruptMask = 0b100
+	timerHandler       = 0x50
 
-	serialMask    = 0b1000
-	serialHandler = 0x58
+	SerialInterruptMask = 0b1000
+	serialHandler       = 0x58
 
-	joypadMask    = 0b10000
-	joypadHandler = 0x60
+	JoypadInterruptMask = 0b10000
+	joypadHandler       = 0x60
 )
 
 var interruptsHandler = map[uint8]uint16{
-	vblankMask: vblankHandler,
-	statMask:   statHandler,
-	timerMask:  timerHandler,
-	serialMask: serialHandler,
-	joypadMask: joypadHandler,
+	VBlankInterruptMask: vblankHandler,
+	STATInterruptMask:   statHandler,
+	TimerInterruptMask:  timerHandler,
+	SerialInterruptMask: serialHandler,
+	JoypadInterruptMask: joypadHandler,
 }
-
-var (
-	RequestSerialInterruptFunc = func(cpu *CPU) func() {
-		return func() {
-			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|serialMask)
-		}
-	}
-	RequestTimerInterruptFunc = func(cpu *CPU) func() {
-		return func() {
-			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|timerMask)
-		}
-	}
-	RequestVBlankInterruptFunc = func(cpu *CPU) func() {
-		return func() {
-			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|vblankMask)
-		}
-	}
-	RequestSTATInterruptFunc = func(cpu *CPU) func() {
-		return func() {
-			cpu.mmu.Write(ifAddr, cpu.mmu.Read(ifAddr)|statMask)
-		}
-	}
-)
 
 func (cpu *CPU) handleInterrupts() {
 	defer cpu.handleIME()
@@ -79,7 +56,7 @@ func (cpu *CPU) handleInterrupts() {
 	return
 }
 
-func (cpu *CPU) requestInterrupt(interruptMask uint8) {
+func (cpu *CPU) RequestInterrupt(interruptMask uint8) {
 	IF := cpu.mmu.Read(ifAddr)
 	IF |= interruptMask
 	cpu.mmu.Write(ifAddr, IF)

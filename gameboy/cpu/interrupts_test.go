@@ -51,18 +51,18 @@ func TestRequestInterrupt(t *testing.T) {
 	cpu := mockCPU()
 
 	// Test requesting an interrupt
-	cpu.requestInterrupt(vblankMask)
+	cpu.RequestInterrupt(VBlankInterruptMask)
 
 	// Check if the interrupt flag is set
-	if cpu.mmu.Read(ifAddr)&vblankMask == 0 {
+	if cpu.mmu.Read(ifAddr)&VBlankInterruptMask == 0 {
 		t.Errorf("VBLANK interrupt not requested")
 	}
 
 	// Test requesting another interrupt
-	cpu.requestInterrupt(timerMask)
+	cpu.RequestInterrupt(TimerInterruptMask)
 
 	// Check if the interrupt flag is set
-	if cpu.mmu.Read(ifAddr)&timerMask == 0 {
+	if cpu.mmu.Read(ifAddr)&TimerInterruptMask == 0 {
 		t.Errorf("TIMER interrupt not requested")
 	}
 }
