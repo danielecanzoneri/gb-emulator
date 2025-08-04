@@ -51,6 +51,7 @@ func (gb *GameBoy) initComponents() {
 	gb.PPU.RequestSTATInterrupt = func() { gb.CPU.RequestInterrupt(cpu.STATInterruptMask) }
 	gb.Timer.RequestInterrupt = func() { gb.CPU.RequestInterrupt(cpu.TimerInterruptMask) }
 	gb.SerialPort.RequestInterrupt = func() { gb.CPU.RequestInterrupt(cpu.SerialInterruptMask) }
+	gb.Joypad.RequestInterrupt = func() { gb.CPU.RequestInterrupt(cpu.JoypadInterruptMask) }
 }
 
 func (gb *GameBoy) Reset() {

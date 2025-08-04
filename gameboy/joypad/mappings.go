@@ -29,36 +29,55 @@ var dPadKeyMapping = map[gbKey]ebiten.Key{
 }
 
 func (jp *Joypad) DetectKeysPressed() {
-	jp.selectUp = 1
-	jp.startDown = 1
-	jp.bLeft = 1
-	jp.aRight = 1
-
 	if jp.selectButtons == 0 {
 		if ebiten.IsKeyPressed(buttonsKeyMapping[KeyStart]) {
+			if jp.startDown == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.startDown = 0
 		}
 		if ebiten.IsKeyPressed(buttonsKeyMapping[KeySelect]) {
+			if jp.selectUp == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.selectUp = 0
 		}
 		if ebiten.IsKeyPressed(buttonsKeyMapping[KeyB]) {
+			if jp.bLeft == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.bLeft = 0
 		}
 		if ebiten.IsKeyPressed(buttonsKeyMapping[KeyA]) {
+			if jp.aRight == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.aRight = 0
 		}
 	}
 	if jp.selectDPad == 0 {
 		if ebiten.IsKeyPressed(dPadKeyMapping[KeyDown]) {
+			if jp.startDown == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.startDown = 0
 		}
 		if ebiten.IsKeyPressed(dPadKeyMapping[KeyUp]) {
+			if jp.selectUp == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.selectUp = 0
 		}
 		if ebiten.IsKeyPressed(dPadKeyMapping[KeyLeft]) {
+			if jp.bLeft == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.bLeft = 0
 		}
 		if ebiten.IsKeyPressed(dPadKeyMapping[KeyRight]) {
+			if jp.aRight == 1 { // Detect high -> low transition
+				jp.RequestInterrupt()
+			}
 			jp.aRight = 0
 		}
 	}
