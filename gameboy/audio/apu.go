@@ -40,7 +40,7 @@ func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
 	return apu
 }
 
-func (apu *APU) Tick(ticks uint) {
+func (apu *APU) Tick(ticks int) {
 	if !apu.active {
 		return
 	}

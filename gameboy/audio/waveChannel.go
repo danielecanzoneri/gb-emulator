@@ -32,7 +32,7 @@ type WaveChannel struct {
 	WaveRam      [16]uint8
 	bufferSample uint8 // CH3 does not emit samples directly, but stores every sample read into a buffer, and emits that continuously;
 
-	ticks uint
+	ticks int
 }
 
 func NewWaveChannel(fs *frameSequencer) *WaveChannel {
@@ -65,7 +65,7 @@ func (ch *WaveChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *WaveChannel) Tick(ticks uint) {
+func (ch *WaveChannel) Tick(ticks int) {
 	if !ch.active {
 		return
 	}

@@ -39,7 +39,7 @@ func NewPort() *Port {
 	}
 }
 
-func (port *Port) Tick(ticks uint) {
+func (port *Port) Tick(ticks int) {
 	if port.isSlave() {
 		select {
 		// If slave received a bit, immediately send back lower bit of SB
@@ -56,7 +56,7 @@ func (port *Port) Tick(ticks uint) {
 			return
 		}
 
-		port.clockTimer -= int(ticks)
+		port.clockTimer -= ticks
 		if port.clockTimer <= 0 {
 			if port.State == Connected {
 				port.sendBit() // Send bit to slave

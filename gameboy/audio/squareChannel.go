@@ -37,7 +37,7 @@ type SquareChannel struct {
 	periodCounter uint16
 	wavePosition  uint8 // Varies from 0 to 7
 
-	ticks uint
+	ticks int
 }
 
 func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16, fs *frameSequencer) *SquareChannel {
@@ -71,7 +71,7 @@ func (ch *SquareChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *SquareChannel) Tick(ticks uint) {
+func (ch *SquareChannel) Tick(ticks int) {
 	if !ch.active {
 		return
 	}

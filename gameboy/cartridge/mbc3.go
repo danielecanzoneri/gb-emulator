@@ -45,7 +45,7 @@ type MBC3 struct {
 	rtcDH, lthRtcDH uint8
 	lastWriteWas00  bool
 
-	rtcClockCounter uint
+	rtcClockCounter int
 }
 
 func (mbc *MBC3) RAMDump() []uint8 {
@@ -123,7 +123,7 @@ func NewMBC3(rom []uint8, ram bool, savData []uint8, header *Header, battery boo
 	return mbc
 }
 
-func (mbc *MBC3) Tick(ticks uint) {
+func (mbc *MBC3) Tick(ticks int) {
 	// Check if RTC is enabled
 	if util.ReadBit(mbc.rtcDH, 6) != 0 {
 		return

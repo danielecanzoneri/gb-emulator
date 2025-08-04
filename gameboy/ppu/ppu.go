@@ -71,7 +71,7 @@ func New() *PPU {
 	return ppu
 }
 
-func (ppu *PPU) Tick(ticks uint) {
+func (ppu *PPU) Tick(ticks int) {
 	if !ppu.active {
 		return
 	}
@@ -99,8 +99,8 @@ func (ppu *PPU) Tick(ticks uint) {
 	//
 	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ppu.InternalStateLength -= int(ticks)
-	ppu.Dots += int(ticks)
+	ppu.InternalStateLength -= ticks
+	ppu.Dots += ticks
 
 	// Switch PPU internal state
 	for ppu.InternalStateLength <= 0 {

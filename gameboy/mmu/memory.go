@@ -49,9 +49,9 @@ func New(ppu *ppu.PPU, apu *audio.APU, timer *timer.Timer, jp *joypad.Joypad, se
 	}
 }
 
-func (mmu *MMU) Tick(ticks uint) {
+func (mmu *MMU) Tick(ticks int) {
 	if mmu.dmaTransfer {
-		mmu.dmaTicks += int(ticks)
+		mmu.dmaTicks += ticks
 		for mmu.dmaTicks >= 4 {
 			mmu.dmaTicks -= 4
 
@@ -68,7 +68,7 @@ func (mmu *MMU) Tick(ticks uint) {
 	}
 
 	if mmu.delayDmaTicks > 0 {
-		mmu.delayDmaTicks -= int(ticks)
+		mmu.delayDmaTicks -= ticks
 		if mmu.delayDmaTicks <= 0 {
 			mmu.dmaTransfer = true
 			mmu.dmaTicks = 0

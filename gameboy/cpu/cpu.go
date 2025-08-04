@@ -7,7 +7,7 @@ import (
 
 // Ticker describes hardware components that needs clock synchronization
 type Ticker interface {
-	Tick(ticks uint)
+	Tick(ticks int)
 }
 
 type CPU struct {
@@ -64,7 +64,7 @@ func (cpu *CPU) AddCycler(cyclers ...Ticker) {
 	}
 }
 
-func (cpu *CPU) Tick(ticks uint) {
+func (cpu *CPU) Tick(ticks int) {
 	cpu.interruptCancelled = false
 
 	// Cancel interrupt one cycle later

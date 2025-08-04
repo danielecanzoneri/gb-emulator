@@ -72,7 +72,7 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	gb.Memory.Cartridge = rom
 
 	// MBC3 RTC clocking
-	if c, ok := rom.(interface{ Tick(uint) }); ok {
+	if c, ok := rom.(cpu.Ticker); ok {
 		gb.CPU.AddCycler(c)
 	}
 }

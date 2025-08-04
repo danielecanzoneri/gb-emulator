@@ -22,7 +22,7 @@ type NoiseChannel struct {
 	lfsrWidth    uint8 // Bit 3 (0 = 15-bit, 1 = 7-bit)
 	clockDivider uint8 // Bits 2-0
 
-	ticks uint
+	ticks int
 }
 
 func NewNoiseChannel(fs *frameSequencer) *NoiseChannel {
@@ -61,7 +61,7 @@ func (ch *NoiseChannel) Output() (sample float32) {
 	return
 }
 
-func (ch *NoiseChannel) Tick(ticks uint) {
+func (ch *NoiseChannel) Tick(ticks int) {
 	if !ch.active {
 		return
 	}

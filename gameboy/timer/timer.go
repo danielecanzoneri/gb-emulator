@@ -40,7 +40,7 @@ func New(apu *audio.APU) *Timer {
 	return t
 }
 
-func (t *Timer) Tick(ticks uint) {
+func (t *Timer) Tick(ticks int) {
 	for range ticks {
 		// Update DIV
 		t.systemCounter++
