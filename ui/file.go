@@ -12,31 +12,6 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-func (ui *UI) LoadNewGame() {
-	romPath, err := dialog.File().
-		Filter("Game Boy ROMs", "gb", "gbc").
-		Title("Choose a GameBoy ROM").
-		Load()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check if the ROM path is provided
-	if romPath == "" {
-		log.Fatal("Error: ROM file path is required")
-	}
-
-	// Load the ROM
-	rom, err := loadROM(romPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	ui.GameBoy.Load(rom)
-
-	ui.gameTitle = rom.Header().Title
-	ui.fileName = romPath
-}
-
 func (ui *UI) Save() {
 	ramDump := ui.GameBoy.Memory.Cartridge.RAMDump()
 	if ramDump == nil {
@@ -62,11 +37,28 @@ func (ui *UI) LoadBootROM(bootRom string) (err error) {
 	return
 }
 
-func loadROM(romPath string) (cartridge.Cartridge, error) {
+func (ui *UI) AskRomPath() (string, error) {
+	romPath, err := dialog.File().
+		Filter("Game Boy ROMs", "gb", "gbc").
+		Title("Choose a GameBoy ROM").
+		Load()
+	if err != nil {
+		return "", err
+	}
+
+	// Check if the ROM path is provided
+	if romPath == "" {
+		return "", errors.New("ROM file path is required")
+	}
+
+	return romPath, nil
+}
+
+func (ui *UI) LoadROM(romPath string) error {
 	// Open the ROM file
 	cartridgeData, err := os.ReadFile(romPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Open the SAV file
@@ -76,11 +68,17 @@ func loadROM(romPath string) (cartridge.Cartridge, error) {
 		if errors.Is(err, os.ErrNotExist) {
 			savData = nil
 		} else {
-			return nil, err
+			return err
 		}
 	}
 
-	return cartridge.NewCartridge(cartridgeData, savData), nil
+	rom := cartridge.NewCartridge(cartridgeData, savData)
+	ui.GameBoy.Load(rom)
+
+	ui.gameTitle = rom.Header().Title
+	ui.fileName = romPath
+
+	return nil
 }
 
 func getSavFileName(romPath string) string {

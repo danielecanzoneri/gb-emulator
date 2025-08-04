@@ -4,6 +4,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/ui/debugger"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"log"
 )
 
 func (ui *UI) handleInput() {
@@ -22,7 +23,14 @@ func (ui *UI) handleInput() {
 		// Save game before switching
 		ui.Save()
 
-		ui.LoadNewGame()
+		romPath, err := ui.AskRomPath()
+		if err == nil {
+			err = ui.LoadROM(romPath)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		ui.GameBoy.Reset()
 
 		// Start running

@@ -4,6 +4,8 @@ import (
 	"flag"
 	"github.com/danielecanzoneri/gb-emulator/ui"
 	"log"
+	"os"
+	"runtime/pprof"
 )
 
 const (
@@ -13,11 +15,19 @@ const (
 var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
 	bootRom           = flag.String("boot-rom", "boot/bootix_dmg.bin", "Boot ROM filename (\"None\" to skip boot ROM)")
+	romPath           = flag.String("rom", "", "ROM filename")
 	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
 )
 
 func main() {
+	f, _ := os.Create("cpu.prof")
+	err := pprof.StartCPUProfile(f)
+	if err != nil {
+		log.Println("Error starting CPU profile: ", err)
+	}
+	defer pprof.StopCPUProfile()
+
 	flag.Parse()
 
 	// Init emulator
@@ -26,7 +36,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gui.LoadNewGame()
+	if *romPath == "" {
+		*romPath, err = gui.AskRomPath()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	err = gui.LoadROM(*romPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Load Boot ROM
 	if *bootRom == "None" {
