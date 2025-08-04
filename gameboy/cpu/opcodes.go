@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/util"
+	"log"
 )
 
 func (cpu *CPU) NOP() {
@@ -1301,4 +1302,17 @@ func (cpu *CPU) SET_B3_R8(bit uint8, opcode uint8) {
 	b := cpu.readR8(opcode)
 	util.SetBit(&b, bit, 1)
 	cpu.writeR8(opcode, b)
+}
+
+// CB prefixed opcodes
+func (cpu *CPU) PREFIX() {
+	opcode := cpu.ReadNextByte()
+
+	// Execute opcode
+	cpu.prefixedOpcodesTable[opcode>>3](opcode)
+}
+
+func (cpu *CPU) INVALID() {
+	opcode := cpu.MMU.Read(cpu.PC - 1)
+	log.Fatalf("OPCODE 0x%02X NOT RECOGNIZED\n", opcode)
 }

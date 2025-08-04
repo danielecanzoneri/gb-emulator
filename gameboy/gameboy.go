@@ -44,7 +44,10 @@ func (gb *GameBoy) initComponents() {
 	gb.Timer.APU = gb.APU
 
 	gb.Memory = &memory.MMU{Serial: gb.SerialPort, Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
-	gb.CPU = &cpu.CPU{Timer: gb.Timer, MMU: gb.Memory, PPU: gb.PPU}
+	gb.CPU = cpu.New()
+	gb.CPU.Timer = gb.Timer
+	gb.CPU.MMU = gb.Memory
+	gb.CPU.PPU = gb.PPU
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
 	// Set interrupt request for timer
