@@ -1,4 +1,4 @@
-package memory
+package mmu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
@@ -16,11 +16,11 @@ type MMU struct {
 	// Cartridge (with MBC and data)
 	Cartridge cartridge.Cartridge
 
-	Serial *serial.Port
-	Timer  *timer.Timer
-	PPU    *ppu.PPU
-	Joypad *joypad.Joypad
-	APU    *audio.APU
+	ppu    *ppu.PPU
+	apu    *audio.APU
+	timer  *timer.Timer
+	joypad *joypad.Joypad
+	serial *serial.Port
 
 	// I/O registers
 	dmaReg uint8
@@ -39,6 +39,16 @@ type MMU struct {
 	BootRom         []uint8
 }
 
+func New(ppu *ppu.PPU, apu *audio.APU, timer *timer.Timer, jp *joypad.Joypad, serialPort *serial.Port) *MMU {
+	return &MMU{
+		ppu:    ppu,
+		apu:    apu,
+		timer:  timer,
+		joypad: jp,
+		serial: serialPort,
+	}
+}
+
 func (mmu *MMU) Tick(ticks uint) {
 	if mmu.dmaTransfer {
 		mmu.dmaTicks += int(ticks)
@@ -48,7 +58,7 @@ func (mmu *MMU) Tick(ticks uint) {
 			addr := uint16(mmu.read(dmaAddress)) << 8
 			mmu.dmaValue = mmu.read(addr + mmu.dmaOffset)
 
-			mmu.PPU.DMAWrite(mmu.dmaOffset, mmu.dmaValue)
+			mmu.ppu.DMAWrite(mmu.dmaOffset, mmu.dmaValue)
 			mmu.dmaOffset++
 
 			if mmu.dmaOffset == dmaDuration {
@@ -91,7 +101,7 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	case addr < 0x8000:
 		return mmu.Cartridge.Read(addr)
 	case addr < 0xA000: // vRAM
-		return mmu.PPU.Read(addr)
+		return mmu.ppu.Read(addr)
 	case addr < 0xC000:
 		return mmu.Cartridge.Read(addr)
 	case addr < 0xE000: // wRAM
@@ -99,7 +109,7 @@ func (mmu *MMU) read(addr uint16) uint8 {
 	case addr < 0xFE00: // Echo RAM
 		return mmu.read(addr - 0x2000)
 	case addr < 0xFF00: // OAM
-		return mmu.PPU.Read(addr)
+		return mmu.ppu.Read(addr)
 	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		return mmu.readIO(addr)
 	default: // hRAM
@@ -126,7 +136,7 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 	case addr < 0x8000:
 		mmu.Cartridge.Write(addr, value)
 	case addr < 0xA000: // vRAM
-		mmu.PPU.Write(addr, value)
+		mmu.ppu.Write(addr, value)
 	case addr < 0xC000:
 		mmu.Cartridge.Write(addr, value)
 	case addr < 0xE000: // wRAM
@@ -134,7 +144,7 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 	case addr < 0xFE00: // Echo RAM
 		mmu.Write(addr-0x2000, value)
 	case addr < 0xFF00: // OAM
-		mmu.PPU.Write(addr, value)
+		mmu.ppu.Write(addr, value)
 	case addr < 0xFF80 || addr == 0xFFFF: // I/O registers
 		mmu.writeIO(addr, value)
 	default: // hRAM

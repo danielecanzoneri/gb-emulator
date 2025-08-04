@@ -1,4 +1,4 @@
-package memory
+package mmu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"

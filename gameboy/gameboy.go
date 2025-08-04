@@ -5,7 +5,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/cpu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/mmu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
@@ -15,7 +15,7 @@ type GameBoy struct {
 	CPU        *cpu.CPU
 	SerialPort *serial.Port
 	Timer      *timer.Timer
-	Memory     *memory.MMU
+	Memory     *mmu.MMU
 	PPU        *ppu.PPU
 	Joypad     *joypad.Joypad
 	APU        *audio.APU
@@ -43,7 +43,7 @@ func (gb *GameBoy) initComponents() {
 	gb.Timer = timer.New()
 	gb.Timer.APU = gb.APU
 
-	gb.Memory = &memory.MMU{Serial: gb.SerialPort, Timer: gb.Timer, PPU: gb.PPU, Joypad: gb.Joypad, APU: gb.APU}
+	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort)
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 

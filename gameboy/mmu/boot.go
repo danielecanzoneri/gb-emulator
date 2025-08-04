@@ -1,4 +1,4 @@
-package memory
+package mmu
 
 func (mmu *MMU) SkipBoot() {
 	// Memory (from examining MMU after boot ROM)

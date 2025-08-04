@@ -1,4 +1,4 @@
-package memory
+package mmu
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestDMA(t *testing.T) {
-	mmu := &MMU{Cartridge: cartridge.NewMBC1(make([]uint8, 0x8000), true, nil, &cartridge.Header{ROMBanks: 1, RAMBanks: 1}, false), PPU: &ppu.PPU{}}
+	mmu := &MMU{Cartridge: cartridge.NewMBC1(make([]uint8, 0x8000), true, nil, &cartridge.Header{ROMBanks: 1, RAMBanks: 1}, false), ppu: &ppu.PPU{}}
 
 	// Write data to RAM
 	startAddr := 0xA000

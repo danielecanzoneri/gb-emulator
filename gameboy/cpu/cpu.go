@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/memory"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/mmu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 )
 
@@ -35,7 +35,7 @@ type CPU struct {
 	haltBug bool
 
 	// Other components
-	mmu *memory.MMU
+	mmu *mmu.MMU
 	ppu *ppu.PPU
 
 	cyclers []Ticker
@@ -49,7 +49,7 @@ type CPU struct {
 	prefixedOpcodesTable [32]func(uint8)
 }
 
-func New(mmu *memory.MMU, ppu *ppu.PPU) *CPU {
+func New(mmu *mmu.MMU, ppu *ppu.PPU) *CPU {
 	cpu := &CPU{
 		mmu: mmu,
 		ppu: ppu,

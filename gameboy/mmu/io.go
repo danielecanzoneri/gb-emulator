@@ -1,4 +1,4 @@
-package memory
+package mmu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
@@ -60,11 +60,11 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	switch addr {
 	// Joypad
 	case JOYPAddr:
-		mmu.Joypad.Write(v)
+		mmu.joypad.Write(v)
 
 	// Serial
 	case serial.SBAddr, serial.SCAddr:
-		mmu.Serial.Write(addr, v)
+		mmu.serial.Write(addr, v)
 
 	// Audio I/O
 	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
@@ -72,15 +72,15 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		NR30Addr, NR31Addr, NR32Addr, NR33Addr, NR34Addr,
 		NR41Addr, NR42Addr, NR43Addr, NR44Addr,
 		NR50Addr, NR51Addr, NR52Addr:
-		mmu.APU.IOWrite(addr, v)
+		mmu.apu.IOWrite(addr, v)
 
 	// Timer I/O
 	case DIVAddr, TIMAAddr, TMAAddr, TACAddr:
-		mmu.Timer.Write(addr, v)
+		mmu.timer.Write(addr, v)
 
 	// PPU I/O
 	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
-		mmu.PPU.Write(addr, v)
+		mmu.ppu.Write(addr, v)
 
 	// DMA transfer
 	case DMAAddr:
@@ -99,7 +99,7 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	default:
 		// Wave RAM
 		if waveRAMStartAddr <= addr && addr < waveRAMStartAddr+waveRAMLength {
-			mmu.APU.IOWrite(addr, v)
+			mmu.apu.IOWrite(addr, v)
 		}
 	}
 }
@@ -108,11 +108,11 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	switch addr {
 	// Joypad
 	case JOYPAddr:
-		return mmu.Joypad.Read()
+		return mmu.joypad.Read()
 
 	// Serial
 	case serial.SBAddr, serial.SCAddr:
-		return mmu.Serial.Read(addr)
+		return mmu.serial.Read(addr)
 
 	// Audio I/O
 	case NR10Addr, NR11Addr, NR12Addr, NR13Addr, NR14Addr,
@@ -120,15 +120,15 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		NR30Addr, NR31Addr, NR32Addr, NR33Addr, NR34Addr,
 		NR41Addr, NR42Addr, NR43Addr, NR44Addr,
 		NR50Addr, NR51Addr, NR52Addr:
-		return mmu.APU.IORead(addr)
+		return mmu.apu.IORead(addr)
 
 	// Timer I/O
 	case DIVAddr, TIMAAddr, TMAAddr, TACAddr:
-		return mmu.Timer.Read(addr)
+		return mmu.timer.Read(addr)
 
 	// PPU I/O
 	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
-		return mmu.PPU.Read(addr)
+		return mmu.ppu.Read(addr)
 
 	// DMA transfer
 	case DMAAddr:
@@ -143,7 +143,7 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	default:
 		// Wave RAM
 		if waveRAMStartAddr <= addr && addr < waveRAMStartAddr+waveRAMLength {
-			return mmu.APU.IORead(addr)
+			return mmu.apu.IORead(addr)
 		}
 
 		// Unused I/O return bits 1
