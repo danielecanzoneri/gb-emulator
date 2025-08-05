@@ -4,7 +4,7 @@ import "github.com/danielecanzoneri/gb-emulator/util"
 
 // isTransferring checks whether a serial data exchange is happening
 func (port *Port) isTransferring() bool {
-	return port.Conn != nil && util.ReadBit(port.SC, 7) > 0
+	return util.ReadBit(port.SC, 7) > 0
 }
 
 // isMaster returns whether the game boy has initiated the exchange

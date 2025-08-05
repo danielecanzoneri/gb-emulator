@@ -29,8 +29,8 @@ func (port *Port) Write(addr uint16, v uint8) {
 	case SCAddr:
 		port.SC = v &^ SCMask
 
-		// Start transmission (TODO - check)
-		if port.isMaster() && port.isTransferring() {
+		// Start transmission
+		if port.isMaster() {
 			// Serial clock runs at 8 kHz, since game boy runs at 4 MHz
 			// each serial clock happens once every 4 MHz / 8 kHz = 512 game boy ticks
 			port.clockTimer = 512
