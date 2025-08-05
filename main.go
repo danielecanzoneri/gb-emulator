@@ -4,8 +4,6 @@ import (
 	"flag"
 	"github.com/danielecanzoneri/gb-emulator/ui"
 	"log"
-	"os"
-	"runtime/pprof"
 )
 
 const (
@@ -21,13 +19,6 @@ var (
 )
 
 func main() {
-	f, _ := os.Create("cpu.prof")
-	err := pprof.StartCPUProfile(f)
-	if err != nil {
-		log.Println("Error starting CPU profile: ", err)
-	}
-	defer pprof.StopCPUProfile()
-
 	flag.Parse()
 
 	// Init emulator
