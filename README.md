@@ -2,7 +2,7 @@
 
 A feature-rich, cross-platform Game Boy emulator written in Go, with a modern graphical interface and an integrated graphical debugger.
 
-It currently supports only the original DMG and passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites (except for tests involving Serial Transfer, still in progress).
+It currently supports only the original DMG and passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites.
 Some tests require the original boot rom.
 
 ## Features
