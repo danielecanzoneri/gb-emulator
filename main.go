@@ -16,6 +16,7 @@ var (
 	romPath           = flag.String("rom", "", "ROM filename")
 	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
+	systemModel       = flag.String("model", "auto", "GameBoy model (auto, dmg, cgb)")
 )
 
 func main() {
@@ -32,6 +33,10 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	if err = gui.SetModel(*systemModel); err != nil {
+		log.Fatal(err)
 	}
 
 	err = gui.LoadROM(*romPath)

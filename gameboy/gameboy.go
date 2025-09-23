@@ -9,6 +9,15 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
+	"log"
+)
+
+type SystemModel int
+
+const (
+	Auto SystemModel = iota
+	DMG
+	CGB
 )
 
 type GameBoy struct {
@@ -19,6 +28,10 @@ type GameBoy struct {
 	PPU        *ppu.PPU
 	Joypad     *joypad.Joypad
 	APU        *audio.APU
+
+	// DMG or CGB (Auto to automatically detect it based on cartridge)
+	Model          SystemModel
+	emulationModel SystemModel // Actual model used to emulate
 
 	sampleRate float64
 	sampleBuff chan float32
@@ -69,6 +82,23 @@ func (gb *GameBoy) Reset() {
 func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
+
+	// Detect system model
+	if gb.Model == Auto {
+		if rom.Header().CgbMode == cartridge.DmgOnly {
+			gb.emulationModel = DMG
+		} else {
+			gb.emulationModel = CGB
+		}
+	} else if gb.Model == DMG {
+		gb.emulationModel = DMG
+
+		if rom.Header().CgbMode == cartridge.CgbOnly {
+			log.Println("WARNING: DMG doesn't support CGB only games, running as CGB")
+		}
+	} else {
+		gb.emulationModel = CGB
+	}
 
 	// MBC3 RTC clocking
 	if c, ok := rom.(cpu.Ticker); ok {

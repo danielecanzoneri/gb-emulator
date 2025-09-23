@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"log"
 	"os"
 	"path/filepath"
@@ -77,6 +78,21 @@ func (ui *UI) LoadROM(romPath string) error {
 
 	ui.gameTitle = rom.Header().Title
 	ui.fileName = romPath
+
+	return nil
+}
+
+func (ui *UI) SetModel(model string) error {
+	switch model {
+	case "auto":
+		ui.GameBoy.Model = gameboy.Auto
+	case "dmg":
+		ui.GameBoy.Model = gameboy.DMG
+	case "cgb":
+		ui.GameBoy.Model = gameboy.CGB
+	default:
+		return fmt.Errorf("invalid model type: %s", model)
+	}
 
 	return nil
 }
