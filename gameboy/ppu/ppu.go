@@ -35,6 +35,9 @@ type PPU struct {
 	WY   uint8
 	WX   uint8
 
+	// CGB only registers
+	cgb bool
+
 	// Window Y counter
 	wyCounter uint8
 
@@ -58,7 +61,7 @@ type PPU struct {
 	modeTicksElapsed uint
 }
 
-func New() *PPU {
+func New(cgb bool) *PPU {
 	ppu := new(PPU)
 	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
 	ppu.OBP[0] = 0xFF
@@ -67,6 +70,8 @@ func New() *PPU {
 	// Init buffers
 	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
 	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+
+	ppu.cgb = cgb
 
 	return ppu
 }

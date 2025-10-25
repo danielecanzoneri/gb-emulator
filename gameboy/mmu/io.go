@@ -48,8 +48,11 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
+	VBK      = 0xFF4F
 
 	BANKAddr = 0xFF50
+
+	WBKAddr = 0xFF70
 
 	IFAddr       = 0xFF0F
 	IEAddr       = 0xFFFF
@@ -79,7 +82,7 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		mmu.timer.Write(addr, v)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBK:
 		mmu.ppu.Write(addr, v)
 
 	// DMA transfer
@@ -89,6 +92,10 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	// Disable BOOT ROM
 	case BANKAddr:
 		mmu.BootRomDisabled = true
+
+	// wRAM bank register
+	case WBKAddr:
+		mmu.vbk = v & 0b111
 
 	// Interrupt flags
 	case IFAddr:
@@ -127,12 +134,16 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		return mmu.timer.Read(addr)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBK:
 		return mmu.ppu.Read(addr)
 
 	// DMA transfer
 	case DMAAddr:
 		return mmu.dmaReg
+
+	// wRAM bank register
+	case WBKAddr:
+		return 0xF8 | mmu.vbk
 
 	// Interrupt flags
 	case IFAddr:

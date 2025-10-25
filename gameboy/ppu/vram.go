@@ -12,8 +12,12 @@ const (
 )
 
 type vRAM struct {
-	tileData [tileNums]Tile
-	tileMaps [tileMapsSize]uint8
+	// CGB register
+	bankNumber uint8
+
+	// One for each bank
+	tileData [2][tileNums]Tile
+	tileMaps [2][tileMapsSize]uint8
 
 	// Disabled during mode 3 (drawing)
 	readDisabled  bool
@@ -33,11 +37,11 @@ func (v *vRAM) read(addr uint16) uint8 {
 	if addr < tileNums*tileSize { // Tile data
 		tileId := addr / tileSize
 		tileOffset := addr % tileSize
-		return v.tileData[tileId].read(tileOffset)
+		return v.tileData[v.bankNumber][tileId].read(tileOffset)
 	}
 
 	// Tile maps
-	return v.tileMaps[addr-tileNums*tileSize]
+	return v.tileMaps[v.bankNumber][addr-tileNums*tileSize]
 }
 
 func (v *vRAM) Write(addr uint16, value uint8) {
@@ -53,12 +57,12 @@ func (v *vRAM) write(addr uint16, value uint8) {
 	if addr < tileNums*tileSize { // Tile data
 		tileId := addr / tileSize
 		tileOffset := addr % tileSize
-		v.tileData[tileId].write(tileOffset, value)
+		v.tileData[v.bankNumber][tileId].write(tileOffset, value)
 		return
 	}
 
 	// Tile maps
-	v.tileMaps[addr-tileNums*tileSize] = value
+	v.tileMaps[v.bankNumber][addr-tileNums*tileSize] = value
 }
 
 // Tile contains 8 pixel (2 bit per pixel) per row (8 rows)
@@ -89,7 +93,7 @@ func (t *Tile) getRowPixels(row uint8) [8]uint8 {
 }
 
 func (ppu *PPU) ReadTileObj(tileId uint8) *Tile {
-	return &ppu.vRAM.tileData[tileId]
+	return &ppu.vRAM.tileData[ppu.vRAM.bankNumber][tileId]
 }
 
 func (ppu *PPU) ReadTileBGWindow(tileId uint8) *Tile {
@@ -102,5 +106,5 @@ func (ppu *PPU) ReadTileBGWindow(tileId uint8) *Tile {
 		}
 	}
 
-	return &ppu.vRAM.tileData[tileNum]
+	return &ppu.vRAM.tileData[ppu.vRAM.bankNumber][tileNum]
 }

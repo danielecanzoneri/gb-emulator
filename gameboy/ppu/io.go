@@ -20,6 +20,7 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
+	VBKAddr  = 0xFF4F
 
 	// STATMask bits 0-2 read only, bits 3-6 read/write
 	STATMask = 0b01111000
@@ -93,6 +94,10 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.WY = v
 	case WXAddr:
 		ppu.WX = v
+	case VBKAddr:
+		if ppu.cgb {
+			ppu.vRAM.bankNumber = v & 1
+		}
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
@@ -129,6 +134,11 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		return ppu.WY
 	case WXAddr:
 		return ppu.WX
+	case VBKAddr:
+		if ppu.cgb {
+			return ppu.vRAM.bankNumber | 0xFE
+		}
+		return 0xFF // DMG
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}

@@ -49,13 +49,15 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 }
 
 func (gb *GameBoy) initComponents() {
-	gb.PPU = ppu.New()
+	isCGB := gb.emulationModel == CGB
+
+	gb.PPU = ppu.New(isCGB)
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
 	gb.SerialPort = serial.NewPort()
 	gb.Timer = timer.New(gb.APU)
 
-	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort)
+	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
@@ -71,18 +73,12 @@ func (gb *GameBoy) Reset() {
 	rom := gb.Memory.Cartridge
 	bootRom := gb.Memory.BootRom
 
-	// Reset all components
-	gb.initComponents()
-
 	// Load ROM and boot ROM
 	gb.Load(rom)
 	gb.LoadBootROM(bootRom)
 }
 
 func (gb *GameBoy) Load(rom cartridge.Cartridge) {
-	// Load ROM into memory
-	gb.Memory.Cartridge = rom
-
 	// Detect system model
 	if gb.Model == Auto {
 		if rom.Header().CgbMode == cartridge.DmgOnly {
@@ -99,6 +95,11 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	} else {
 		gb.emulationModel = CGB
 	}
+
+	gb.initComponents()
+
+	// Load ROM into memory
+	gb.Memory.Cartridge = rom
 
 	// MBC3 RTC clocking
 	if c, ok := rom.(cpu.Ticker); ok {

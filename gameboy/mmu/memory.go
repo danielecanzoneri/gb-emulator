@@ -10,7 +10,7 @@ import (
 )
 
 type MMU struct {
-	wRAM [0x2000]uint8 // Work RAM
+	wRAM [0x8000]uint8 // Work RAM (8 0x1000 banks for CGB, 2 for DMG)
 	hRAM [0x7F]uint8   // High RAM
 
 	// Cartridge (with MBC and data)
@@ -21,6 +21,9 @@ type MMU struct {
 	timer  *timer.Timer
 	joypad *joypad.Joypad
 	serial *serial.Port
+
+	// wRAM bank register
+	vbk uint8
 
 	// I/O registers
 	dmaReg uint8
@@ -37,15 +40,19 @@ type MMU struct {
 	// Boot ROM
 	BootRomDisabled bool
 	BootRom         []uint8
+
+	// CGB flag
+	cgb bool
 }
 
-func New(ppu *ppu.PPU, apu *audio.APU, timer *timer.Timer, jp *joypad.Joypad, serialPort *serial.Port) *MMU {
+func New(ppu *ppu.PPU, apu *audio.APU, timer *timer.Timer, jp *joypad.Joypad, serialPort *serial.Port, cgb bool) *MMU {
 	return &MMU{
 		ppu:    ppu,
 		apu:    apu,
 		timer:  timer,
 		joypad: jp,
 		serial: serialPort,
+		cgb:    cgb,
 	}
 }
 
@@ -104,8 +111,16 @@ func (mmu *MMU) read(addr uint16) uint8 {
 		return mmu.ppu.Read(addr)
 	case addr < 0xC000:
 		return mmu.Cartridge.Read(addr)
-	case addr < 0xE000: // wRAM
+	case addr < 0xD000: // wRAM bank 0
 		return mmu.wRAM[addr-0xC000]
+	case addr < 0xE000: // wRAM (bank 1-7)
+		baseAddr := addr - 0xD000
+
+		var bank uint16 = 1
+		if mmu.cgb && mmu.vbk > 0 {
+			bank = uint16(mmu.vbk)
+		}
+		return mmu.wRAM[0x1000*bank+baseAddr]
 	case addr < 0xFE00: // Echo RAM
 		return mmu.read(addr - 0x2000)
 	case addr < 0xFF00: // OAM
@@ -139,8 +154,16 @@ func (mmu *MMU) write(addr uint16, value uint8) {
 		mmu.ppu.Write(addr, value)
 	case addr < 0xC000:
 		mmu.Cartridge.Write(addr, value)
-	case addr < 0xE000: // wRAM
+	case addr < 0xD000: // wRAM bank 0
 		mmu.wRAM[addr-0xC000] = value
+	case addr < 0xE000: // wRAM (bank 1-7)
+		baseAddr := addr - 0xD000
+
+		var bank uint16 = 1
+		if mmu.cgb && mmu.vbk > 0 {
+			bank = uint16(mmu.vbk)
+		}
+		mmu.wRAM[0x1000*bank+baseAddr] = value
 	case addr < 0xFE00: // Echo RAM
 		mmu.Write(addr-0x2000, value)
 	case addr < 0xFF00: // OAM
