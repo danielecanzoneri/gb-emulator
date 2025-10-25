@@ -2,7 +2,6 @@ package ppu
 
 import (
 	"cmp"
-	"github.com/danielecanzoneri/gb-emulator/util"
 	"slices"
 )
 
@@ -16,16 +15,10 @@ const (
 )
 
 type Object struct {
-	y uint8 // Byte 0
-	x uint8 // Byte 1
-
-	flags      uint8 // Byte 3
-	bgPriority bool
-	yFlip      bool
-	xFlip      bool
-	paletteId  uint8 // 0: OBP0, 1: OBP1
-
+	y         uint8 // Byte 0
+	x         uint8 // Byte 1
 	tileIndex uint8 // Byte 2
+	flags     uint8 // Byte 3
 }
 
 func (obj *Object) Read(addr uint8) uint8 {
@@ -53,11 +46,6 @@ func (obj *Object) write(addr uint8, value uint8) {
 		obj.tileIndex = value
 	case 3:
 		obj.flags = value
-		// Bit 7: priority; Bit 6: y-flip; Bit 5: x-flip; Bit 4: palette
-		obj.bgPriority = util.ReadBit(value, 7) > 0
-		obj.yFlip = util.ReadBit(value, 6) > 0
-		obj.xFlip = util.ReadBit(value, 5) > 0
-		obj.paletteId = util.ReadBit(value, 4)
 	default:
 		panic("should never happen")
 	}
@@ -103,41 +91,27 @@ func (ppu *PPU) DMAWrite(index uint16, value uint8) {
 }
 
 func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
-	if ppu.obj8x16Size { // 16-row object
-		row &= 0xF
-	} else { // 8-row object
-		row &= 0x7
-	}
-
-	if obj.yFlip {
-		if !ppu.obj8x16Size { // height = 8
-			row = 7 - row
-		} else { // height = 16
-			row = 15 - row
-		}
-	}
-
-	var pixels [8]uint8
-	if !ppu.obj8x16Size {
+	if !ppu.obj8x16Size { // 8-row object
 		tile := ppu.ReadTileObj(obj.tileIndex)
-		pixels = tile.getRowPixels(row)
-	} else {
-		if row < 8 {
-			tile := ppu.ReadTileObj(obj.tileIndex & 0xFE)
-			pixels = tile.getRowPixels(row)
-		} else {
-			tile := ppu.ReadTileObj(obj.tileIndex | 0b01)
-			pixels = tile.getRowPixels(row - 8)
-		}
+		return ppu.GetTileRow(tile, tileAttr(obj.flags), row&0x7)
 	}
 
-	if obj.xFlip {
-		pixels[0], pixels[7] = pixels[7], pixels[0]
-		pixels[1], pixels[6] = pixels[6], pixels[1]
-		pixels[2], pixels[5] = pixels[5], pixels[2]
-		pixels[3], pixels[4] = pixels[4], pixels[3]
+	// 16 row object
+	row &= 0xF
+	if tileAttr(obj.flags).yFlip() {
+		// Flip tile (just switch 4-th bit)
+		bit4 := row & 0x8
+		row = (row &^ 0x8) | (^bit4 & 0x8)
 	}
-	return pixels
+
+	// 2-tiles object, fetch the correct one
+	if row < 8 {
+		tile := ppu.ReadTileObj(obj.tileIndex & 0xFE)
+		return ppu.GetTileRow(tile, tileAttr(obj.flags), row)
+	} else {
+		tile := ppu.ReadTileObj(obj.tileIndex | 0b01)
+		return ppu.GetTileRow(tile, tileAttr(obj.flags), row-8)
+	}
 }
 
 func (ppu *PPU) searchOAM() {
