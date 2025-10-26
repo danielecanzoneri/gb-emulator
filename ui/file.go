@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"log"
 	"os"
 	"path/filepath"
@@ -75,6 +76,12 @@ func (ui *UI) LoadROM(romPath string) error {
 
 	rom := cartridge.NewCartridge(cartridgeData, savData)
 	ui.GameBoy.Load(rom)
+
+	if ui.GameBoy.EmulationModel == gameboy.DMG {
+		ui.palette = theme.DMGPalette{}
+	} else {
+		ui.palette = theme.CGBPalette{}
+	}
 
 	ui.gameTitle = rom.Header().Title
 	ui.fileName = romPath

@@ -31,7 +31,7 @@ type GameBoy struct {
 
 	// DMG or CGB (Auto to automatically detect it based on cartridge)
 	Model          SystemModel
-	emulationModel SystemModel // Actual model used to emulate
+	EmulationModel SystemModel // Actual model used to emulate
 
 	sampleRate float64
 	sampleBuff chan float32
@@ -49,7 +49,7 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 }
 
 func (gb *GameBoy) initComponents() {
-	isCGB := gb.emulationModel == CGB
+	isCGB := gb.EmulationModel == CGB
 
 	gb.PPU = ppu.New(isCGB)
 	gb.Joypad = joypad.New()
@@ -82,18 +82,18 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 	// Detect system model
 	if gb.Model == Auto {
 		if rom.Header().CgbMode == cartridge.DmgOnly {
-			gb.emulationModel = DMG
+			gb.EmulationModel = DMG
 		} else {
-			gb.emulationModel = CGB
+			gb.EmulationModel = CGB
 		}
 	} else if gb.Model == DMG {
-		gb.emulationModel = DMG
+		gb.EmulationModel = DMG
 
 		if rom.Header().CgbMode == cartridge.CgbOnly {
 			log.Println("WARNING: DMG doesn't support CGB only games, running as CGB")
 		}
 	} else {
-		gb.emulationModel = CGB
+		gb.EmulationModel = CGB
 	}
 
 	gb.initComponents()

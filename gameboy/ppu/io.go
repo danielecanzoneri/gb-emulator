@@ -22,6 +22,11 @@ const (
 	WXAddr   = 0xFF4B
 	VBKAddr  = 0xFF4F
 
+	BGPIAddr = 0xFF68
+	BGPDAddr = 0xFF69
+	OBPIAddr = 0xFF6A
+	OBPDAddr = 0xFF6B
+
 	// STATMask bits 0-2 read only, bits 3-6 read/write
 	STATMask = 0b01111000
 )
@@ -81,11 +86,17 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
 		ppu.checkSTATInterrupt()
 	case BGPAddr:
-		ppu.BGP = Palette(v)
+		if !ppu.cgb {
+			ppu.BGP = DMGPalette(v)
+		}
 	case OBP0Addr:
-		ppu.OBP[0] = Palette(v)
+		if !ppu.cgb {
+			ppu.OBP[0] = DMGPalette(v)
+		}
 	case OBP1Addr:
-		ppu.OBP[1] = Palette(v)
+		if !ppu.cgb {
+			ppu.OBP[1] = DMGPalette(v)
+		}
 	case SCYAddr:
 		ppu.SCY = v
 	case SCXAddr:
@@ -97,6 +108,36 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 	case VBKAddr:
 		if ppu.cgb {
 			ppu.vRAM.bankNumber = v & 1
+		}
+	case BGPIAddr:
+		if ppu.cgb {
+			ppu.BGPI = v
+		}
+	case BGPDAddr:
+		if ppu.cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.BGPI & 0x3F
+			ppu.bgPalette[paletteAddr] = v
+
+			// Auto increment of address if bit 7 of BGPI is set
+			if util.ReadBit(ppu.BGPI, 7) > 0 {
+				ppu.BGPI = (ppu.BGPI & 0x80) | ((paletteAddr + 1) & 0x3F)
+			}
+		}
+	case OBPIAddr:
+		if ppu.cgb {
+			ppu.OBPI = v
+		}
+	case OBPDAddr:
+		if ppu.cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.OBPI & 0x3F
+			ppu.obPalette[paletteAddr] = v
+
+			// Auto increment of address if bit 7 of OBPI is set
+			if util.ReadBit(ppu.OBPI, 7) > 0 {
+				ppu.OBPI = (ppu.OBPI & 0x80) | ((paletteAddr + 1) & 0x3F)
+			}
 		}
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
@@ -121,11 +162,20 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case STATAddr:
 		return 0x80 | ppu.STAT // Bit 7 is unused
 	case BGPAddr:
-		return uint8(ppu.BGP)
+		if !ppu.cgb {
+			return uint8(ppu.BGP)
+		}
+		return 0xFF // CGB
 	case OBP0Addr:
-		return uint8(ppu.OBP[0])
+		if !ppu.cgb {
+			return uint8(ppu.OBP[0])
+		}
+		return 0xFF // CGB
 	case OBP1Addr:
-		return uint8(ppu.OBP[1])
+		if !ppu.cgb {
+			return uint8(ppu.OBP[1])
+		}
+		return 0xFF // CGB
 	case SCYAddr:
 		return ppu.SCY
 	case SCXAddr:
@@ -137,6 +187,30 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case VBKAddr:
 		if ppu.cgb {
 			return ppu.vRAM.bankNumber | 0xFE
+		}
+		return 0xFF // DMG
+	case BGPIAddr:
+		if ppu.cgb {
+			return ppu.BGPI
+		}
+		return 0xFF // DMG
+	case BGPDAddr:
+		if ppu.cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.BGPI & 0x3F
+			return ppu.bgPalette[paletteAddr]
+		}
+		return 0xFF // DMG
+	case OBPIAddr:
+		if ppu.cgb {
+			return ppu.OBPI
+		}
+		return 0xFF // DMG
+	case OBPDAddr:
+		if ppu.cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.OBPI & 0x3F
+			return ppu.obPalette[paletteAddr]
 		}
 		return 0xFF // DMG
 	default:

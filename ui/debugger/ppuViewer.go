@@ -35,7 +35,7 @@ func newOamViewerObject(index int) *oamViewerObject {
 
 	// Object image
 	obj.sprite = ebiten.NewImage(8, 8)
-	obj.sprite.Fill(theme.GameBoyPalette[0])
+	obj.sprite.Fill(theme.DMGPalette{}.Get(0))
 	obj.drawOptions = &ebiten.DrawImageOptions{}
 	obj.drawOptions.GeoM.Scale(objectsScale, objectsScale)
 
@@ -79,7 +79,7 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 	for row := range 8 {
 		pixels := gb.PPU.GetObjectRow(oamObj, uint8(row))
 		for col := range 8 {
-			obj.sprite.Set(col, row, theme.GameBoyPalette[pixels[col]])
+			obj.sprite.Set(col, row, theme.DMGPalette{}.Get(uint16(pixels[col])))
 		}
 	}
 	obj.graphic.Image.DrawImage(obj.sprite, obj.drawOptions)

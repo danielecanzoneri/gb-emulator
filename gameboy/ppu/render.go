@@ -5,18 +5,29 @@ const (
 	FrameHeight = 144
 )
 
-type Palette uint8
+type Palette interface {
+	getColor(uint8) uint16
+}
 
-func (p Palette) getColor(id uint8) uint8 {
+type DMGPalette uint8
+
+func (p DMGPalette) getColor(id uint8) uint16 {
 	var mask uint8 = 0b11
 	id &= mask
 
 	// Bit 7,6: id 3; Bit 5,4: id 2; Bit 3,2: id 1; Bit 1,0: id 0
 	shift := id * 2
-	return (uint8(p) >> shift) & mask
+	return uint16((uint8(p) >> shift) & mask)
 }
 
-func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint8 {
+type CGBPalette []uint8
+
+func (p CGBPalette) getColor(id uint8) uint16 {
+	// Each color is stored as little-endian RGB555
+	return uint16(p[2*id+1]) | (uint16(p[2*id]) << 8)
+}
+
+func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint16 {
 	return ppu.frontBuffer
 }
 
@@ -29,7 +40,7 @@ func (ppu *PPU) emptyFrame() {
 
 	// Swap buffers
 	ppu.frontBuffer = ppu.backBuffer
-	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
 }
 
 // renderLine returns the number of penalty dots incurred to draw this line
@@ -47,9 +58,12 @@ func (ppu *PPU) renderLine() int {
 	var objectsPenalties [10]bool
 
 	for x := uint8(0); x < uint8(FrameWidth); x++ {
-		if ppu.bgWindowEnabled {
+		// CGB flag that signals if this pixel BG has higher priority than objs
+		var bgPriority = false
+
+		// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
+		if ppu.bgWindowEnabled || ppu.cgb {
 			// TODO - obviously optimize
-			var tile *Tile
 			var tileX, tileY uint8
 			var tileBaseAddr uint16
 
@@ -68,11 +82,19 @@ func (ppu *PPU) renderLine() int {
 			}
 
 			tileAddr := tileBaseAddr + getTileMapOffset(tileX, tileY)
-			tileId := ppu.vRAM.read(tileAddr)
+			bgPixels, tileAttributes := ppu.getBGWindowPixelRow(tileAddr, tileY)
 
-			tile = ppu.ReadTileBGWindow(tileId)
-			objPixels := tile.getRowPixels(tileY & 0b111)
-			ppu.backBuffer[ppu.LY][x] = ppu.BGP.getColor(objPixels[tileX&0b111])
+			// Pixel color (0-3)
+			color := bgPixels[tileX&0b111]
+			var palette Palette = ppu.BGP // DMG palette
+
+			if ppu.cgb {
+				bgPriority = tileAttributes.bgPriority()
+				paletteId := tileAttributes.cgbPalette()
+				palette = CGBPalette(ppu.bgPalette[8*paletteId : 8*paletteId+8])
+			}
+
+			ppu.backBuffer[ppu.LY][x] = palette.getColor(color)
 		}
 
 		// Render objects
@@ -122,10 +144,32 @@ func (ppu *PPU) renderLine() int {
 			// Draw pixel if no other pixel with higher priority was drawn
 			px := rowPixels[(x+8)-obj.x]
 
-			// Draw if pixel is not transparent and if no BG pixel has higher priority
-			// (pixel is transparent if color id is 0 (not if the color itself is 0)
-			if px > 0 && (ppu.backBuffer[ppu.LY][x] == 0 || !tileAttr(obj.flags).bgPriority()) {
-				ppu.backBuffer[ppu.LY][x] = ppu.OBP[tileAttr(obj.flags).dmgPalette()].getColor(px)
+			if ppu.cgb {
+				// If the BG color index is 0, the OBJ will always have priority;
+				// Otherwise, if LCDC bit 0 is clear, the OBJ will always have priority;
+				// Otherwise, if both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority;
+				// Otherwise, BG will have priority.
+				if px > 0 {
+					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
+					if ppu.backBuffer[ppu.LY][x] == 0 || !ppu.bgWindowEnabled || (!bgPriority && !tileAttr(obj.flags).bgPriority()) {
+						paletteId := tileAttr(obj.flags).cgbPalette()
+						palette := CGBPalette(ppu.obPalette[8*paletteId : 8*paletteId+8])
+
+						ppu.backBuffer[ppu.LY][x] = palette.getColor(px)
+					}
+				}
+			} else {
+				// If object pixel is transparent (px == 0), draw background pixel
+				// Otherwise:
+				//  - If background pixel is 0, draw object pixel
+				//  - If both object and background pixel are not 0, draw pixel based on
+				//    object attributes BG/Window priority (bit 7)
+				if px > 0 { // Object pixel is transparent
+					if ppu.backBuffer[ppu.LY][x] == 0 || !tileAttr(obj.flags).bgPriority() {
+						palette := ppu.OBP[tileAttr(obj.flags).dmgPalette()]
+						ppu.backBuffer[ppu.LY][x] = palette.getColor(px)
+					}
+				}
 			}
 		}
 	}

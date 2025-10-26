@@ -32,7 +32,7 @@ func (st *vBlank) Init(ppu *PPU) {
 
 		// Frame complete, switch buffers
 		ppu.frontBuffer = ppu.backBuffer
-		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+		ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
 	}
 }
 func (st *vBlank) Next(ppu *PPU) ppuInternalState {

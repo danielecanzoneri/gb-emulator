@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"log"
 	"os"
 
@@ -29,6 +30,9 @@ type UI struct {
 
 	debugString      string
 	debugStringTimer uint
+
+	// Color Palette
+	palette theme.Palette
 
 	// Debugger
 	debugger *debugger.Debugger

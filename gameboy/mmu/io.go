@@ -48,9 +48,14 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
-	VBK      = 0xFF4F
+	VBKAddr  = 0xFF4F
 
 	BANKAddr = 0xFF50
+
+	BGPIAddr = 0xFF68
+	BGPDAddr = 0xFF69
+	OBPIAddr = 0xFF6A
+	OBPDAddr = 0xFF6B
 
 	WBKAddr = 0xFF70
 
@@ -82,7 +87,8 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		mmu.timer.Write(addr, v)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBK:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBKAddr,
+		BGPIAddr, BGPDAddr, OBPIAddr, OBPDAddr:
 		mmu.ppu.Write(addr, v)
 
 	// DMA transfer
@@ -134,7 +140,8 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		return mmu.timer.Read(addr)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBK:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBKAddr,
+		BGPIAddr, BGPDAddr, OBPIAddr, OBPDAddr:
 		return mmu.ppu.Read(addr)
 
 	// DMA transfer

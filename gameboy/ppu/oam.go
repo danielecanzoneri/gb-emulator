@@ -91,9 +91,15 @@ func (ppu *PPU) DMAWrite(index uint16, value uint8) {
 }
 
 func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
+	// CGB only
+	vRAMBank := uint8(0)
+	if ppu.cgb {
+		vRAMBank = tileAttr(obj.flags).bank()
+	}
+
 	if !ppu.obj8x16Size { // 8-row object
-		tile := ppu.ReadTileObj(obj.tileIndex)
-		return ppu.GetTileRow(tile, tileAttr(obj.flags), row&0x7)
+		tile := ppu.ReadTileObj(obj.tileIndex, vRAMBank)
+		return tile.GetRow(tileAttr(obj.flags), row&0x7)
 	}
 
 	// 16 row object
@@ -106,15 +112,18 @@ func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 
 	// 2-tiles object, fetch the correct one
 	if row < 8 {
-		tile := ppu.ReadTileObj(obj.tileIndex & 0xFE)
-		return ppu.GetTileRow(tile, tileAttr(obj.flags), row)
+		tile := ppu.ReadTileObj(obj.tileIndex&0xFE, vRAMBank)
+		return tile.GetRow(tileAttr(obj.flags), row)
 	} else {
-		tile := ppu.ReadTileObj(obj.tileIndex | 0b01)
-		return ppu.GetTileRow(tile, tileAttr(obj.flags), row-8)
+		tile := ppu.ReadTileObj(obj.tileIndex|0b01, vRAMBank)
+		return tile.GetRow(tileAttr(obj.flags), row-8)
 	}
 }
 
 func (ppu *PPU) searchOAM() {
+	// TODO - In CGB mode, only the object’s location in OAM determines its priority.
+	//        The earlier the object, the higher its priority.
+
 	// objHeight is used to check which objects are currently on the line
 	var objHeight uint8 = 8
 	if ppu.obj8x16Size {

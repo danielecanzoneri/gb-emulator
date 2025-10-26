@@ -27,11 +27,27 @@ func (t *Tile) getRowPixels(row uint8) [8]uint8 {
 	}
 }
 
-func (ppu *PPU) ReadTileObj(tileId uint8) *Tile {
-	return &ppu.vRAM.tileData[ppu.vRAM.bankNumber][tileId]
+func (t *Tile) GetRow(attr tileAttr, row uint8) [8]uint8 {
+	if attr.yFlip() {
+		row = 7 - row
+	}
+
+	pixels := t.getRowPixels(row)
+
+	if attr.xFlip() {
+		pixels[0], pixels[7] = pixels[7], pixels[0]
+		pixels[1], pixels[6] = pixels[6], pixels[1]
+		pixels[2], pixels[5] = pixels[5], pixels[2]
+		pixels[3], pixels[4] = pixels[4], pixels[3]
+	}
+	return pixels
 }
 
-func (ppu *PPU) ReadTileBGWindow(tileId uint8) *Tile {
+func (ppu *PPU) ReadTileObj(tileId uint8, vRAMBank uint8) *Tile {
+	return &ppu.vRAM.tileData[vRAMBank][tileId]
+}
+
+func (ppu *PPU) ReadTileBGWindow(tileId uint8, vRAMBank uint8) *Tile {
 	tileNum := uint16(tileId)
 
 	// In this case tileId is a signed int8 with starting address 0x9000
@@ -41,21 +57,24 @@ func (ppu *PPU) ReadTileBGWindow(tileId uint8) *Tile {
 		}
 	}
 
-	return &ppu.vRAM.tileData[0][tileNum]
+	return &ppu.vRAM.tileData[vRAMBank][tileNum]
 }
 
-func (ppu *PPU) GetTileRow(tile *Tile, attr tileAttr, row uint8) [8]uint8 {
-	if attr.yFlip() {
-		row = 7 - row
-	}
+func (ppu *PPU) getBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, tileAttr) {
+	// Address in the tilemap of the tile
+	tileMapAddr := tileAddr - 0x9800
 
-	pixels := tile.getRowPixels(row)
+	tileId := ppu.vRAM.tileMaps[0][tileMapAddr]
+	var tile *Tile
 
-	if attr.xFlip() {
-		pixels[0], pixels[7] = pixels[7], pixels[0]
-		pixels[1], pixels[6] = pixels[6], pixels[1]
-		pixels[2], pixels[5] = pixels[5], pixels[2]
-		pixels[3], pixels[4] = pixels[4], pixels[3]
+	// In CGB Mode, an additional map of 32×32 bytes is stored in VRAM Bank 1
+	// (each byte defines attributes for the corresponding tile-number map entry in VRAM Bank 0)
+	if ppu.cgb {
+		attr := tileAttr(ppu.vRAM.tileMaps[1][tileMapAddr])
+		tile = ppu.ReadTileBGWindow(tileId, attr.bank())
+		return tile.GetRow(attr, tileY&0b111), attr
+	} else {
+		tile = ppu.ReadTileBGWindow(tileId, 0)
+		return tile.getRowPixels(tileY & 0b111), 0
 	}
-	return pixels
 }

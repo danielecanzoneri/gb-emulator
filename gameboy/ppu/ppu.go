@@ -21,8 +21,8 @@ type PPU struct {
 	numObjs int
 
 	// Double buffering to avoid screen tearing
-	frontBuffer *[FrameHeight][FrameWidth]uint8
-	backBuffer  *[FrameHeight][FrameWidth]uint8
+	frontBuffer *[FrameHeight][FrameWidth]uint16
+	backBuffer  *[FrameHeight][FrameWidth]uint16
 
 	LCDC uint8 // LCD control
 	STAT uint8 // STAT interrupt
@@ -30,13 +30,17 @@ type PPU struct {
 	SCX  uint8 // x - background scrolling
 	LY   uint8 // line counter
 	LYC  uint8 // line counter check
-	BGP  Palette
-	OBP  [2]Palette
+	BGP  DMGPalette
+	OBP  [2]DMGPalette
 	WY   uint8
 	WX   uint8
 
 	// CGB only registers
-	cgb bool
+	cgb       bool
+	BGPI      uint8 // Background palette index
+	OBPI      uint8 // Object palette index
+	bgPalette [64]uint8
+	obPalette [64]uint8
 
 	// Window Y counter
 	wyCounter uint8
@@ -68,8 +72,8 @@ func New(cgb bool) *PPU {
 	ppu.OBP[1] = 0xFF
 
 	// Init buffers
-	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
-	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint16)
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
 
 	ppu.cgb = cgb
 
