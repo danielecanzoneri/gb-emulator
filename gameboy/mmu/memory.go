@@ -99,8 +99,15 @@ func (mmu *MMU) Read(addr uint16) uint8 {
 
 func (mmu *MMU) read(addr uint16) uint8 {
 	// Map boot ROM over memory
-	if !mmu.BootRomDisabled && addr < 0x100 {
-		return mmu.BootRom[addr]
+	if !mmu.BootRomDisabled {
+		if addr < 0x100 {
+			return mmu.BootRom[addr]
+		}
+
+		// In CGB mode the boot ROM is actually split in two parts, a $0000-00FF one, and a $0200-08FF one.
+		if mmu.cgb && 0x200 <= addr && addr < 0x900 {
+			return mmu.BootRom[addr]
+		}
 	}
 
 	switch {
