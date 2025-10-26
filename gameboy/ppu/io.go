@@ -117,7 +117,7 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		if ppu.cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.BGPI & 0x3F
-			ppu.bgPalette[paletteAddr] = v
+			ppu.BGPalette[paletteAddr] = v
 
 			// Auto increment of address if bit 7 of BGPI is set
 			if util.ReadBit(ppu.BGPI, 7) > 0 {
@@ -132,7 +132,7 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		if ppu.cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.OBPI & 0x3F
-			ppu.obPalette[paletteAddr] = v
+			ppu.OBJPalette[paletteAddr] = v
 
 			// Auto increment of address if bit 7 of OBPI is set
 			if util.ReadBit(ppu.OBPI, 7) > 0 {
@@ -198,7 +198,7 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		if ppu.cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.BGPI & 0x3F
-			return ppu.bgPalette[paletteAddr]
+			return ppu.BGPalette[paletteAddr]
 		}
 		return 0xFF // DMG
 	case OBPIAddr:
@@ -210,7 +210,7 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		if ppu.cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.OBPI & 0x3F
-			return ppu.obPalette[paletteAddr]
+			return ppu.OBJPalette[paletteAddr]
 		}
 		return 0xFF // DMG
 	default:

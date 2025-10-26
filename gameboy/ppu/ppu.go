@@ -36,13 +36,13 @@ type PPU struct {
 	WX   uint8
 
 	// CGB only registers
-	cgb       bool
-	BGPI      uint8 // Background palette index
-	OBPI      uint8 // Object palette index
-	bgPalette [64]uint8
-	obPalette [64]uint8
+	cgb        bool
+	BGPI       uint8 // Background palette index
+	OBPI       uint8 // Object palette index
+	BGPalette  [64]uint8
+	OBJPalette [64]uint8
 
-	// Window Y counter
+	// Window Y count
 	wyCounter uint8
 
 	// LCD control

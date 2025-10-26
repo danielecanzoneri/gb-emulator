@@ -6,12 +6,12 @@ const (
 )
 
 type Palette interface {
-	getColor(uint8) uint16
+	GetColor(uint8) uint16
 }
 
 type DMGPalette uint8
 
-func (p DMGPalette) getColor(id uint8) uint16 {
+func (p DMGPalette) GetColor(id uint8) uint16 {
 	var mask uint8 = 0b11
 	id &= mask
 
@@ -22,7 +22,7 @@ func (p DMGPalette) getColor(id uint8) uint16 {
 
 type CGBPalette []uint8
 
-func (p CGBPalette) getColor(id uint8) uint16 {
+func (p CGBPalette) GetColor(id uint8) uint16 {
 	// Each color is stored as little-endian RGB555
 	return uint16(p[2*id]) | (uint16(p[2*id+1]) << 8)
 }
@@ -91,10 +91,10 @@ func (ppu *PPU) renderLine() int {
 			if ppu.cgb {
 				bgPriority = tileAttributes.bgPriority()
 				paletteId := tileAttributes.cgbPalette()
-				palette = CGBPalette(ppu.bgPalette[8*paletteId : 8*paletteId+8])
+				palette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 			}
 
-			ppu.backBuffer[ppu.LY][x] = palette.getColor(color)
+			ppu.backBuffer[ppu.LY][x] = palette.GetColor(color)
 		}
 
 		// Render objects
@@ -104,8 +104,7 @@ func (ppu *PPU) renderLine() int {
 
 		// Draw objects with priority
 		for i := range ppu.numObjs {
-			// Traverse objects in reverse so objects that come first will be displayed with priority
-			obj := ppu.objsLY[ppu.numObjs-i-1]
+			obj := ppu.objsLY[i]
 			if obj.x >= 168 { // Out of range tile
 				continue
 			}
@@ -153,9 +152,9 @@ func (ppu *PPU) renderLine() int {
 					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
 					if ppu.backBuffer[ppu.LY][x] == 0 || !ppu.bgWindowEnabled || (!bgPriority && !tileAttr(obj.flags).bgPriority()) {
 						paletteId := tileAttr(obj.flags).cgbPalette()
-						palette := CGBPalette(ppu.obPalette[8*paletteId : 8*paletteId+8])
+						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 
-						ppu.backBuffer[ppu.LY][x] = palette.getColor(px)
+						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				}
 			} else {
@@ -167,10 +166,13 @@ func (ppu *PPU) renderLine() int {
 				if px > 0 { // Object pixel is transparent
 					if ppu.backBuffer[ppu.LY][x] == 0 || !tileAttr(obj.flags).bgPriority() {
 						palette := ppu.OBP[tileAttr(obj.flags).dmgPalette()]
-						ppu.backBuffer[ppu.LY][x] = palette.getColor(px)
+						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				}
 			}
+
+			// The first object that impacts this pixel will be the one displayed
+			break
 		}
 	}
 
