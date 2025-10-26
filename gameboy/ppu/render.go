@@ -60,6 +60,7 @@ func (ppu *PPU) renderLine() int {
 	for x := uint8(0); x < uint8(FrameWidth); x++ {
 		// CGB flag that signals if this pixel BG has higher priority than objs
 		var bgPriority = false
+		var bgPixel uint8 = 0
 
 		// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
 		if ppu.bgWindowEnabled || ppu.cgb {
@@ -85,16 +86,16 @@ func (ppu *PPU) renderLine() int {
 			bgPixels, tileAttributes := ppu.getBGWindowPixelRow(tileAddr, tileY)
 
 			// Pixel color (0-3)
-			color := bgPixels[tileX&0b111]
-			var palette Palette = ppu.BGP // DMG palette
+			bgPixel = bgPixels[tileX&0b111]
+			var bgPalette Palette = ppu.BGP // DMG palette
 
 			if ppu.cgb {
 				bgPriority = tileAttributes.bgPriority()
 				paletteId := tileAttributes.cgbPalette()
-				palette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
+				bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 			}
 
-			ppu.backBuffer[ppu.LY][x] = palette.GetColor(color)
+			ppu.backBuffer[ppu.LY][x] = bgPalette.GetColor(bgPixel)
 		}
 
 		// Render objects
@@ -143,6 +144,7 @@ func (ppu *PPU) renderLine() int {
 			// Draw pixel if no other pixel with higher priority was drawn
 			px := rowPixels[(x+8)-obj.x]
 
+			// TODO - tidy this mess
 			if ppu.cgb {
 				// If the BG color index is 0, the OBJ will always have priority;
 				// Otherwise, if LCDC bit 0 is clear, the OBJ will always have priority;
@@ -150,7 +152,7 @@ func (ppu *PPU) renderLine() int {
 				// Otherwise, BG will have priority.
 				if px > 0 {
 					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
-					if ppu.backBuffer[ppu.LY][x] == 0 || !ppu.bgWindowEnabled || (!bgPriority && !tileAttr(obj.flags).bgPriority()) {
+					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !tileAttr(obj.flags).bgPriority()) {
 						paletteId := tileAttr(obj.flags).cgbPalette()
 						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 
@@ -164,7 +166,7 @@ func (ppu *PPU) renderLine() int {
 				//  - If both object and background pixel are not 0, draw pixel based on
 				//    object attributes BG/Window priority (bit 7)
 				if px > 0 { // Object pixel is transparent
-					if ppu.backBuffer[ppu.LY][x] == 0 || !tileAttr(obj.flags).bgPriority() {
+					if bgPixel == 0 || !tileAttr(obj.flags).bgPriority() {
 						palette := ppu.OBP[tileAttr(obj.flags).dmgPalette()]
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
