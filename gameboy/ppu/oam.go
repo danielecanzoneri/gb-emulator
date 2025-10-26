@@ -121,9 +121,6 @@ func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 }
 
 func (ppu *PPU) searchOAM() {
-	// TODO - In CGB mode, only the object’s location in OAM determines its priority.
-	//        The earlier the object, the higher its priority.
-
 	// objHeight is used to check which objects are currently on the line
 	var objHeight uint8 = 8
 	if ppu.obj8x16Size {
@@ -147,7 +144,12 @@ func (ppu *PPU) searchOAM() {
 
 	// Sort objects by priority (lower x have priority)
 	objs := ppu.objsLY[0:ppu.numObjs]
-	slices.SortStableFunc(objs, func(a, b *Object) int {
-		return cmp.Compare(a.x, b.x)
-	})
+
+	// In CGB mode, only the object’s location in OAM determines its priority.
+	// The earlier the object, the higher its priority.
+	if !ppu.cgb {
+		slices.SortStableFunc(objs, func(a, b *Object) int {
+			return cmp.Compare(a.x, b.x)
+		})
+	}
 }
