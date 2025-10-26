@@ -36,8 +36,8 @@ type CGBPalette struct{}
 
 func (p CGBPalette) Get(c uint16) color.Color {
 	return CGBColor{
-		r: uint8((c >> 11) & 0x1F),
-		g: uint8((c >> 6) & 0x1F),
-		b: uint8((c >> 1) & 0x1F),
+		r: uint8(c & 0x1F),
+		g: uint8((c >> 5) & 0x1F),
+		b: uint8((c >> 10) & 0x1F),
 	}
 }

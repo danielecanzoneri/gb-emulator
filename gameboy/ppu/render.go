@@ -24,7 +24,7 @@ type CGBPalette []uint8
 
 func (p CGBPalette) getColor(id uint8) uint16 {
 	// Each color is stored as little-endian RGB555
-	return uint16(p[2*id+1]) | (uint16(p[2*id]) << 8)
+	return uint16(p[2*id]) | (uint16(p[2*id+1]) << 8)
 }
 
 func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint16 {
