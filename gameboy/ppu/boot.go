@@ -47,6 +47,6 @@ func (ppu *PPU) SkipBoot() {
 	ppu.BGP = 0xFC
 	ppu.windowTileMapAddr = 0x9800
 	ppu.bgWindowTileDataArea = 1
-	ppu.bgTileMapAddr = 0x9800
+	ppu.BGTileMapAddr = 0x9800
 	ppu.bgWindowEnabled = true
 }

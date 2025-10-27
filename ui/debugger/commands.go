@@ -109,3 +109,27 @@ func (d *Debugger) ShowOAM() {
 
 	d.oamViewer.Sync(d.gameBoy)
 }
+
+func (d *Debugger) ShowBG() {
+	if d.IsWindowOpen(d.bgViewer.Window) {
+		return
+	}
+
+	// Current window size
+	winSize := input.GetWindowSize()
+
+	// Get the preferred size of the content
+	x1, y1 := d.bgViewer.Contents.PreferredSize()
+	x2, y2 := d.bgViewer.TitleBar.PreferredSize()
+	xWindow, yWindow := max(x1, x2), y1+y2
+	remainingSize := winSize.Sub(image.Pt(xWindow, yWindow))
+
+	// Set the windows location at center of window
+	r := image.Rect(0, 0, xWindow, yWindow).Add(remainingSize.Div(2))
+	d.bgViewer.SetLocation(r)
+
+	closeWindow := d.AddWindow(d.bgViewer.Window)
+	d.bgViewer.closeWindow = closeWindow
+
+	d.bgViewer.Sync(d.gameBoy)
+}

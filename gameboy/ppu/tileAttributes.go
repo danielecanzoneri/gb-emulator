@@ -1,27 +1,27 @@
 package ppu
 
-type tileAttr uint8
+type TileAttribute uint8
 
-func (attr tileAttr) bgPriority() bool {
+func (attr TileAttribute) BGPriority() bool {
 	return (attr & 0x80) > 0
 }
 
-func (attr tileAttr) yFlip() bool {
+func (attr TileAttribute) YFlip() bool {
 	return (attr & 0x40) > 0
 }
 
-func (attr tileAttr) xFlip() bool {
+func (attr TileAttribute) XFlip() bool {
 	return (attr & 0x20) > 0
 }
 
-func (attr tileAttr) dmgPalette() uint8 {
+func (attr TileAttribute) DMGPalette() uint8 {
 	return uint8(attr&0x10) >> 4
 }
 
-func (attr tileAttr) bank() uint8 {
+func (attr TileAttribute) Bank() uint8 {
 	return uint8(attr&0x08) >> 3
 }
 
-func (attr tileAttr) cgbPalette() uint8 {
+func (attr TileAttribute) CGBPalette() uint8 {
 	return uint8(attr & 0x07)
 }

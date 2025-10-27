@@ -94,17 +94,17 @@ func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 	// CGB only
 	vRAMBank := uint8(0)
 	if ppu.cgb {
-		vRAMBank = tileAttr(obj.flags).bank()
+		vRAMBank = TileAttribute(obj.flags).Bank()
 	}
 
 	if !ppu.obj8x16Size { // 8-row object
 		tile := ppu.ReadTileObj(obj.tileIndex, vRAMBank)
-		return tile.GetRow(tileAttr(obj.flags), row&0x7)
+		return tile.GetRow(TileAttribute(obj.flags), row&0x7)
 	}
 
 	// 16 row object
 	row &= 0xF
-	if tileAttr(obj.flags).yFlip() {
+	if TileAttribute(obj.flags).YFlip() {
 		// Flip tile (just switch 4-th bit)
 		bit4 := row & 0x8
 		row = (row &^ 0x8) | (^bit4 & 0x8)
@@ -113,10 +113,10 @@ func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 	// 2-tiles object, fetch the correct one
 	if row < 8 {
 		tile := ppu.ReadTileObj(obj.tileIndex&0xFE, vRAMBank)
-		return tile.GetRow(tileAttr(obj.flags), row)
+		return tile.GetRow(TileAttribute(obj.flags), row)
 	} else {
 		tile := ppu.ReadTileObj(obj.tileIndex|0b01, vRAMBank)
-		return tile.GetRow(tileAttr(obj.flags), row-8)
+		return tile.GetRow(TileAttribute(obj.flags), row-8)
 	}
 }
 

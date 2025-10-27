@@ -73,19 +73,19 @@ func (ppu *PPU) renderLine() int {
 				// We're drawing the background
 				tileX = ppu.SCX + x // Auto wrap around
 				tileY = ppu.SCY + ppu.LY
-				tileBaseAddr = ppu.bgTileMapAddr
+				tileBaseAddr = ppu.BGTileMapAddr
 			}
 
 			tileAddr := tileBaseAddr + getTileMapOffset(tileX, tileY)
-			bgPixels, tileAttributes := ppu.getBGWindowPixelRow(tileAddr, tileY)
+			bgPixels, tileAttributes := ppu.GetBGWindowPixelRow(tileAddr, tileY)
 
 			// Pixel color (0-3)
 			bgPixel = bgPixels[tileX&0b111]
 			var bgPalette Palette = ppu.BGP // DMG palette
 
 			if ppu.cgb {
-				bgPriority = tileAttributes.bgPriority()
-				paletteId := tileAttributes.cgbPalette()
+				bgPriority = tileAttributes.BGPriority()
+				paletteId := tileAttributes.CGBPalette()
 				bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 			}
 
@@ -119,8 +119,8 @@ func (ppu *PPU) renderLine() int {
 					// - If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority;
 					// Otherwise, BG will have priority.
 					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
-					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !tileAttr(obj.flags).bgPriority()) {
-						paletteId := tileAttr(obj.flags).cgbPalette()
+					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !TileAttribute(obj.flags).BGPriority()) {
+						paletteId := TileAttribute(obj.flags).CGBPalette()
 						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
@@ -128,8 +128,8 @@ func (ppu *PPU) renderLine() int {
 					// If background pixel is 0, draw object pixel
 					// If both object and background pixel are not 0, draw pixel based on
 					//    object attributes BG/Window priority (bit 7)
-					if bgPixel == 0 || !tileAttr(obj.flags).bgPriority() {
-						palette := ppu.OBP[tileAttr(obj.flags).dmgPalette()]
+					if bgPixel == 0 || !TileAttribute(obj.flags).BGPriority() {
+						palette := ppu.OBP[TileAttribute(obj.flags).DMGPalette()]
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				}

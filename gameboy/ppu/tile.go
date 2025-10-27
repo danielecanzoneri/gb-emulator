@@ -27,14 +27,14 @@ func (t *Tile) getRowPixels(row uint8) [8]uint8 {
 	}
 }
 
-func (t *Tile) GetRow(attr tileAttr, row uint8) [8]uint8 {
-	if attr.yFlip() {
+func (t *Tile) GetRow(attr TileAttribute, row uint8) [8]uint8 {
+	if attr.YFlip() {
 		row = 7 - row
 	}
 
 	pixels := t.getRowPixels(row)
 
-	if attr.xFlip() {
+	if attr.XFlip() {
 		pixels[0], pixels[7] = pixels[7], pixels[0]
 		pixels[1], pixels[6] = pixels[6], pixels[1]
 		pixels[2], pixels[5] = pixels[5], pixels[2]
@@ -60,7 +60,7 @@ func (ppu *PPU) ReadTileBGWindow(tileId uint8, vRAMBank uint8) *Tile {
 	return &ppu.vRAM.tileData[vRAMBank][tileNum]
 }
 
-func (ppu *PPU) getBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, tileAttr) {
+func (ppu *PPU) GetBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, TileAttribute) {
 	// Address in the tilemap of the tile
 	tileMapAddr := tileAddr - 0x9800
 
@@ -70,8 +70,8 @@ func (ppu *PPU) getBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, til
 	// In CGB Mode, an additional map of 32×32 bytes is stored in VRAM Bank 1
 	// (each byte defines attributes for the corresponding tile-number map entry in VRAM Bank 0)
 	if ppu.cgb {
-		attr := tileAttr(ppu.vRAM.tileMaps[1][tileMapAddr])
-		tile = ppu.ReadTileBGWindow(tileId, attr.bank())
+		attr := TileAttribute(ppu.vRAM.tileMaps[1][tileMapAddr])
+		tile = ppu.ReadTileBGWindow(tileId, attr.Bank())
 		return tile.GetRow(attr, tileY&0b111), attr
 	} else {
 		tile = ppu.ReadTileBGWindow(tileId, 0)

@@ -20,6 +20,7 @@ type Debugger struct {
 	registersViewer *registersViewer
 
 	oamViewer *oamViewer
+	bgViewer  *bgViewer
 
 	// State
 	gameBoy *gameboy.GameBoy
@@ -59,6 +60,7 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.registersViewer = newRegisterViewer()
 
 	d.oamViewer = d.newOamViewer()
+	d.bgViewer = d.newBGViewer()
 
 	// Add widgets to the root container
 	main := newContainer(widget.DirectionHorizontal,

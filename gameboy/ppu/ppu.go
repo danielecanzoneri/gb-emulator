@@ -50,7 +50,7 @@ type PPU struct {
 	windowTileMapAddr    uint16 // Bit 6 (0 = 9800–9BFF; 1 = 9C00–9FFF)
 	windowEnabled        bool   // Bit 5
 	bgWindowTileDataArea uint8  // Bit 4 (0 = 8800–97FF; 1 = 8000–8FFF)
-	bgTileMapAddr        uint16 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
+	BGTileMapAddr        uint16 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
 	obj8x16Size          bool   // Bit 2 (false = 8x8; true = 8x16)
 	objEnabled           bool   // Bit 1
 	bgWindowEnabled      bool   // Bit 0

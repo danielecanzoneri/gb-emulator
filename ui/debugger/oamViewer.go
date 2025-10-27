@@ -92,7 +92,7 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 			}
 
 			if gb.EmulationModel == gameboy.CGB {
-				paletteId := oamObj.Read(3) & 0x7
+				paletteId := ppu.TileAttribute(oamObj.Read(3)).CGBPalette()
 				p := ppu.CGBPalette(gb.PPU.OBJPalette[8*paletteId : 8*paletteId+8])
 				obj.sprite.Set(col, row, palette.Get(p.GetColor(pixels[col])))
 			} else {

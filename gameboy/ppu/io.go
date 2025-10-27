@@ -62,9 +62,9 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.windowEnabled = util.ReadBit(v, 5) > 0
 		ppu.bgWindowTileDataArea = util.ReadBit(v, 4)
 		if util.ReadBit(v, 3) == 0 {
-			ppu.bgTileMapAddr = 0x9800
+			ppu.BGTileMapAddr = 0x9800
 		} else {
-			ppu.bgTileMapAddr = 0x9C00
+			ppu.BGTileMapAddr = 0x9C00
 		}
 		ppu.obj8x16Size = util.ReadBit(v, 2) > 0
 		ppu.objEnabled = util.ReadBit(v, 1) > 0
