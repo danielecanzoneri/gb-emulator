@@ -60,11 +60,15 @@ func (ppu *PPU) ReadTileBGWindow(tileId uint8, vRAMBank uint8) *Tile {
 	return &ppu.vRAM.tileData[vRAMBank][tileNum]
 }
 
+func (ppu *PPU) GetTileId(tileAddress uint16) uint8 {
+	return ppu.vRAM.tileMaps[0][tileAddress]
+}
+
 func (ppu *PPU) GetBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, TileAttribute) {
 	// Address in the tilemap of the tile
 	tileMapAddr := tileAddr - 0x9800
 
-	tileId := ppu.vRAM.tileMaps[0][tileMapAddr]
+	tileId := ppu.GetTileId(tileMapAddr)
 	var tile *Tile
 
 	// In CGB Mode, an additional map of 32×32 bytes is stored in VRAM Bank 1
