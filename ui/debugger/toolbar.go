@@ -62,8 +62,10 @@ func (d *Debugger) newToolbar() *toolbar {
 
 	// PPU menu
 	ppuMenu := t.newMenu("PPU")
-	ppuMenu.addEntry("OAM Viewer", d.ShowOAM)
-	ppuMenu.addEntry("BG Viewer", d.ShowBG)
+	ppuMenu.addEntryWithShortcut("OAM Viewer", d.ShowOAM,
+		ebiten.KeyShift, ebiten.KeyO)
+	ppuMenu.addEntryWithShortcut("BG Viewer", d.ShowBG,
+		ebiten.KeyShift, ebiten.KeyB)
 	return t
 }
 

@@ -88,6 +88,7 @@ func (d *Debugger) initHooks() {
 
 func (d *Debugger) ShowOAM() {
 	if d.IsWindowOpen(d.oamViewer.Window) {
+		d.oamViewer.closeWindow()
 		return
 	}
 
@@ -112,6 +113,7 @@ func (d *Debugger) ShowOAM() {
 
 func (d *Debugger) ShowBG() {
 	if d.IsWindowOpen(d.bgViewer.Window) {
+		d.bgViewer.closeWindow()
 		return
 	}
 
