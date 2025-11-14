@@ -2,8 +2,9 @@ package debugger
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	goimage "image"
+
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"
@@ -62,10 +63,12 @@ func (d *Debugger) newToolbar() *toolbar {
 
 	// PPU menu
 	ppuMenu := t.newMenu("PPU")
-	ppuMenu.addEntryWithShortcut("OAM Viewer", d.ShowOAM,
+	ppuMenu.addEntryWithShortcut("OAM Viewer", func() { d.showWindow(d.oamViewer) },
 		ebiten.KeyShift, ebiten.KeyO)
-	ppuMenu.addEntryWithShortcut("BG Viewer", d.ShowBG,
+	ppuMenu.addEntryWithShortcut("BG Viewer", func() { d.showWindow(d.bgViewer) },
 		ebiten.KeyShift, ebiten.KeyB)
+	ppuMenu.addEntryWithShortcut("TilesViewer", func() { d.showWindow(d.tilesViewer) },
+		ebiten.KeyShift, ebiten.KeyT)
 	return t
 }
 

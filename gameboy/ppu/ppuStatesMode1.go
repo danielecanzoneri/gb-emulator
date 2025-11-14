@@ -37,7 +37,7 @@ func (st *vBlank) Init(ppu *PPU) {
 }
 func (st *vBlank) Next(ppu *PPU) ppuInternalState {
 	ppu.LY++
-	ppu.Dots -= lineLength
+	ppu.dots -= lineLength
 
 	if ppu.LY == 154 {
 		ppu.LY = 0

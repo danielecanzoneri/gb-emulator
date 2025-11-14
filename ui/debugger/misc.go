@@ -2,9 +2,10 @@ package debugger
 
 import (
 	"bytes"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"image/color"
 	"log"
+
+	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
@@ -43,7 +44,13 @@ func newLabel(text string, color color.Color) *widget.Text {
 	)
 }
 
-func newWindow(title string, content *widget.Container, closeWindow *widget.RemoveWindowFunc) *widget.Window {
+type windowInfo struct {
+	Window   *widget.Window
+	TitleBar *widget.Container
+	Contents *widget.Container
+}
+
+func newWindow(title string, content *widget.Container, closeWindow *widget.RemoveWindowFunc) *windowInfo {
 	c := widget.NewContainer(
 		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Window.Color)),
 		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
@@ -80,5 +87,9 @@ func newWindow(title string, content *widget.Container, closeWindow *widget.Remo
 		widget.WindowOpts.TitleBar(titleBar, 25),
 	)
 
-	return w
+	return &windowInfo{
+		Window:   w,
+		TitleBar: titleBar,
+		Contents: c,
+	}
 }

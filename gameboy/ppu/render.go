@@ -73,7 +73,7 @@ func (ppu *PPU) renderLine() int {
 				// We're drawing the background
 				tileX = ppu.SCX + x // Auto wrap around
 				tileY = ppu.SCY + ppu.LY
-				tileBaseAddr = ppu.BGTileMapAddr
+				tileBaseAddr = ppu.bgTileMapAddr
 			}
 
 			tileAddr := tileBaseAddr + getTileMapOffset(tileX, tileY)

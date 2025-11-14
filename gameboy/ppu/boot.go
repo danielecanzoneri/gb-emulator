@@ -1,10 +1,10 @@
 package ppu
 
 func (ppu *PPU) SkipBoot() {
-	ppu.Dots = 400
-	ppu.InternalState = new(vBlank)
+	ppu.dots = 400
+	ppu.internalState = new(vBlank)
 	ppu.interruptMode = 1
-	ppu.InternalStateLength = 56
+	ppu.internalStateLength = 56
 
 	// vRAM
 	ppu.vRAM.tileData[0][1] = [16]uint8{0xF0, 0, 0xF0, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xFC, 0, 0xF3, 0, 0xF3, 0}
@@ -47,6 +47,6 @@ func (ppu *PPU) SkipBoot() {
 	ppu.BGP = 0xFC
 	ppu.windowTileMapAddr = 0x9800
 	ppu.bgWindowTileDataArea = 1
-	ppu.BGTileMapAddr = 0x9800
+	ppu.bgTileMapAddr = 0x9800
 	ppu.bgWindowEnabled = true
 }

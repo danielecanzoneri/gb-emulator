@@ -10,70 +10,70 @@ func (ppu *PPU) GlitchedOAMAccess(address uint16, isRead bool) {
 	}
 
 	// This means we are in mode 2
-	if st, ok := ppu.InternalState.(*oamScan); ok {
-		ppu.OAM.buggedRow = st.rowAccessed
+	if st, ok := ppu.internalState.(*oamScan); ok {
+		ppu.oam.buggedRow = st.rowAccessed
 		if isRead {
-			ppu.OAM.buggedRead = true
+			ppu.oam.buggedRead = true
 		} else {
-			ppu.OAM.buggedWrite = true
+			ppu.oam.buggedWrite = true
 		}
 	}
 }
 
 func readOAMWord(ppu *PPU, row uint8, offset uint8) uint16 {
-	low := ppu.OAM.read((row)<<3 + 2*offset)
-	high := ppu.OAM.read((row)<<3 + 2*offset + 1)
+	low := ppu.oam.read((row)<<3 + 2*offset)
+	high := ppu.oam.read((row)<<3 + 2*offset + 1)
 
 	return util.CombineBytes(high, low)
 }
 func writeOAMWord(ppu *PPU, row uint8, offset uint8, word uint16) {
 	high, low := util.SplitWord(word)
-	ppu.OAM.write((row)<<3+2*offset, low)
-	ppu.OAM.write((row)<<3+2*offset+1, high)
+	ppu.oam.write((row)<<3+2*offset, low)
+	ppu.oam.write((row)<<3+2*offset+1, high)
 }
 
 func (ppu *PPU) triggerOAMBugWrite() {
-	if ppu.OAM.buggedRow == 0 || ppu.OAM.buggedRow > 19 {
+	if ppu.oam.buggedRow == 0 || ppu.oam.buggedRow > 19 {
 		return
 	}
 
-	// A “write corruption” corrupts the currently access row in the following manner,
-	// as long as it’s not the first row (containing the first two objects):
+	// A "write corruption" corrupts the currently access row in the following manner,
+	// as long as it's not the first row (containing the first two objects):
 	// - The first word in the row is replaced with this bitwise expression:
 	//       ((a ^ c) & (b ^ c)) ^ c
 	//   where a is the original value of that word, b is the first word in the preceding row,
 	//   and c is the third word in the preceding row.
 	// - The last three words are copied from the last three words in the preceding row.
 
-	a := readOAMWord(ppu, ppu.OAM.buggedRow, 0)
-	b := readOAMWord(ppu, ppu.OAM.buggedRow-1, 0)
-	c := readOAMWord(ppu, ppu.OAM.buggedRow-1, 2)
+	a := readOAMWord(ppu, ppu.oam.buggedRow, 0)
+	b := readOAMWord(ppu, ppu.oam.buggedRow-1, 0)
+	c := readOAMWord(ppu, ppu.oam.buggedRow-1, 2)
 
 	newA := ((a ^ c) & (b ^ c)) ^ c
-	writeOAMWord(ppu, ppu.OAM.buggedRow, 0, newA)
+	writeOAMWord(ppu, ppu.oam.buggedRow, 0, newA)
 
 	// Copy values of the last three words
 	for i := uint8(1); i < 4; i++ {
-		writeOAMWord(ppu, ppu.OAM.buggedRow, i, readOAMWord(ppu, ppu.OAM.buggedRow-1, i))
+		writeOAMWord(ppu, ppu.oam.buggedRow, i, readOAMWord(ppu, ppu.oam.buggedRow-1, i))
 	}
 }
 func (ppu *PPU) triggerOAMBugRead() {
-	if ppu.OAM.buggedRow == 0 || ppu.OAM.buggedRow > 19 {
+	if ppu.oam.buggedRow == 0 || ppu.oam.buggedRow > 19 {
 		return
 	}
 
-	// A “read corruption” works similarly to a write corruption,
+	// A "read corruption" works similarly to a write corruption,
 	// except the bitwise expression is b | (a & c).
-	a := readOAMWord(ppu, ppu.OAM.buggedRow, 0)
-	b := readOAMWord(ppu, ppu.OAM.buggedRow-1, 0)
-	c := readOAMWord(ppu, ppu.OAM.buggedRow-1, 2)
+	a := readOAMWord(ppu, ppu.oam.buggedRow, 0)
+	b := readOAMWord(ppu, ppu.oam.buggedRow-1, 0)
+	c := readOAMWord(ppu, ppu.oam.buggedRow-1, 2)
 
 	newA := b | (a & c)
-	writeOAMWord(ppu, ppu.OAM.buggedRow, 0, newA)
+	writeOAMWord(ppu, ppu.oam.buggedRow, 0, newA)
 
 	// Copy values of the last three words
 	for i := uint8(1); i < 4; i++ {
-		writeOAMWord(ppu, ppu.OAM.buggedRow, i, readOAMWord(ppu, ppu.OAM.buggedRow-1, i))
+		writeOAMWord(ppu, ppu.oam.buggedRow, i, readOAMWord(ppu, ppu.oam.buggedRow-1, i))
 	}
 }
 
@@ -97,22 +97,22 @@ func (ppu *PPU) triggerOAMBugWriteAndRead() {
 
 	defer ppu.triggerOAMBugRead()
 
-	if ppu.OAM.buggedRow < 4 || ppu.OAM.buggedRow >= 19 {
+	if ppu.oam.buggedRow < 4 || ppu.oam.buggedRow >= 19 {
 		return
 	}
 
-	a := readOAMWord(ppu, ppu.OAM.buggedRow-2, 0)
-	b := readOAMWord(ppu, ppu.OAM.buggedRow-1, 0)
-	c := readOAMWord(ppu, ppu.OAM.buggedRow, 0)
-	d := readOAMWord(ppu, ppu.OAM.buggedRow-1, 2)
+	a := readOAMWord(ppu, ppu.oam.buggedRow-2, 0)
+	b := readOAMWord(ppu, ppu.oam.buggedRow-1, 0)
+	c := readOAMWord(ppu, ppu.oam.buggedRow, 0)
+	d := readOAMWord(ppu, ppu.oam.buggedRow-1, 2)
 
 	newB := (b & (a | c | d)) | (a & c & d)
-	writeOAMWord(ppu, ppu.OAM.buggedRow-1, 0, newB)
+	writeOAMWord(ppu, ppu.oam.buggedRow-1, 0, newB)
 
 	// Copy preceding row
 	for i := uint8(0); i < 4; i++ {
-		w := readOAMWord(ppu, ppu.OAM.buggedRow-1, i)
-		writeOAMWord(ppu, ppu.OAM.buggedRow-2, i, w)
-		writeOAMWord(ppu, ppu.OAM.buggedRow, i, w)
+		w := readOAMWord(ppu, ppu.oam.buggedRow-1, i)
+		writeOAMWord(ppu, ppu.oam.buggedRow-2, i, w)
+		writeOAMWord(ppu, ppu.oam.buggedRow, i, w)
 	}
 }

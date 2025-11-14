@@ -1,10 +1,5 @@
 package debugger
 
-import (
-	"github.com/ebitenui/ebitenui/input"
-	"image"
-)
-
 func (d *Debugger) Toggle() {
 	d.Active = !d.Active
 	if d.Active {
@@ -82,56 +77,4 @@ func (d *Debugger) initHooks() {
 		d.CallDepth--
 	}
 	d.gameBoy.CPU.SetHooks(callHook, retHook)
-}
-
-// PPU commands
-
-func (d *Debugger) ShowOAM() {
-	if d.IsWindowOpen(d.oamViewer.Window) {
-		d.oamViewer.closeWindow()
-		return
-	}
-
-	// Current window size
-	winSize := input.GetWindowSize()
-
-	// Get the preferred size of the content
-	x1, y1 := d.oamViewer.Contents.PreferredSize()
-	x2, y2 := d.oamViewer.TitleBar.PreferredSize()
-	xWindow, yWindow := max(x1, x2), y1+y2
-	remainingSize := winSize.Sub(image.Pt(xWindow, yWindow))
-
-	// Set the windows location at center of window
-	r := image.Rect(0, 0, xWindow, yWindow).Add(remainingSize.Div(2))
-	d.oamViewer.SetLocation(r)
-
-	closeWindow := d.AddWindow(d.oamViewer.Window)
-	d.oamViewer.closeWindow = closeWindow
-
-	d.oamViewer.Sync(d.gameBoy)
-}
-
-func (d *Debugger) ShowBG() {
-	if d.IsWindowOpen(d.bgViewer.Window) {
-		d.bgViewer.closeWindow()
-		return
-	}
-
-	// Current window size
-	winSize := input.GetWindowSize()
-
-	// Get the preferred size of the content
-	x1, y1 := d.bgViewer.Contents.PreferredSize()
-	x2, y2 := d.bgViewer.TitleBar.PreferredSize()
-	xWindow, yWindow := max(x1, x2), y1+y2
-	remainingSize := winSize.Sub(image.Pt(xWindow, yWindow))
-
-	// Set the windows location at center of window
-	r := image.Rect(0, 0, xWindow, yWindow).Add(remainingSize.Div(2))
-	d.bgViewer.SetLocation(r)
-
-	closeWindow := d.AddWindow(d.bgViewer.Window)
-	d.bgViewer.closeWindow = closeWindow
-
-	d.bgViewer.Sync(d.gameBoy)
 }

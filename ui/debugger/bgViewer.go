@@ -65,7 +65,7 @@ func newBGTile(row, col uint16, syncData syncTileFunc) *bgTile {
 }
 
 func (t *bgTile) Sync(gb *gameboy.GameBoy) {
-	t.address = gb.PPU.BGTileMapAddr + (t.row * 32) + t.col
+	t.address = gb.PPU.DebugGetBGTileMapAddr() + (t.row * 32) + t.col
 	t.tileId = gb.PPU.GetTileId(t.address - 0x9800)
 
 	// Update image
@@ -74,7 +74,8 @@ func (t *bgTile) Sync(gb *gameboy.GameBoy) {
 		for col := range 8 {
 			if gb.EmulationModel == gameboy.CGB {
 				paletteId := attr.CGBPalette()
-				p := ppu.CGBPalette(gb.PPU.OBJPalette[8*paletteId : 8*paletteId+8])
+				bgPalette := gb.PPU.DebugGetBGPalette()
+				p := ppu.CGBPalette(bgPalette[8*paletteId : 8*paletteId+8])
 				t.sprite.Set(col, row, theme.CGBPalette{}.Get(p.GetColor(pixels[col])))
 			} else {
 				t.sprite.Set(col, row, theme.DMGPalette{}.Get(uint16(pixels[col])))
@@ -86,8 +87,6 @@ func (t *bgTile) Sync(gb *gameboy.GameBoy) {
 }
 
 type bgViewer struct {
-	*widget.Window
-
 	// Pointer to the UI for showing the window
 	ui *ebitenui.UI
 
@@ -97,6 +96,9 @@ type bgViewer struct {
 	attributeLabel *widget.Text
 
 	tiles [32][32]*bgTile
+
+	// Window info
+	windowInfo *windowInfo
 
 	// Handler to close the window
 	closeWindow widget.RemoveWindowFunc
@@ -152,12 +154,30 @@ func (d *Debugger) newBGViewer() *bgViewer {
 	root := newContainer(widget.DirectionHorizontal,
 		grid, tileContainer,
 	)
-	v.Window = newWindow("BG  Viewer", root, &v.closeWindow)
+	v.windowInfo = newWindow("BG  Viewer", root, &v.closeWindow)
 	return v
 }
 
+func (v *bgViewer) Window() *widget.Window {
+	return v.windowInfo.Window
+}
+
+func (v *bgViewer) Contents() *widget.Container {
+	return v.windowInfo.Contents
+}
+
+func (v *bgViewer) TitleBar() *widget.Container {
+	return v.windowInfo.TitleBar
+}
+
+func (v *bgViewer) SetCloseHandler(closeFunc widget.RemoveWindowFunc) widget.RemoveWindowFunc {
+	old := v.closeWindow
+	v.closeWindow = closeFunc
+	return old
+}
+
 func (v *bgViewer) Sync(gb *gameboy.GameBoy) {
-	if !v.ui.IsWindowOpen(v.Window) {
+	if !v.ui.IsWindowOpen(v.Window()) {
 		return
 	}
 

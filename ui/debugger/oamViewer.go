@@ -69,7 +69,10 @@ func newOamViewerObject(index int) *oamViewerObject {
 }
 
 func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
-	oamObj := &gb.PPU.OAM.Data[obj.index]
+	oamObj := gb.PPU.DebugGetOAMObject(obj.index)
+	if oamObj == nil {
+		return
+	}
 
 	// Update data
 	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
@@ -93,7 +96,8 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 
 			if gb.EmulationModel == gameboy.CGB {
 				paletteId := ppu.TileAttribute(oamObj.Read(3)).CGBPalette()
-				p := ppu.CGBPalette(gb.PPU.OBJPalette[8*paletteId : 8*paletteId+8])
+				objPalette := gb.PPU.DebugGetOBJPalette()
+				p := ppu.CGBPalette(objPalette[8*paletteId : 8*paletteId+8])
 				obj.sprite.Set(col, row, palette.Get(p.GetColor(pixels[col])))
 			} else {
 				obj.sprite.Set(col, row, palette.Get(uint16(pixels[col])))
@@ -104,12 +108,13 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 }
 
 type oamViewer struct {
-	*widget.Window
-
 	// Pointer to the UI for showing the window
 	ui *ebitenui.UI
 
 	objects [40]*oamViewerObject
+
+	// Window info
+	windowInfo *windowInfo
 
 	// Handler to close the window
 	closeWindow widget.RemoveWindowFunc
@@ -133,12 +138,30 @@ func (d *Debugger) newOamViewer() *oamViewer {
 		root.AddChild(o.objects[i])
 	}
 
-	o.Window = newWindow("OAM Viewer", root, &o.closeWindow)
+	o.windowInfo = newWindow("OAM Viewer", root, &o.closeWindow)
 	return o
 }
 
+func (o *oamViewer) Window() *widget.Window {
+	return o.windowInfo.Window
+}
+
+func (o *oamViewer) Contents() *widget.Container {
+	return o.windowInfo.Contents
+}
+
+func (o *oamViewer) TitleBar() *widget.Container {
+	return o.windowInfo.TitleBar
+}
+
+func (o *oamViewer) SetCloseHandler(closeFunc widget.RemoveWindowFunc) widget.RemoveWindowFunc {
+	old := o.closeWindow
+	o.closeWindow = closeFunc
+	return old
+}
+
 func (o *oamViewer) Sync(gb *gameboy.GameBoy) {
-	if !o.ui.IsWindowOpen(o.Window) {
+	if !o.ui.IsWindowOpen(o.Window()) {
 		return
 	}
 

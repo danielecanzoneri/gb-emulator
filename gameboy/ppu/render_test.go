@@ -57,7 +57,7 @@ func TestDrawLineBG(t *testing.T) {
 	ppu.BGP = DMGPalette(0b11100100)
 	ppu.windowEnabled = false
 	ppu.bgWindowTileDataArea = 0
-	ppu.BGTileMapAddr = 0x9C00
+	ppu.bgTileMapAddr = 0x9C00
 	ppu.objEnabled = false
 	ppu.bgWindowEnabled = true
 	ppu.LY = 12
@@ -100,7 +100,7 @@ func TestDrawLineWindow(t *testing.T) {
 	ppu.windowTileMapAddr = 0x9800
 	ppu.windowEnabled = true
 	ppu.bgWindowTileDataArea = 0
-	ppu.BGTileMapAddr = 0x9C00
+	ppu.bgTileMapAddr = 0x9C00
 	ppu.objEnabled = false
 	ppu.bgWindowEnabled = true
 	ppu.LY = 2

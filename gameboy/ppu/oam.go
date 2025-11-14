@@ -87,7 +87,7 @@ func (oam *OAM) write(addr uint8, value uint8) {
 }
 
 func (ppu *PPU) DMAWrite(index uint16, value uint8) {
-	ppu.OAM.Write(OAMStartAddr+index, value)
+	ppu.oam.Write(OAMStartAddr+index, value)
 }
 
 func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
@@ -130,7 +130,7 @@ func (ppu *PPU) searchOAM() {
 	ppu.numObjs = 0
 
 	// Scan OAM and select objects that lie in current line
-	for _, obj := range ppu.OAM.Data {
+	for _, obj := range ppu.oam.Data {
 		// obj is on the line if obj.y <= LY+16 < obj.y + height
 		if obj.y <= ppu.LY+yObjOffset && ppu.LY+yObjOffset < obj.y+objHeight {
 			ppu.objsLY[ppu.numObjs] = &obj

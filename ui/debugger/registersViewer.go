@@ -129,15 +129,16 @@ func newLcdPanel() *panel {
 
 func newLcdInternalPanel() *panel {
 	entries := []panelEntry{
-		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.Dots) }},
-		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.STAT&3) }},
+		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetDots()) }},
+		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetMode()) }},
 		{name: "State", valueSync: func(gb *gameboy.GameBoy) string {
-			if gb.PPU.InternalState == nil {
+			state := gb.PPU.DebugGetInternalState()
+			if state == nil {
 				return " "
 			}
-			return reflect.TypeOf(gb.PPU.InternalState).String()[5:]
+			return reflect.TypeOf(state).String()[5:]
 		}},
-		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.InternalStateLength) }},
+		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetInternalStateLength()) }},
 	}
 	return newPanel("LCD (internal)", entries...)
 }

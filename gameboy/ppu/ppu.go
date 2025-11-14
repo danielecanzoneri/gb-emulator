@@ -5,16 +5,16 @@ import (
 )
 
 type PPU struct {
-	Dots int // Dots elapsed rendering this line
+	dots int // Dots elapsed rendering this line
 
 	// Internal (machine state and length)
-	InternalState       ppuInternalState
-	InternalStateLength int   // When it reaches 0, switch to next state
+	internalState       ppuInternalState
+	internalStateLength int   // When it reaches 0, switch to next state
 	interruptMode       uint8 // Mode used for the STAT interrupt line
 
-	// vRAM and OAM data
+	// vRAM and OAM data (internal memory structures, accessed via Read()/Write())
 	vRAM vRAM
-	OAM  OAM
+	oam  OAM
 
 	// objects on current line
 	objsLY  [objsLimit]*Object
@@ -50,7 +50,7 @@ type PPU struct {
 	windowTileMapAddr    uint16 // Bit 6 (0 = 9800–9BFF; 1 = 9C00–9FFF)
 	windowEnabled        bool   // Bit 5
 	bgWindowTileDataArea uint8  // Bit 4 (0 = 8800–97FF; 1 = 8000–8FFF)
-	BGTileMapAddr        uint16 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
+	bgTileMapAddr        uint16 // Bit 3 (0 = 9800–9BFF; 1 = 9C00–9FFF)
 	obj8x16Size          bool   // Bit 2 (false = 8x8; true = 8x16)
 	objEnabled           bool   // Bit 1
 	bgWindowEnabled      bool   // Bit 0
@@ -86,15 +86,15 @@ func (ppu *PPU) Tick(ticks int) {
 	}
 
 	// OAM bug
-	if ppu.OAM.buggedRead && ppu.OAM.buggedWrite {
+	if ppu.oam.buggedRead && ppu.oam.buggedWrite {
 		ppu.triggerOAMBugWriteAndRead()
-	} else if ppu.OAM.buggedRead {
+	} else if ppu.oam.buggedRead {
 		ppu.triggerOAMBugRead()
-	} else if ppu.OAM.buggedWrite {
+	} else if ppu.oam.buggedWrite {
 		ppu.triggerOAMBugWrite()
 	}
-	ppu.OAM.buggedRead = false
-	ppu.OAM.buggedWrite = false
+	ppu.oam.buggedRead = false
+	ppu.oam.buggedWrite = false
 
 	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
 	// normally it is blocked 4 ticks before STAT mode changes
@@ -108,13 +108,13 @@ func (ppu *PPU) Tick(ticks int) {
 	//
 	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ppu.InternalStateLength -= ticks
-	ppu.Dots += ticks
+	ppu.internalStateLength -= ticks
+	ppu.dots += ticks
 
 	// Switch PPU internal state
-	for ppu.InternalStateLength <= 0 {
+	for ppu.internalStateLength <= 0 {
 		// Given the PPU state, we compute the next state
-		nextState := ppu.InternalState.Next(ppu)
+		nextState := ppu.internalState.Next(ppu)
 		ppu.setState(nextState)
 	}
 }

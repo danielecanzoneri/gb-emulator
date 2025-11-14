@@ -37,7 +37,7 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		return
 	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
 		ppu.GlitchedOAMAccess(addr, false)
-		ppu.OAM.Write(addr, v)
+		ppu.oam.Write(addr, v)
 		return
 	}
 
@@ -62,9 +62,9 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.windowEnabled = util.ReadBit(v, 5) > 0
 		ppu.bgWindowTileDataArea = util.ReadBit(v, 4)
 		if util.ReadBit(v, 3) == 0 {
-			ppu.BGTileMapAddr = 0x9800
+			ppu.bgTileMapAddr = 0x9800
 		} else {
-			ppu.BGTileMapAddr = 0x9C00
+			ppu.bgTileMapAddr = 0x9C00
 		}
 		ppu.obj8x16Size = util.ReadBit(v, 2) > 0
 		ppu.objEnabled = util.ReadBit(v, 1) > 0
@@ -86,17 +86,11 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
 		ppu.checkSTATInterrupt()
 	case BGPAddr:
-		if !ppu.cgb {
-			ppu.BGP = DMGPalette(v)
-		}
+		ppu.BGP = DMGPalette(v)
 	case OBP0Addr:
-		if !ppu.cgb {
-			ppu.OBP[0] = DMGPalette(v)
-		}
+		ppu.OBP[0] = DMGPalette(v)
 	case OBP1Addr:
-		if !ppu.cgb {
-			ppu.OBP[1] = DMGPalette(v)
-		}
+		ppu.OBP[1] = DMGPalette(v)
 	case SCYAddr:
 		ppu.SCY = v
 	case SCXAddr:
@@ -149,7 +143,7 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		return ppu.vRAM.Read(addr)
 	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
 		ppu.GlitchedOAMAccess(addr, true)
-		return ppu.OAM.Read(addr)
+		return ppu.oam.Read(addr)
 	}
 
 	switch addr {
@@ -162,20 +156,11 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case STATAddr:
 		return 0x80 | ppu.STAT // Bit 7 is unused
 	case BGPAddr:
-		if !ppu.cgb {
-			return uint8(ppu.BGP)
-		}
-		return 0xFF // CGB
+		return uint8(ppu.BGP)
 	case OBP0Addr:
-		if !ppu.cgb {
-			return uint8(ppu.OBP[0])
-		}
-		return 0xFF // CGB
+		return uint8(ppu.OBP[0])
 	case OBP1Addr:
-		if !ppu.cgb {
-			return uint8(ppu.OBP[1])
-		}
-		return 0xFF // CGB
+		return uint8(ppu.OBP[1])
 	case SCYAddr:
 		return ppu.SCY
 	case SCXAddr:
@@ -223,8 +208,8 @@ func (ppu *PPU) enable() {
 		return
 	}
 	ppu.active = true
-	ppu.Dots = 0
-	ppu.InternalStateLength = 0
+	ppu.dots = 0
+	ppu.internalStateLength = 0
 
 	ppu.setState(new(glitchedOamScan))
 	ppu.checkSTATInterrupt()
@@ -243,9 +228,9 @@ func (ppu *PPU) disable() {
 
 	// Reset to HBlank
 	ppu.LY = 0
-	ppu.Dots = 0
-	ppu.InternalStateLength = 0
-	ppu.InternalState = nil
+	ppu.dots = 0
+	ppu.internalStateLength = 0
+	ppu.internalState = nil
 
 	// Blank screen
 	ppu.emptyFrame()

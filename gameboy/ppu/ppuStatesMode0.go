@@ -5,13 +5,13 @@ type hBlank struct {
 }
 
 func (st *hBlank) Init(ppu *PPU) {
-	ppu.OAM.readDisabled = false
-	ppu.OAM.writeDisabled = false
+	ppu.oam.readDisabled = false
+	ppu.oam.writeDisabled = false
 	ppu.vRAM.readDisabled = false
 	ppu.vRAM.writeDisabled = false
 
 	// Here we have to reset the previous state length so that each line is 456 dots
-	st.length = lineLength - ppu.Dots - ppu.InternalStateLength
+	st.length = lineLength - ppu.dots - ppu.internalStateLength
 
 	ppu.interruptMode = 0
 	ppu.STAT = (ppu.STAT & 0xFC) | 0
@@ -20,7 +20,7 @@ func (st *hBlank) Init(ppu *PPU) {
 func (st *hBlank) Next(ppu *PPU) ppuInternalState {
 	// To mode 1 if LY == 144, to mode 2 otherwise
 	ppu.LY++
-	ppu.Dots -= lineLength
+	ppu.dots -= lineLength
 
 	if ppu.LY == 144 {
 		return new(vBlankStart)
