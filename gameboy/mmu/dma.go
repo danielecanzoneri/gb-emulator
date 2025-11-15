@@ -32,6 +32,7 @@ func (mmu *MMU) VDMA(length uint8) {
 		mmu.vDMAActive = true
 	}
 
+	mmu.vDMAOffset = 0
 	mmu.vDMALength = length & 0x7F
 }
 
