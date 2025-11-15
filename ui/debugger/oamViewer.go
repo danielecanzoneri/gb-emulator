@@ -2,30 +2,21 @@ package debugger
 
 import (
 	"fmt"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
-	"image/color"
-)
-
-const (
-	objectsScale = 10
 )
 
 type oamViewerObject struct {
-	*widget.Container
+	*tileView
 
 	// Index (from 0 to 39) in OAM data
 	index int
 
-	// Image displaying the object
-	sprite      *ebiten.Image
-	drawOptions *ebiten.DrawImageOptions
-	graphic     *widget.Graphic
-
+	// Labels for object data
 	yLabel         *widget.Text
 	xLabel         *widget.Text
 	tileLabel      *widget.Text
@@ -35,19 +26,10 @@ type oamViewerObject struct {
 func newOamViewerObject(index int) *oamViewerObject {
 	obj := &oamViewerObject{index: index}
 
-	// Object image
-	obj.sprite = ebiten.NewImage(8, 8)
-	obj.sprite.Fill(color.Transparent)
-	obj.drawOptions = &ebiten.DrawImageOptions{}
-	obj.drawOptions.GeoM.Scale(objectsScale, objectsScale)
+	// Create tile view with larger scale for OAM objects
+	obj.tileView = newTileView(objectsScale, nil)
 
-	scaledSprite := ebiten.NewImage(8*objectsScale, 8*objectsScale)
-	scaledSprite.DrawImage(obj.sprite, obj.drawOptions)
-	obj.graphic = widget.NewGraphic(
-		widget.GraphicOpts.Image(scaledSprite),
-	)
-
-	// Object data
+	// Object data labels
 	obj.yLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.xLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.tileLabel = newLabel("00", theme.Debugger.LabelColor)
@@ -57,13 +39,8 @@ func newOamViewerObject(index int) *oamViewerObject {
 		obj.yLabel, obj.xLabel, obj.tileLabel, obj.attributeLabel,
 	)
 
-	obj.Container = widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(2),
-		),
-	))
-	obj.Container.AddChild(obj.graphic, dataContainer)
+	// Add labels to container (tileView already has graphic)
+	obj.Container.AddChild(dataContainer)
 
 	return obj
 }
@@ -74,37 +51,30 @@ func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
 		return
 	}
 
-	// Update data
+	// Update data labels
 	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
 	obj.xLabel.Label = fmt.Sprintf("%02X", oamObj.Read(1))
 	obj.tileLabel.Label = fmt.Sprintf("%02X", oamObj.Read(2))
 	obj.attributeLabel.Label = fmt.Sprintf("%02X", oamObj.Read(3))
 
-	// Update image
-	var palette theme.Palette = theme.DMGPalette{}
+	var systemPalette theme.Palette = theme.DMGPalette{}
+	paletteId := ppu.TileAttribute(oamObj.Read(3)).DMGPalette()
+	var colorPalette ppu.Palette = gb.PPU.OBP[paletteId]
 	if gb.EmulationModel == gameboy.CGB {
-		palette = theme.CGBPalette{}
+		systemPalette = theme.CGBPalette{}
+		paletteId = ppu.TileAttribute(oamObj.Read(3)).CGBPalette()
+		objPalette := gb.PPU.DebugGetOBJPalette()
+		colorPalette = ppu.CGBPalette(objPalette[8*paletteId : 8*paletteId+8])
 	}
 
+	// Render tile row by row using shared buffer
+	var pixels [8][8]uint8
 	for row := range 8 {
-		pixels := gb.PPU.GetObjectRow(oamObj, uint8(row))
-		for col := range 8 {
-			if pixels[col] == 0 {
-				obj.sprite.Set(col, row, color.Transparent)
-				continue
-			}
-
-			if gb.EmulationModel == gameboy.CGB {
-				paletteId := ppu.TileAttribute(oamObj.Read(3)).CGBPalette()
-				objPalette := gb.PPU.DebugGetOBJPalette()
-				p := ppu.CGBPalette(objPalette[8*paletteId : 8*paletteId+8])
-				obj.sprite.Set(col, row, palette.Get(p.GetColor(pixels[col])))
-			} else {
-				obj.sprite.Set(col, row, palette.Get(uint16(pixels[col])))
-			}
-		}
+		pixels[row] = gb.PPU.GetObjectRow(oamObj, uint8(row))
 	}
-	obj.graphic.Image.DrawImage(obj.sprite, obj.drawOptions)
+
+	// Use common rendering method
+	obj.renderPixels(pixels, systemPalette, colorPalette)
 }
 
 type oamViewer struct {

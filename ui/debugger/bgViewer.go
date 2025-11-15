@@ -2,64 +2,34 @@ package debugger
 
 import (
 	"fmt"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
-	"image/color"
-)
-
-const (
-	tileScale = 2
 )
 
 type bgTile struct {
-	*widget.Container
+	*tileView
 
 	// Row, columns
 	row, col  uint16
 	tileId    uint8
 	attribute uint8
-
-	// Image displaying the object
-	sprite      *ebiten.Image
-	drawOptions *ebiten.DrawImageOptions
-	graphic     *widget.Graphic
-
-	address uint16
+	address   uint16
 }
 
-type syncTileFunc func(col, row uint16, tileId, attribute uint8)
+func newBGTile(row, col uint16, syncData func(col, row uint16, tileId, attribute uint8)) *bgTile {
+	tile := &bgTile{
+		row: row,
+		col: col,
+	}
 
-func newBGTile(row, col uint16, syncData syncTileFunc) *bgTile {
-	tile := &bgTile{row: row, col: col}
-
-	// Object image
-	tile.sprite = ebiten.NewImage(8, 8)
-	tile.sprite.Fill(color.Transparent)
-	tile.drawOptions = &ebiten.DrawImageOptions{}
-	tile.drawOptions.GeoM.Scale(tileScale, tileScale)
-
-	scaledSprite := ebiten.NewImage(8*tileScale, 8*tileScale)
-	scaledSprite.DrawImage(tile.sprite, tile.drawOptions)
-	tile.graphic = widget.NewGraphic(
-		widget.GraphicOpts.Image(scaledSprite),
-		widget.GraphicOpts.WidgetOpts(
-			widget.WidgetOpts.CursorEnterHandler(func(args *widget.WidgetCursorEnterEventArgs) {
-				syncData(tile.row, tile.col, tile.tileId, tile.attribute)
-			}),
-		),
-	)
-
-	tile.Container = widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(2),
-		),
-	))
-	tile.Container.AddChild(tile.graphic)
+	// Create tile view with hover callback (must be after tile is created)
+	tile.tileView = newTileView(tileScale, func() {
+		syncData(row, col, tile.tileId, tile.attribute)
+	})
 
 	return tile
 }
@@ -68,22 +38,23 @@ func (t *bgTile) Sync(gb *gameboy.GameBoy) {
 	t.address = gb.PPU.DebugGetBGTileMapAddr() + (t.row * 32) + t.col
 	t.tileId = gb.PPU.GetTileId(t.address - 0x9800)
 
-	// Update image
-	for row := range 8 {
-		pixels, attr := gb.PPU.GetBGWindowPixelRow(t.address, uint8(row))
-		for col := range 8 {
-			if gb.EmulationModel == gameboy.CGB {
-				paletteId := attr.CGBPalette()
-				bgPalette := gb.PPU.DebugGetBGPalette()
-				p := ppu.CGBPalette(bgPalette[8*paletteId : 8*paletteId+8])
-				t.sprite.Set(col, row, theme.CGBPalette{}.Get(p.GetColor(pixels[col])))
-			} else {
-				t.sprite.Set(col, row, theme.DMGPalette{}.Get(uint16(pixels[col])))
-			}
-		}
-		t.attribute = uint8(attr)
+	var systemPalette theme.Palette = theme.DMGPalette{}
+	var colorPalette ppu.Palette = gb.PPU.BGP
+	if gb.EmulationModel == gameboy.CGB {
+		systemPalette = theme.CGBPalette{}
+		paletteId := ppu.TileAttribute(gb.PPU.DebugGetTileMaps(1, t.address-0x9800)).CGBPalette()
+		bgPalette := gb.PPU.DebugGetBGPalette()
+		colorPalette = ppu.CGBPalette(bgPalette[8*paletteId : 8*paletteId+8])
 	}
-	t.graphic.Image.DrawImage(t.sprite, t.drawOptions)
+
+	// Render tile row by row using shared buffer
+	var pixels [8][8]uint8
+	for row := range 8 {
+		pixels[row], _ = gb.PPU.GetBGWindowPixelRow(t.address, uint8(row))
+	}
+
+	// Use common rendering method
+	t.renderPixels(pixels, systemPalette, colorPalette)
 }
 
 type bgViewer struct {

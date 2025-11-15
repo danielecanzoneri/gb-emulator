@@ -14,6 +14,11 @@ func (ppu *PPU) DebugGetTileData(bank uint8, tileIndex uint16) Tile {
 	return ppu.vRAM.tileData[bank][tileIndex]
 }
 
+// DebugGetTileMaps returns the tile number for the specified bank and tile index
+func (ppu *PPU) DebugGetTileMaps(bank uint8, tileIndex uint16) uint8 {
+	return ppu.vRAM.tileMaps[bank][tileIndex]
+}
+
 // DebugGetBGPalette returns a copy of the background palette
 func (ppu *PPU) DebugGetBGPalette() [64]uint8 {
 	return ppu.BGPalette

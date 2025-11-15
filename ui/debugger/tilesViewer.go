@@ -2,56 +2,40 @@ package debugger
 
 import (
 	"fmt"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
 	"github.com/danielecanzoneri/gb-emulator/ui/theme"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
-	"image/color"
+)
+
+var (
+	basicCGBPalette = ppu.CGBPalette{
+		0xFE, 0xFF, // Black
+		0x94, 0x52, // Dark Gray
+		0x4A, 0x29, // Light Gray
+		0x00, 0x00, // White
+	}
+	basicDMGPalette = ppu.DMGPalette(0xE4)
 )
 
 type tileData struct {
-	*widget.Container
+	*tileView
 
 	// Bank, address
 	bank    uint8
 	address uint16
-
-	// Image displaying the object
-	sprite      *ebiten.Image
-	drawOptions *ebiten.DrawImageOptions
-	graphic     *widget.Graphic
 }
 
-type syncTileDataFunc func(bank uint8, address uint16)
-
-func newTileData(bank uint8, address uint16, syncData syncTileDataFunc) *tileData {
-	tile := &tileData{bank: bank, address: address}
-
-	// Object image
-	tile.sprite = ebiten.NewImage(8, 8)
-	tile.sprite.Fill(color.Transparent)
-	tile.drawOptions = &ebiten.DrawImageOptions{}
-	tile.drawOptions.GeoM.Scale(tileScale, tileScale)
-
-	scaledSprite := ebiten.NewImage(8*tileScale, 8*tileScale)
-	scaledSprite.DrawImage(tile.sprite, tile.drawOptions)
-	tile.graphic = widget.NewGraphic(
-		widget.GraphicOpts.Image(scaledSprite),
-		widget.GraphicOpts.WidgetOpts(
-			widget.WidgetOpts.CursorEnterHandler(func(args *widget.WidgetCursorEnterEventArgs) {
-				syncData(tile.bank, tile.address)
-			}),
-		),
-	)
-
-	tile.Container = widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(2),
-		),
-	))
-	tile.Container.AddChild(tile.graphic)
+func newTileData(bank uint8, address uint16, syncTile func(bank uint8, address uint16)) *tileData {
+	tile := &tileData{
+		tileView: newTileView(tileScale, func() {
+			syncTile(bank, address)
+		}),
+		bank:    bank,
+		address: address,
+	}
 
 	return tile
 }
@@ -59,18 +43,22 @@ func newTileData(bank uint8, address uint16, syncData syncTileDataFunc) *tileDat
 func (t *tileData) Sync(gb *gameboy.GameBoy) {
 	tileOffset := (t.address - 0x8000) >> 4
 
-	t.sprite.Fill(color.Transparent)
-
-	// Update image
-	for row := range 8 {
-		tile := gb.PPU.DebugGetTileData(t.bank, tileOffset)
-		pixels := tile.GetRow(0, uint8(row))
-
-		for col := range 8 {
-			t.sprite.Set(col, row, theme.DMGPalette{}.Get(uint16(pixels[col])))
-		}
+	var systemPalette theme.Palette = theme.DMGPalette{}
+	var colorPalette ppu.Palette = basicDMGPalette
+	if gb.EmulationModel == gameboy.CGB {
+		systemPalette = theme.CGBPalette{}
+		colorPalette = basicCGBPalette
 	}
-	t.graphic.Image.DrawImage(t.sprite, t.drawOptions)
+
+	// Render tile using shared buffer
+	tile := gb.PPU.DebugGetTileData(t.bank, tileOffset)
+	var pixels [8][8]uint8
+	for row := range 8 {
+		pixels[row] = tile.GetRow(0, uint8(row))
+	}
+
+	// Use common rendering method (DMG palette only for tiles viewer)
+	t.renderPixels(pixels, systemPalette, colorPalette)
 }
 
 type tilesViewer struct {
