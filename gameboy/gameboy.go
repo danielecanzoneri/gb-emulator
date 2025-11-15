@@ -49,8 +49,7 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 	isCGB := gb.EmulationModel == CGB
 
-	gb.PPU = ppu.New()
-	gb.PPU.Cgb = isCGB
+	gb.PPU = ppu.New(isCGB)
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
 	gb.SerialPort = serial.NewPort()

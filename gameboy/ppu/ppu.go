@@ -71,8 +71,9 @@ type PPU struct {
 	modeTicksElapsed uint
 }
 
-func New() *PPU {
+func New(cgb bool) *PPU {
 	ppu := new(PPU)
+	ppu.Cgb = cgb
 	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
 	ppu.OBP[0] = 0xFF
 	ppu.OBP[1] = 0xFF
@@ -80,6 +81,7 @@ func New() *PPU {
 	// Init buffers
 	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint16)
 	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
+	ppu.emptyFrame()
 
 	return ppu
 }

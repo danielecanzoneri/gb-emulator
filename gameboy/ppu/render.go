@@ -32,9 +32,14 @@ func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint16 {
 }
 
 func (ppu *PPU) emptyFrame() {
+	var blankPixel uint16 = 0
+	if ppu.Cgb {
+		blankPixel = 0xFFFF
+	}
+
 	for x := range FrameWidth {
 		for y := range FrameHeight {
-			ppu.backBuffer[y][x] = 0
+			ppu.backBuffer[y][x] = blankPixel
 		}
 	}
 
