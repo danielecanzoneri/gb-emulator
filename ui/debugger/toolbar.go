@@ -60,6 +60,8 @@ func (d *Debugger) newToolbar() *toolbar {
 		ebiten.KeyShift, ebiten.KeyF9)
 	runMenu.addEntryWithShortcut("Reset", d.Reset,
 		ebiten.KeyControl, ebiten.KeyR)
+	runMenu.addEntryWithShortcut("Next VBlank", d.NextVBlank,
+		ebiten.KeyF10)
 
 	// PPU menu
 	ppuMenu := t.newMenu("PPU")

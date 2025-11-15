@@ -29,9 +29,9 @@ func (d *Debugger) Next() {
 		return
 	}
 
-	d.Continue()
 	d.NextInstruction = true
 	d.CallDepth = 0
+	d.Continue()
 }
 
 func (d *Debugger) Continue() {
@@ -46,6 +46,20 @@ func (d *Debugger) Continue() {
 
 	// TODO Disable control buttons
 	d.disassembler.refresh()
+}
+
+func (d *Debugger) NextVBlank() {
+	if d.Running {
+		return
+	}
+
+	// Set VBlank handler to stop after hitting VBlank
+	d.gameBoy.PPU.VBlankCallback = func() {
+		d.Stop()
+		d.gameBoy.PPU.VBlankCallback = nil
+	}
+	
+	d.Continue()
 }
 
 func (d *Debugger) Stop() {

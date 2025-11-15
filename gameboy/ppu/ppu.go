@@ -65,6 +65,9 @@ type PPU struct {
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
 
+	// Callback to be called on VBlank
+	VBlankCallback func()
+
 	modeTicksElapsed uint
 }
 
