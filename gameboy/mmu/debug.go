@@ -7,3 +7,15 @@ func (mmu *MMU) DebugRead(addr uint16) uint8 {
 	}
 	return mmu.read(addr)
 }
+
+func (mmu *MMU) DebugGetVDMASrcAddress() uint16 {
+	return mmu.vDMASrcAddress()
+}
+
+func (mmu *MMU) DebugGetVDMADestAddress() uint16 {
+	return 0x8000 + mmu.vDMADestAddress()
+}
+
+func (mmu *MMU) DebugGetVDMALength() uint8 {
+	return mmu.read(HDMA5Addr)
+}
