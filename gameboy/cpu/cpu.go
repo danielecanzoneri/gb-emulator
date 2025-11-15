@@ -83,7 +83,7 @@ func (cpu *CPU) Tick(ticks int) {
 }
 
 func (cpu *CPU) ExecuteInstruction() {
-	if !cpu.halted {
+	if !cpu.halted && !cpu.mmu.VDMAActive() {
 		opcode := cpu.ReadNextByte()
 
 		// Execute opcode

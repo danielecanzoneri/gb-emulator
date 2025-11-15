@@ -16,6 +16,10 @@ func (st *hBlank) Init(ppu *PPU) {
 	ppu.interruptMode = 0
 	ppu.STAT = (ppu.STAT & 0xFC) | 0
 	ppu.checkSTATInterrupt()
+
+	if ppu.HBlankCallback != nil {
+		ppu.HBlankCallback()
+	}
 }
 func (st *hBlank) Next(ppu *PPU) ppuInternalState {
 	// To mode 1 if LY == 144, to mode 2 otherwise

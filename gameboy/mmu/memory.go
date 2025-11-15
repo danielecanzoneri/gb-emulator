@@ -37,6 +37,17 @@ type MMU struct {
 	dmaOffset     uint16
 	dmaValue      uint8
 
+	// vRAM DMA transfer
+	vDMAActive   bool // If true, CPU will halt to complete vDMA
+	vDMATicks    int
+	vDMAHBlank   bool
+	vDMASrcHigh  uint8
+	vDMASrcLow   uint8
+	vDMADestHigh uint8
+	vDMADestLow  uint8
+	vDMALength   uint8
+	vDMAOffset   uint16 // vDMA current memory offset
+
 	// Boot ROM
 	BootRomDisabled bool
 	BootRom         []uint8
@@ -80,6 +91,17 @@ func (mmu *MMU) Tick(ticks int) {
 			mmu.dmaTransfer = true
 			mmu.dmaTicks = 0
 			mmu.dmaOffset = 0
+		}
+	}
+
+	// vRAM DMA
+	if mmu.vDMAActive {
+		mmu.vDMATicks += ticks
+		if mmu.vDMATicks >= 8*4 {
+			mmu.vDMATicks -= 8 * 4
+
+			// Actually transfer data and set up next transfer
+			mmu.vDMATransfer()
 		}
 	}
 }

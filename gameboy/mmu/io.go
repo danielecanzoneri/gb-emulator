@@ -52,6 +52,12 @@ const (
 
 	BANKAddr = 0xFF50
 
+	HDMA1Addr = 0xFF51
+	HDMA2Addr = 0xFF52
+	HDMA3Addr = 0xFF53
+	HDMA4Addr = 0xFF54
+	HDMA5Addr = 0xFF55
+
 	BGPIAddr = 0xFF68
 	BGPDAddr = 0xFF69
 	OBPIAddr = 0xFF6A
@@ -98,6 +104,18 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	// Disable BOOT ROM
 	case BANKAddr:
 		mmu.DisableBootROM()
+
+	// VDMA transfer
+	case HDMA1Addr:
+		mmu.vDMASrcHigh = v
+	case HDMA2Addr:
+		mmu.vDMASrcLow = v & 0xF0
+	case HDMA3Addr:
+		mmu.vDMADestHigh = v & 0x1F
+	case HDMA4Addr:
+		mmu.vDMADestLow = v & 0xF0
+	case HDMA5Addr:
+		mmu.VDMA(v)
 
 	// wRAM bank register
 	case WBKAddr:
@@ -147,6 +165,14 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	// DMA transfer
 	case DMAAddr:
 		return mmu.dmaReg
+
+	// VDMA transfer
+	case HDMA5Addr:
+		if mmu.vDMAActive {
+			return mmu.vDMALength
+		} else {
+			return 0x80 | mmu.vDMALength
+		}
 
 	// wRAM bank register
 	case WBKAddr:

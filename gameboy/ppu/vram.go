@@ -64,3 +64,7 @@ func (v *vRAM) write(addr uint16, value uint8) {
 	// Tile maps
 	v.tileMaps[v.bankNumber][addr-tileNums*tileSize] = value
 }
+
+func (ppu *PPU) VDMAWrite(index uint16, value uint8) {
+	ppu.vRAM.Write(vRAMStartAddr+index, value)
+}
