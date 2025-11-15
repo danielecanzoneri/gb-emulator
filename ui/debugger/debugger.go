@@ -50,9 +50,6 @@ func New(gb *gameboy.GameBoy) *Debugger {
 		gameBoy: gb,
 	}
 
-	// Set CPU hooks
-	d.initHooks()
-
 	// Create widgets
 	d.toolbar = d.newToolbar()
 	d.disassembler = newDisassembler()

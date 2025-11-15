@@ -35,8 +35,11 @@ type PPU struct {
 	WY   uint8
 	WX   uint8
 
+	// Handle emulation of CGB colors
+	Cgb              bool
+	DmgCompatibility bool
+
 	// CGB only registers
-	cgb        bool
 	BGPI       uint8 // Background palette index
 	OBPI       uint8 // Object palette index
 	BGPalette  [64]uint8
@@ -65,7 +68,7 @@ type PPU struct {
 	modeTicksElapsed uint
 }
 
-func New(cgb bool) *PPU {
+func New() *PPU {
 	ppu := new(PPU)
 	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
 	ppu.OBP[0] = 0xFF
@@ -74,8 +77,6 @@ func New(cgb bool) *PPU {
 	// Init buffers
 	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint16)
 	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
-
-	ppu.cgb = cgb
 
 	return ppu
 }

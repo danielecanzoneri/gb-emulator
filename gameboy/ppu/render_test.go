@@ -5,7 +5,7 @@ import (
 )
 
 func TestDrawLineObj(t *testing.T) {
-	ppu := New(false)
+	ppu := New()
 	ppu.obj8x16Size = false
 	ppu.bgWindowEnabled = false
 	ppu.objEnabled = true
@@ -53,7 +53,7 @@ func TestDrawLineObj(t *testing.T) {
 }
 
 func TestDrawLineBG(t *testing.T) {
-	ppu := New(false)
+	ppu := New()
 	ppu.BGP = DMGPalette(0b11100100)
 	ppu.windowEnabled = false
 	ppu.bgWindowTileDataArea = 0
@@ -95,7 +95,7 @@ func TestDrawLineBG(t *testing.T) {
 }
 
 func TestDrawLineWindow(t *testing.T) {
-	ppu := New(false)
+	ppu := New()
 	ppu.BGP = DMGPalette(0b11100100)
 	ppu.windowTileMapAddr = 0x9800
 	ppu.windowEnabled = true

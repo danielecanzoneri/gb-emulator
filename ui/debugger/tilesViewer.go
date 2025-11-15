@@ -152,9 +152,14 @@ func (v *tilesViewer) Sync(gb *gameboy.GameBoy) {
 		return
 	}
 
-	for _, row := range v.tiles {
-		for _, tile := range row {
+	for _, tile := range v.tiles[0] {
+		tile.Sync(gb)
+	}
+	for _, tile := range v.tiles[1] {
+		if gb.PPU.Cgb && !gb.PPU.DmgCompatibility {
 			tile.Sync(gb)
+		} else {
+			tile.clear()
 		}
 	}
 }

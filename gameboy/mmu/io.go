@@ -97,7 +97,7 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 
 	// Disable BOOT ROM
 	case BANKAddr:
-		mmu.BootRomDisabled = true
+		mmu.DisableBootROM()
 
 	// wRAM bank register
 	case WBKAddr:

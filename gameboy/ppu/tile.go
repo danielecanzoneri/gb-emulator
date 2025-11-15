@@ -73,7 +73,7 @@ func (ppu *PPU) GetBGWindowPixelRow(tileAddr uint16, tileY uint8) ([8]uint8, Til
 
 	// In CGB Mode, an additional map of 32×32 bytes is stored in VRAM Bank 1
 	// (each byte defines attributes for the corresponding tile-number map entry in VRAM Bank 0)
-	if ppu.cgb {
+	if ppu.Cgb && !ppu.DmgCompatibility {
 		attr := TileAttribute(ppu.vRAM.tileMaps[1][tileMapAddr])
 		tile = ppu.ReadTileBGWindow(tileId, attr.Bank())
 		return tile.GetRow(attr, tileY&0b111), attr

@@ -130,3 +130,10 @@ func (tv *tileView) renderPixels(pixels [8][8]uint8, systemPalette theme.Palette
 	tv.scaledImage.Clear()
 	tv.scaledImage.DrawImage(buf, tv.drawOptions)
 }
+
+// clear resets the image to blank
+func (tv *tileView) clear() {
+	tv.scaledImage = ebiten.NewImage(tileSize*tv.scale, tileSize*tv.scale)
+	tv.scaledImage.Fill(color.Transparent)
+	tv.graphic.Image = tv.scaledImage
+}

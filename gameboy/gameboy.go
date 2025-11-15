@@ -43,15 +43,14 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 		sampleBuff: audioSampleBuffer,
 	}
 
-	gb.initComponents()
-
 	return gb
 }
 
-func (gb *GameBoy) initComponents() {
+func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 	isCGB := gb.EmulationModel == CGB
 
-	gb.PPU = ppu.New(isCGB)
+	gb.PPU = ppu.New()
+	gb.PPU.Cgb = isCGB
 	gb.Joypad = joypad.New()
 	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
 	gb.SerialPort = serial.NewPort()
@@ -60,6 +59,9 @@ func (gb *GameBoy) initComponents() {
 	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
+
+	// Load ROM into memory
+	gb.Memory.Cartridge = rom
 
 	// Set interrupts request handler
 	gb.PPU.RequestVBlankInterrupt = func() { gb.CPU.RequestInterrupt(cpu.VBlankInterruptMask) }
@@ -96,10 +98,7 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 		gb.EmulationModel = CGB
 	}
 
-	gb.initComponents()
-
-	// Load ROM into memory
-	gb.Memory.Cartridge = rom
+	gb.initComponents(rom)
 
 	// MBC3 RTC clocking
 	if c, ok := rom.(cpu.Ticker); ok {
@@ -118,7 +117,7 @@ func (gb *GameBoy) LoadBootROM(bootRom []uint8) {
 }
 
 func (gb *GameBoy) skipBootROM() {
-	gb.Memory.BootRomDisabled = true
+	gb.Memory.DisableBootROM()
 
 	gb.CPU.SkipBoot()
 	gb.Timer.SkipBoot()

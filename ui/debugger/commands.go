@@ -64,12 +64,8 @@ func (d *Debugger) Reset() {
 
 	// Stop if active
 	d.Stop()
-
 	d.gameBoy.Reset()
-	d.initHooks()
-}
 
-func (d *Debugger) initHooks() {
 	callHook := func() {
 		d.CallDepth++
 	}

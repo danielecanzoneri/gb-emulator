@@ -85,12 +85,16 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		}
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
 		ppu.checkSTATInterrupt()
+	// If in CGB compatibility mode, writes to this address must update the
+	// corresponding CGB palettes
 	case BGPAddr:
 		ppu.BGP = DMGPalette(v)
+
 	case OBP0Addr:
 		ppu.OBP[0] = DMGPalette(v)
 	case OBP1Addr:
 		ppu.OBP[1] = DMGPalette(v)
+
 	case SCYAddr:
 		ppu.SCY = v
 	case SCXAddr:
@@ -100,15 +104,15 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 	case WXAddr:
 		ppu.WX = v
 	case VBKAddr:
-		if ppu.cgb {
+		if ppu.Cgb {
 			ppu.vRAM.bankNumber = v & 1
 		}
 	case BGPIAddr:
-		if ppu.cgb {
+		if ppu.Cgb {
 			ppu.BGPI = v
 		}
 	case BGPDAddr:
-		if ppu.cgb {
+		if ppu.Cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.BGPI & 0x3F
 			ppu.BGPalette[paletteAddr] = v
@@ -119,11 +123,11 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 			}
 		}
 	case OBPIAddr:
-		if ppu.cgb {
+		if ppu.Cgb {
 			ppu.OBPI = v
 		}
 	case OBPDAddr:
-		if ppu.cgb {
+		if ppu.Cgb {
 			// address bits are 0-5
 			paletteAddr := ppu.OBPI & 0x3F
 			ppu.OBJPalette[paletteAddr] = v
@@ -170,34 +174,19 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 	case WXAddr:
 		return ppu.WX
 	case VBKAddr:
-		if ppu.cgb {
-			return ppu.vRAM.bankNumber | 0xFE
-		}
-		return 0xFF // DMG
+		return ppu.vRAM.bankNumber | 0xFE
 	case BGPIAddr:
-		if ppu.cgb {
-			return ppu.BGPI
-		}
-		return 0xFF // DMG
+		return ppu.BGPI
 	case BGPDAddr:
-		if ppu.cgb {
-			// address bits are 0-5
-			paletteAddr := ppu.BGPI & 0x3F
-			return ppu.BGPalette[paletteAddr]
-		}
-		return 0xFF // DMG
+		// address bits are 0-5
+		paletteAddr := ppu.BGPI & 0x3F
+		return ppu.BGPalette[paletteAddr]
 	case OBPIAddr:
-		if ppu.cgb {
-			return ppu.OBPI
-		}
-		return 0xFF // DMG
+		return ppu.OBPI
 	case OBPDAddr:
-		if ppu.cgb {
-			// address bits are 0-5
-			paletteAddr := ppu.OBPI & 0x3F
-			return ppu.OBJPalette[paletteAddr]
-		}
-		return 0xFF // DMG
+		// address bits are 0-5
+		paletteAddr := ppu.OBPI & 0x3F
+		return ppu.OBJPalette[paletteAddr]
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}

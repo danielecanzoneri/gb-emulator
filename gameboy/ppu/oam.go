@@ -93,7 +93,7 @@ func (ppu *PPU) DMAWrite(index uint16, value uint8) {
 func (ppu *PPU) GetObjectRow(obj *Object, row uint8) [8]uint8 {
 	// CGB only
 	vRAMBank := uint8(0)
-	if ppu.cgb {
+	if ppu.Cgb {
 		vRAMBank = TileAttribute(obj.flags).Bank()
 	}
 
@@ -147,7 +147,7 @@ func (ppu *PPU) searchOAM() {
 
 	// In CGB mode, only the object’s location in OAM determines its priority.
 	// The earlier the object, the higher its priority.
-	if !ppu.cgb {
+	if !ppu.Cgb {
 		slices.SortStableFunc(objs, func(a, b *Object) int {
 			return cmp.Compare(a.x, b.x)
 		})
