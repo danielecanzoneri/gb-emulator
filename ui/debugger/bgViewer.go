@@ -42,9 +42,15 @@ func (t *bgTile) Sync(gb *gameboy.GameBoy) {
 	var colorPalette ppu.Palette = gb.PPU.BGP
 	if gb.EmulationModel == gameboy.CGB {
 		systemPalette = theme.CGBPalette{}
-		paletteId := ppu.TileAttribute(gb.PPU.DebugGetTileMaps(1, t.address-0x9800)).CGBPalette()
+
 		bgPalette := gb.PPU.DebugGetBGPalette()
-		colorPalette = ppu.CGBPalette(bgPalette[8*paletteId : 8*paletteId+8])
+		if gb.PPU.DmgCompatibility {
+			colorPalette = gb.PPU.BGP.ConvertToCGB(bgPalette[0:8])
+		} else {
+			t.attribute = gb.PPU.DebugGetTileMaps(1, t.address-0x9800)
+			paletteId := ppu.TileAttribute(t.attribute).CGBPalette()
+			colorPalette = ppu.CGBPalette(bgPalette[8*paletteId : 8*paletteId+8])
+		}
 	}
 
 	// Render tile row by row using shared buffer

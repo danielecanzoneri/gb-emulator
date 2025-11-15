@@ -27,6 +27,27 @@ func (p CGBPalette) GetColor(id uint8) uint16 {
 	return uint16(p[2*id]) | (uint16(p[2*id+1]) << 8)
 }
 
+// When in DMG compatibility mode, the CGB palettes are still being used.
+// BGP, OBP0, and OBP1 actually index into the CGB palettes instead of the DMG’s shades of grey.
+func (p DMGPalette) ConvertToCGB(cgbPaletteData []uint8) CGBPalette {
+	id0 := (p >> 0) & 0b11
+	id1 := (p >> 2) & 0b11
+	id2 := (p >> 4) & 0b11
+	id3 := (p >> 6) & 0b11
+	palette := CGBPalette{
+		cgbPaletteData[2*id0],
+		cgbPaletteData[2*id0+1],
+		cgbPaletteData[2*id1],
+		cgbPaletteData[2*id1+1],
+		cgbPaletteData[2*id2],
+		cgbPaletteData[2*id2+1],
+		cgbPaletteData[2*id3],
+		cgbPaletteData[2*id3+1],
+	}
+
+	return palette
+}
+
 func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint16 {
 	return ppu.frontBuffer
 }
@@ -92,13 +113,12 @@ func (ppu *PPU) renderLine() int {
 				bgPriority = tileAttributes.BGPriority()
 
 				// If we are in compatibility mode, use the boot computed palette
-				var paletteId uint8
 				if ppu.DmgCompatibility {
-					paletteId = 0
+					bgPalette = ppu.BGP.ConvertToCGB(ppu.BGPalette[0:8])
 				} else {
-					paletteId = tileAttributes.CGBPalette()
+					paletteId := tileAttributes.CGBPalette()
+					bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 				}
-				bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 			}
 
 			ppu.backBuffer[ppu.LY][x] = bgPalette.GetColor(bgPixel)
@@ -132,14 +152,15 @@ func (ppu *PPU) renderLine() int {
 					// Otherwise, BG will have priority.
 					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
 					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !TileAttribute(obj.flags).BGPriority()) {
-						var paletteId uint8
+						var palette Palette
 						// If we are in compatibility mode, use the boot computed palette
 						if ppu.DmgCompatibility {
-							paletteId = TileAttribute(obj.flags).DMGPalette()
+							paletteId := TileAttribute(obj.flags).DMGPalette()
+							palette = ppu.OBP[paletteId].ConvertToCGB(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 						} else {
-							paletteId = TileAttribute(obj.flags).CGBPalette()
+							paletteId := TileAttribute(obj.flags).CGBPalette()
+							palette = CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 						}
-						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				} else { // DMG
