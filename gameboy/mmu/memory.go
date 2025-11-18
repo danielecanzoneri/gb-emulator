@@ -38,15 +38,13 @@ type MMU struct {
 	dmaValue      uint8
 
 	// vRAM DMA transfer
-	vDMAActive   bool // If true, CPU will halt to complete vDMA
-	vDMATicks    int
-	vDMAHBlank   bool
-	vDMASrcHigh  uint8
-	vDMASrcLow   uint8
-	vDMADestHigh uint8
-	vDMADestLow  uint8
-	vDMALength   uint8
-	vDMAOffset   uint16 // vDMA current memory offset
+	vDMAActive      bool // If true, CPU will halt to complete vDMA
+	vDMATicks       int
+	vDMAHBlank      bool // True if vDMA is active but only in HBlank
+	vDMASrcAddress  uint16
+	vDMADestAddress uint16
+	vDMALength      uint8
+	IsCPUHalted     func() bool
 
 	// Boot ROM
 	BootRomDisabled bool

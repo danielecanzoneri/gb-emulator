@@ -9,11 +9,11 @@ func (mmu *MMU) DebugRead(addr uint16) uint8 {
 }
 
 func (mmu *MMU) DebugGetVDMASrcAddress() uint16 {
-	return mmu.vDMASrcAddress()
+	return mmu.vDMASrcAddress
 }
 
 func (mmu *MMU) DebugGetVDMADestAddress() uint16 {
-	return 0x8000 + mmu.vDMADestAddress()
+	return 0x8000 + mmu.vDMADestAddress
 }
 
 func (mmu *MMU) DebugGetVDMALength() uint8 {

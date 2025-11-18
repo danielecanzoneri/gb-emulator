@@ -96,3 +96,7 @@ func (cpu *CPU) handleIME() {
 		cpu.IME = true
 	}
 }
+
+func (cpu *CPU) Halted() bool {
+	return cpu.halted
+}

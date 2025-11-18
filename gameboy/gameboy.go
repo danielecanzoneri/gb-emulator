@@ -57,6 +57,7 @@ func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 
 	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
+	gb.Memory.IsCPUHalted = gb.CPU.Halted
 	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
 	// Load ROM into memory

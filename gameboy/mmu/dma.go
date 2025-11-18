@@ -32,7 +32,6 @@ func (mmu *MMU) VDMA(length uint8) {
 		mmu.vDMAActive = true
 	}
 
-	mmu.vDMAOffset = 0
 	mmu.vDMALength = length & 0x7F
 }
 
@@ -42,16 +41,22 @@ func (mmu *MMU) VDMAActive() bool {
 }
 
 func (mmu *MMU) vDMATransfer() {
+	if mmu.IsCPUHalted() {
+		return
+	}
+
 	// Transfer 0x10 bytes
 	for i := uint16(0); i < 0x10; i++ {
-		src := mmu.read(mmu.vDMASrcAddress() + i)
-		mmu.ppu.VDMAWrite(mmu.vDMADestAddress()+i, src)
+		src := mmu.read(mmu.vDMASrcAddress + i)
+		mmu.ppu.VDMAWrite(mmu.vDMADestAddress+i, src)
 	}
-	mmu.vDMAOffset += 0x10
+	mmu.vDMASrcAddress += 0x10
+	mmu.vDMADestAddress += 0x10
 
 	// Stop VDMA
 	if mmu.vDMALength == 0 {
 		mmu.vDMAActive = false
+		mmu.vDMAHBlank = false
 		mmu.ppu.HBlankCallback = nil
 		mmu.vDMALength = 0x7F
 		return
@@ -64,12 +69,4 @@ func (mmu *MMU) vDMATransfer() {
 	}
 
 	mmu.vDMALength--
-}
-
-func (mmu *MMU) vDMASrcAddress() uint16 {
-	return uint16(mmu.vDMASrcHigh)<<8 | uint16(mmu.vDMASrcLow) + mmu.vDMAOffset
-}
-
-func (mmu *MMU) vDMADestAddress() uint16 {
-	return uint16(mmu.vDMADestHigh)<<8 | uint16(mmu.vDMADestLow) + mmu.vDMAOffset
 }

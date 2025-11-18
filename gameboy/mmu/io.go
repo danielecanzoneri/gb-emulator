@@ -107,13 +107,13 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 
 	// VDMA transfer
 	case HDMA1Addr:
-		mmu.vDMASrcHigh = v
+		mmu.vDMASrcAddress = (mmu.vDMASrcAddress & 0xFF) | (uint16(v) << 8)
 	case HDMA2Addr:
-		mmu.vDMASrcLow = v & 0xF0
+		mmu.vDMASrcAddress = (mmu.vDMASrcAddress & 0xFF00) | uint16(v&0xF0)
 	case HDMA3Addr:
-		mmu.vDMADestHigh = v & 0x1F
+		mmu.vDMADestAddress = (mmu.vDMADestAddress & 0xFF) | (uint16(v&0x1F) << 8)
 	case HDMA4Addr:
-		mmu.vDMADestLow = v & 0xF0
+		mmu.vDMADestAddress = (mmu.vDMADestAddress & 0xFF00) | uint16(v&0xF0)
 	case HDMA5Addr:
 		mmu.VDMA(v)
 
@@ -168,7 +168,7 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 
 	// VDMA transfer
 	case HDMA5Addr:
-		if mmu.vDMAActive {
+		if mmu.vDMAActive || mmu.vDMAHBlank {
 			return mmu.vDMALength
 		} else {
 			return 0x80 | mmu.vDMALength
