@@ -172,10 +172,10 @@ func (ppu *PPU) renderLine() int {
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				}
-			}
 
-			// The first object that impacts this pixel will be the one displayed
-			break
+				// The first object that impacts this pixel will be the one displayed
+				break
+			}
 		}
 	}
 
