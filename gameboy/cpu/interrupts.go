@@ -100,3 +100,7 @@ func (cpu *CPU) handleIME() {
 func (cpu *CPU) Halted() bool {
 	return cpu.halted
 }
+
+func (cpu *CPU) SpeedSwitchHalted() bool {
+	return cpu.speedSwitchHaltedTicks > 0
+}

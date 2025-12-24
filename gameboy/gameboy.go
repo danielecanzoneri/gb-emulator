@@ -58,7 +58,8 @@ func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
 	gb.CPU = cpu.New(gb.Memory, gb.PPU)
 	gb.Memory.IsCPUHalted = gb.CPU.Halted
-	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
+	gb.Timer.DIVGlitched = gb.CPU.SpeedSwitchHalted
+	gb.CPU.AddTicker(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
 
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
@@ -102,7 +103,7 @@ func (gb *GameBoy) Load(rom cartridge.Cartridge) {
 
 	// MBC3 RTC clocking
 	if c, ok := rom.(cpu.Ticker); ok {
-		gb.CPU.AddCycler(c)
+		gb.CPU.AddTicker(c)
 	}
 }
 

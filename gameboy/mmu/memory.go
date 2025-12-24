@@ -46,6 +46,13 @@ type MMU struct {
 	vDMALength      uint8
 	IsCPUHalted     func() bool
 
+	// CGB speed switch
+	PrepareSpeedSwitch bool
+	DoubleSpeed        bool
+
+	// In double speed mode, DMA is at same speed of CPU, VDMA is at normal speed
+	speedFactor int // (0: normal, 1: double)
+
 	// Boot ROM
 	BootRomDisabled bool
 	BootRom         []uint8
@@ -56,18 +63,20 @@ type MMU struct {
 
 func New(ppu *ppu.PPU, apu *audio.APU, timer *timer.Timer, jp *joypad.Joypad, serialPort *serial.Port, cgb bool) *MMU {
 	return &MMU{
-		ppu:    ppu,
-		apu:    apu,
-		timer:  timer,
-		joypad: jp,
-		serial: serialPort,
-		cgb:    cgb,
+		ppu:         ppu,
+		apu:         apu,
+		timer:       timer,
+		joypad:      jp,
+		serial:      serialPort,
+		cgb:         cgb,
+		speedFactor: 0,
 	}
 }
 
 func (mmu *MMU) Tick(ticks int) {
+	// In double speed mode, only DMA to OAM will be faster
 	if mmu.dmaTransfer {
-		mmu.dmaTicks += ticks
+		mmu.dmaTicks += ticks << mmu.speedFactor
 		for mmu.dmaTicks >= 4 {
 			mmu.dmaTicks -= 4
 
@@ -84,7 +93,7 @@ func (mmu *MMU) Tick(ticks int) {
 	}
 
 	if mmu.delayDmaTicks > 0 {
-		mmu.delayDmaTicks -= ticks
+		mmu.delayDmaTicks -= ticks << mmu.speedFactor
 		if mmu.delayDmaTicks <= 0 {
 			mmu.dmaTransfer = true
 			mmu.dmaTicks = 0
@@ -101,6 +110,16 @@ func (mmu *MMU) Tick(ticks int) {
 			// Actually transfer data and set up next transfer
 			mmu.vDMATransfer()
 		}
+	}
+}
+
+func (mmu *MMU) SwitchSpeed(doubleSpeed bool) {
+	mmu.PrepareSpeedSwitch = false
+	mmu.DoubleSpeed = doubleSpeed
+	if doubleSpeed {
+		mmu.speedFactor = 1
+	} else {
+		mmu.speedFactor = 0
 	}
 }
 

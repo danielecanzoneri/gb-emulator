@@ -25,15 +25,22 @@ type Timer struct {
 	timaOverflow bool
 	timaReloaded bool // Don't reload TIMA if is written after overflow
 
+	// In double speed, Timer will tick at same rate of CPU, but APU will tick at normal speed
+	speedFactor int // (0: normal, 1: double)
+
 	// Callback to request interrupt
 	RequestInterrupt func()
+
+	DIVGlitched func() bool
 }
 
 func New(apu *audio.APU) *Timer {
 	// It seems that at startup actual Game Boy timer has elapsed for eight ticks,
 	// (maybe it's for a wrong boot rom emulation)
 	t := &Timer{
-		apu: apu,
+		apu:         apu,
+		speedFactor: 0,
+		DIVGlitched: func() bool { return false },
 	}
 
 	t.Tick(8)
@@ -41,6 +48,10 @@ func New(apu *audio.APU) *Timer {
 }
 
 func (t *Timer) Tick(ticks int) {
+	if t.DIVGlitched() {
+		return
+	}
+
 	// Calculate how many ticks until next multiple of 4
 	ticksToNextMultiple := int(4 - (t.systemCounter % 4))
 
@@ -66,9 +77,6 @@ func (t *Timer) Tick(ticks int) {
 
 		// Update TIMA
 		t.detectFallingEdge()
-
-		// Update DIV APU
-		t.detectAPUFallingEdge()
 
 		// Update ticks to next multiple for next iteration
 		ticksToNextMultiple = 4
@@ -100,16 +108,30 @@ func (t *Timer) detectFallingEdge() {
 			t.timaOverflow = true
 		}
 	}
+
+	// Update DIV APU
+	t.detectAPUFallingEdge()
 }
 
 func (t *Timer) detectAPUFallingEdge() {
-	// APU frame sequencer runs at 512Hz
-	// DIV bit 12 toggles at 512Hz (4194304/2^13)
-	currBit := util.ReadBit(t.systemCounter, 12)
+	// APU frame sequencer runs at 512Hz (regardless of CPU speed)
+	// DIV bit 12 toggles at 512Hz in normal speed (4194304/2^13)
+	// DIV bit 13 toggles at 512Hz in double speed (8388608/2^14)
+	currBit := util.ReadBit(t.systemCounter, 12+uint8(t.speedFactor))
 
 	// Detect falling edge
 	if t.prevBit12 == 1 && currBit == 0 {
 		t.apu.StepFrameSequencer()
 	}
 	t.prevBit12 = uint8(currBit)
+}
+
+func (t *Timer) SwitchSpeed(doubleSpeed bool) {
+	if doubleSpeed {
+		t.speedFactor = 1
+	} else {
+		t.speedFactor = 0
+	}
+	t.systemCounter = 0
+	t.detectFallingEdge()
 }

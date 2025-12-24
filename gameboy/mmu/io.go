@@ -2,6 +2,7 @@ package mmu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
+	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
 const (
@@ -49,6 +50,8 @@ const (
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
 	VBKAddr  = 0xFF4F
+
+	KEY1Addr = 0xFF4D
 
 	BANKAddr = 0xFF50
 
@@ -100,6 +103,10 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 	// DMA transfer
 	case DMAAddr:
 		mmu.DMA(v)
+
+	// Prepare speed switch
+	case KEY1Addr:
+		mmu.PrepareSpeedSwitch = util.ReadBit(v, 0) > 0
 
 	// Disable BOOT ROM
 	case BANKAddr:
@@ -165,6 +172,17 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 	// DMA transfer
 	case DMAAddr:
 		return mmu.dmaReg
+
+	// Speed switch
+	case KEY1Addr:
+		var out uint8 = 0x7E
+		if mmu.PrepareSpeedSwitch {
+			util.SetBit(&out, 0, 1)
+		}
+		if mmu.DoubleSpeed {
+			util.SetBit(&out, 7, 1)
+		}
+		return out
 
 	// VDMA transfer
 	case HDMA5Addr:

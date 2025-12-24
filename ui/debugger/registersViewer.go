@@ -108,6 +108,7 @@ func newInterruptsPanel() *panel {
 	imeString := map[bool]string{true: "enabled", false: "disabled"}
 	entries := []panelEntry{
 		{name: "FF0F IF", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF0F)) }},
+		{name: "FF4D KEY1", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF4D)) }},
 		{name: "FFFF IE", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFFFF)) }},
 		{name: "IME", valueSync: func(gb *gameboy.GameBoy) string { return imeString[gb.CPU.IME] }},
 	}

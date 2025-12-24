@@ -10,6 +10,11 @@ type Ticker interface {
 	Tick(ticks int)
 }
 
+// SpeedSwitcher describes hardware components that works at double speed in CGB double speed mode
+type SpeedSwitcher interface {
+	SwitchSpeed(doubleSpeed bool)
+}
+
 type CPU struct {
 	// 8-bit registers
 	A, F uint8
@@ -34,11 +39,14 @@ type CPU struct {
 	halted  bool
 	haltBug bool
 
+	// After speed switching, CPU will be halted for some time
+	speedSwitchHaltedTicks int
+
 	// Other components
 	mmu *mmu.MMU
 	ppu *ppu.PPU
 
-	cyclers []Ticker
+	tickers []Ticker
 
 	// Used for debugger
 	callHook func()
@@ -58,9 +66,9 @@ func New(mmu *mmu.MMU, ppu *ppu.PPU) *CPU {
 	return cpu
 }
 
-func (cpu *CPU) AddCycler(cyclers ...Ticker) {
-	for _, c := range cyclers {
-		cpu.cyclers = append(cpu.cyclers, c)
+func (cpu *CPU) AddTicker(tickers ...Ticker) {
+	for _, c := range tickers {
+		cpu.tickers = append(cpu.tickers, c)
 	}
 }
 
@@ -77,7 +85,7 @@ func (cpu *CPU) Tick(ticks int) {
 		cpu.writeIEHasCancelledInterrupt = true
 	}
 
-	for _, cycler := range cpu.cyclers {
+	for _, cycler := range cpu.tickers {
 		cycler.Tick(ticks)
 	}
 }
@@ -91,8 +99,22 @@ func (cpu *CPU) ExecuteInstruction() {
 
 	} else { // Cycle if halted
 		cpu.Tick(4)
+
+		// Exit halt mode after speed switch
+		if cpu.speedSwitchHaltedTicks > 0 {
+			cpu.speedSwitchHaltedTicks -= 4
+			if cpu.speedSwitchHaltedTicks <= 0 {
+				cpu.halted = false
+				cpu.speedSwitchHaltedTicks = 0
+			}
+		}
 	}
 
 	// Service eventual interrupts
 	cpu.handleInterrupts()
+}
+
+func (cpu *CPU) SwitchSpeed(doubleSpeed bool) {
+	cpu.speedSwitchHaltedTicks = 0x20000
+	cpu.halted = true
 }
