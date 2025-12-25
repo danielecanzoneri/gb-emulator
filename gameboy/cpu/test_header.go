@@ -12,14 +12,14 @@ import (
 
 func mockCPU() *CPU {
 	p := ppu.New(false)
-	a := audio.NewAPU(48000, make(chan float32, 10))
+	a := audio.New(48000, make(chan float32, 10), false)
 	c := &cartridge.MBC1{ROM: make([]uint8, 0x8000), RAM: make([]uint8, 0x2000), RAMBanks: 1, ROMBanks: 1}
 	mem := mmu.New(p, a, timer.New(a), joypad.New(), serial.NewPort(), false)
 	mem.Cartridge = c
 	mem.BootRomDisabled = true
 	mem.Write(0, 0x0A) // Enable RAM
 
-	cpu := New(mem, p)
+	cpu := New(mem, p, false)
 	cpu.SP = 0xFFFE
 	return cpu
 }

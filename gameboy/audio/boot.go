@@ -7,7 +7,7 @@ func (apu *APU) SkipBoot() {
 	apu.channel1.sweep.timer = 5
 	apu.channel1.sweep.shadow = 0x7C1
 	apu.channel1.waveDuty = 2
-	apu.channel1.lengthTimer.length = 64
+	apu.channel1.LengthTimer.length = 64
 	apu.channel1.envelope.volumeInit = 0xF
 	apu.channel1.envelope.pace = 3
 	apu.channel1.envelope.timer = 1

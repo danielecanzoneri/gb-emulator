@@ -44,6 +44,8 @@ func (apu *APU) IOWrite(addr uint16, v uint8) {
 		case addr == nr52Addr:
 		case addr >= waveRAMAddr:
 		// On the DMG, length counters are unaffected by power and can still be written while off
+		case apu.isCGB:
+			return
 		case addr == nr11Addr, addr == nr21Addr, addr == nr41Addr:
 			v &= 0x3F
 		case addr == nr31Addr:

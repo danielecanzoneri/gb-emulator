@@ -42,6 +42,10 @@ func (lt *LengthTimer) Set(timer uint) {
 	lt.length = timer
 }
 
+func (lt *LengthTimer) Reset() {
+	lt.Set(lt.max)
+}
+
 func (lt *LengthTimer) Trigger(nrx4 uint8) {
 	trigger := util.ReadBit(nrx4, 7) > 0
 	enabled := util.ReadBit(nrx4, 6) > 0
@@ -63,7 +67,7 @@ func (lt *LengthTimer) Trigger(nrx4 uint8) {
 	// and the length counter is now enabled and length is being set to 64 (256 for wave channel)
 	// because it was previously zero, it is set to 63 instead (255 for wave channel).
 	if trigger && lt.length == 0 {
-		lt.length = lt.max
+		lt.Reset()
 
 		// If a channel is triggered when the frame sequencer's next step is one that doesn't clock the length counter
 		// and the length counter is now enabled and length is being set to 64 (256 for wave channel)

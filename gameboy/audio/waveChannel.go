@@ -14,8 +14,11 @@ type WaveChannel struct {
 	dacEnabled bool
 	active     bool
 
+	// CGB flag
+	isCGB bool
+
 	// Length timer (NR31)
-	lengthTimer *LengthTimer
+	LengthTimer *LengthTimer
 
 	// Volume (NR32)
 	volume uint8 // Bits 6-5
@@ -35,9 +38,11 @@ type WaveChannel struct {
 	ticks int
 }
 
-func NewWaveChannel(fs *frameSequencer) *WaveChannel {
-	ch := new(WaveChannel)
-	ch.lengthTimer = NewLengthTimer(&ch.active, fs, 256)
+func NewWaveChannel(fs *frameSequencer, isCGB bool) *WaveChannel {
+	ch := &WaveChannel{
+		isCGB: isCGB,
+	}
+	ch.LengthTimer = NewLengthTimer(&ch.active, fs, 256)
 
 	return ch
 }
@@ -107,7 +112,7 @@ func (ch *WaveChannel) WriteRegister(addr uint16, v uint8) {
 
 	case nr31Addr:
 		// Timer should count up to 256, but we make it count down to 0
-		ch.lengthTimer.Set(256 - uint(v))
+		ch.LengthTimer.Set(256 - uint(v))
 
 	case nr32Addr:
 		ch.volume = (v >> 5) & 0b11
@@ -151,7 +156,7 @@ func (ch *WaveChannel) ReadRegister(addr uint16) uint8 {
 	case nr34Addr:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimer.enabled {
+		if ch.LengthTimer.enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -163,7 +168,7 @@ func (ch *WaveChannel) ReadRegister(addr uint16) uint8 {
 
 func (ch *WaveChannel) WriteWRAM(addr uint16, v uint8) {
 	if ch.active {
-		if ch.justRead {
+		if ch.isCGB || /* isDMG && */ ch.justRead {
 			ch.WaveRam[ch.wavePosition>>1] = v
 		}
 		return
@@ -173,10 +178,10 @@ func (ch *WaveChannel) WriteWRAM(addr uint16, v uint8) {
 
 func (ch *WaveChannel) ReadWRAM(addr uint16) uint8 {
 	// If the wave channel is enabled, accessing any byte from $FF30-$FF3F is equivalent to accessing the current byte selected by the waveform position.
-	// Further, on the DMG accesses will only work in this manner if made within a couple of clocks of the wave channel accessing wave RAM;
-	// if made at any other time, reads return $FF and writes have no effect.
+	// Furthermore, on DMG accesses will only work in this manner if made within a couple of clocks of the wave channel accessing wave RAM;
+	// if made at any other time, reads return $FF and writes have no effect. ON CGB, instead, it can be accessed at any time
 	if ch.active {
-		if ch.justRead {
+		if ch.isCGB || /* isDMG && */ ch.justRead {
 			return ch.WaveRam[ch.wavePosition>>1]
 		}
 		return 0xFF
@@ -196,7 +201,7 @@ func (ch *WaveChannel) disable() {
 }
 
 func (ch *WaveChannel) Trigger(value uint8) {
-	ch.lengthTimer.Trigger(value)
+	ch.LengthTimer.Trigger(value)
 
 	trigger := util.ReadBit(value, 7) > 0
 	if trigger && ch.dacEnabled {
@@ -204,7 +209,7 @@ func (ch *WaveChannel) Trigger(value uint8) {
 		ch.active = true
 
 		// Triggering the wave channel on the DMG while it reads a sample byte will alter the first four bytes of wave RAM.
-		if ch.periodCounter == ch.period+1 { // Don't actually know why this works, but it works so GG
+		if !ch.isCGB && ch.periodCounter == ch.period+1 { // Don't actually know why this works, but it works so GG
 			indexOfNextByte := ((ch.wavePosition + 1) % 32) >> 1
 			// If the channel was reading one of the first four bytes, the only first byte will be rewritten with the byte being read.
 			if indexOfNextByte < 4 {

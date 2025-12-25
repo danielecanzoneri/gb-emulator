@@ -12,7 +12,7 @@ type NoiseChannel struct {
 	frequencyCounter uint16 // It steps LFSR when 0
 
 	// Length timer (NR41)
-	lengthTimer *LengthTimer
+	LengthTimer *LengthTimer
 
 	// Volume and Envelope (NR42)
 	envelope Envelope
@@ -27,7 +27,7 @@ type NoiseChannel struct {
 
 func NewNoiseChannel(fs *frameSequencer) *NoiseChannel {
 	ch := new(NoiseChannel)
-	ch.lengthTimer = NewLengthTimer(&ch.active, fs, 64)
+	ch.LengthTimer = NewLengthTimer(&ch.active, fs, 64)
 
 	ch.resetFrequency()
 	return ch
@@ -91,7 +91,7 @@ func (ch *NoiseChannel) Tick(ticks int) {
 func (ch *NoiseChannel) WriteRegister(addr uint16, v uint8) {
 	switch addr {
 	case nr41Addr:
-		ch.lengthTimer.Set(uint(64 - v&0x3F))
+		ch.LengthTimer.Set(uint(64 - v&0x3F))
 
 	case nr42Addr:
 		ch.dacEnabled = v&0xF8 > 0
@@ -129,7 +129,7 @@ func (ch *NoiseChannel) ReadRegister(addr uint16) uint8 {
 	case nr44Addr:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimer.enabled {
+		if ch.LengthTimer.enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -150,7 +150,7 @@ func (ch *NoiseChannel) disable() {
 }
 
 func (ch *NoiseChannel) Trigger(value uint8) {
-	ch.lengthTimer.Trigger(value)
+	ch.LengthTimer.Trigger(value)
 
 	trigger := util.ReadBit(value, 7) > 0
 	if ch.dacEnabled && trigger {

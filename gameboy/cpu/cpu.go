@@ -39,6 +39,8 @@ type CPU struct {
 	halted  bool
 	haltBug bool
 
+	// CGB flag
+	isCGB bool
 	// After speed switching, CPU will be halted for some time
 	speedSwitchHaltedTicks int
 
@@ -57,10 +59,11 @@ type CPU struct {
 	prefixedOpcodesTable [32]func(uint8)
 }
 
-func New(mmu *mmu.MMU, ppu *ppu.PPU) *CPU {
+func New(mmu *mmu.MMU, ppu *ppu.PPU, isCGB bool) *CPU {
 	cpu := &CPU{
-		mmu: mmu,
-		ppu: ppu,
+		mmu:   mmu,
+		ppu:   ppu,
+		isCGB: isCGB,
 	}
 	cpu.initOpcodeTable()
 	return cpu

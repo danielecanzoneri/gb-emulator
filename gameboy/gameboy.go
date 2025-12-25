@@ -51,12 +51,12 @@ func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 
 	gb.PPU = ppu.New(isCGB)
 	gb.Joypad = joypad.New()
-	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
+	gb.APU = audio.New(gb.sampleRate, gb.sampleBuff, isCGB)
 	gb.SerialPort = serial.NewPort()
 	gb.Timer = timer.New(gb.APU)
 
 	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
-	gb.CPU = cpu.New(gb.Memory, gb.PPU)
+	gb.CPU = cpu.New(gb.Memory, gb.PPU, isCGB)
 	gb.Memory.IsCPUHalted = gb.CPU.Halted
 	gb.Timer.DIVGlitched = gb.CPU.SpeedSwitchHalted
 	gb.CPU.AddTicker(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
