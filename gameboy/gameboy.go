@@ -120,9 +120,18 @@ func (gb *GameBoy) LoadBootROM(bootRom []uint8) {
 func (gb *GameBoy) skipBootROM() {
 	gb.Memory.DisableBootROM()
 
-	gb.CPU.SkipBoot()
-	gb.Timer.SkipBoot()
-	gb.Memory.SkipBoot()
-	gb.PPU.SkipBoot()
-	gb.APU.SkipBoot()
+	if gb.EmulationModel == DMG {
+		gb.CPU.SkipDMGBoot()
+		gb.Timer.SkipDMGBoot()
+		gb.Memory.SkipBoot()
+		gb.PPU.SkipDMGBoot()
+		gb.APU.SkipBoot()
+	} else {
+		// Find compatibility mode palette
+		gb.Timer.SkipCGBBoot()
+		gb.Memory.SkipBoot()
+		titleChecksum := gb.PPU.SkipCGBBoot(gb.Memory.Cartridge)
+		gb.CPU.SkipCGBBoot(titleChecksum)
+		gb.APU.SkipBoot()
+	}
 }
