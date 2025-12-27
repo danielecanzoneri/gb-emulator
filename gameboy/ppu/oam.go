@@ -147,7 +147,7 @@ func (ppu *PPU) searchOAM() {
 
 	// In CGB mode, only the object’s location in OAM determines its priority.
 	// The earlier the object, the higher its priority.
-	if !ppu.Cgb {
+	if !ppu.Cgb || ppu.DmgCompatibility {
 		slices.SortStableFunc(objs, func(a, b *Object) int {
 			return cmp.Compare(a.x, b.x)
 		})

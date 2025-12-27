@@ -52,6 +52,20 @@ func (ppu *PPU) GetFrame() *[FrameHeight][FrameWidth]uint16 {
 	return ppu.frontBuffer
 }
 
+func (ppu *PPU) swapBuffers() {
+	ppu.frontBuffer = ppu.backBuffer
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
+
+	if ppu.Cgb {
+		// Fill new buffer with blank pixels
+		for x := range FrameWidth {
+			for y := range FrameHeight {
+				ppu.backBuffer[y][x] = 0xFFFF
+			}
+		}
+	}
+}
+
 func (ppu *PPU) emptyFrame() {
 	var blankPixel uint16 = 0
 	if ppu.Cgb {
@@ -65,8 +79,7 @@ func (ppu *PPU) emptyFrame() {
 	}
 
 	// Swap buffers
-	ppu.frontBuffer = ppu.backBuffer
-	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
+	ppu.swapBuffers()
 }
 
 // renderLine returns the number of penalty dots incurred to draw this line
@@ -83,7 +96,7 @@ func (ppu *PPU) renderLine() int {
 		var bgPixel uint8 = 0
 
 		// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
-		if ppu.bgWindowEnabled || ppu.Cgb {
+		if ppu.bgWindowEnabled || (ppu.Cgb && !ppu.DmgCompatibility) {
 			// TODO - obviously optimize
 			var tileX, tileY uint8
 			var tileBaseAddr uint16
@@ -110,12 +123,12 @@ func (ppu *PPU) renderLine() int {
 			var bgPalette Palette = ppu.BGP // DMG palette
 
 			if ppu.Cgb {
-				bgPriority = tileAttributes.BGPriority()
-
 				// If we are in compatibility mode, use the boot computed palette
 				if ppu.DmgCompatibility {
 					bgPalette = ppu.BGP.ConvertToCGB(ppu.BGPalette[0:8])
 				} else {
+					bgPriority = tileAttributes.BGPriority()
+
 					paletteId := tileAttributes.CGBPalette()
 					bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
 				}
@@ -145,22 +158,15 @@ func (ppu *PPU) renderLine() int {
 
 			// If object pixel is transparent (px == 0), draw background pixel
 			if px > 0 {
-				if ppu.Cgb {
+				if ppu.Cgb && !ppu.DmgCompatibility {
 					// - If the BG color index is 0, the OBJ will always have priority;
 					// - If LCDC bit 0 is clear, the OBJ will always have priority;
 					// - If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority;
 					// Otherwise, BG will have priority.
 					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
 					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !TileAttribute(obj.flags).BGPriority()) {
-						var palette Palette
-						// If we are in compatibility mode, use the boot computed palette
-						if ppu.DmgCompatibility {
-							paletteId := TileAttribute(obj.flags).DMGPalette()
-							palette = ppu.OBP[paletteId].ConvertToCGB(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
-						} else {
-							paletteId := TileAttribute(obj.flags).CGBPalette()
-							palette = CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
-						}
+						paletteId := TileAttribute(obj.flags).CGBPalette()
+						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				} else { // DMG
@@ -168,7 +174,14 @@ func (ppu *PPU) renderLine() int {
 					// If both object and background pixel are not 0, draw pixel based on
 					//    object attributes BG/Window priority (bit 7)
 					if bgPixel == 0 || !TileAttribute(obj.flags).BGPriority() {
-						palette := ppu.OBP[TileAttribute(obj.flags).DMGPalette()]
+						var palette Palette
+						// If we are in compatibility mode, use the boot computed palette
+						if ppu.DmgCompatibility {
+							paletteId := TileAttribute(obj.flags).DMGPalette()
+							palette = ppu.OBP[paletteId].ConvertToCGB(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
+						} else {
+							palette = ppu.OBP[TileAttribute(obj.flags).DMGPalette()]
+						}
 						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
 					}
 				}

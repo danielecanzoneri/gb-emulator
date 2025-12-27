@@ -31,8 +31,7 @@ func (st *vBlank) Init(ppu *PPU) {
 		ppu.RequestVBlankInterrupt()
 
 		// Frame complete, switch buffers
-		ppu.frontBuffer = ppu.backBuffer
-		ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
+		ppu.swapBuffers()
 
 		if ppu.VBlankCallback != nil {
 			ppu.VBlankCallback()
