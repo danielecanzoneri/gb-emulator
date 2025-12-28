@@ -2,10 +2,11 @@ package cpu
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/lucky-boy/util"
 	"math/rand"
 	"strconv"
 	"testing"
+
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 func Test_LD_R16_N16(t *testing.T) {
@@ -1037,14 +1038,14 @@ func Test_LD_R8_R8(t *testing.T) {
 		opcode uint8
 		read   func() uint8
 	}{
-		"B":     {0x40, func() uint8 { return cpu.B }},
-		"C":     {0x48, func() uint8 { return cpu.C }},
-		"D":     {0x50, func() uint8 { return cpu.D }},
-		"E":     {0x58, func() uint8 { return cpu.E }},
-		"H":     {0x60, func() uint8 { return cpu.H }},
-		"L":     {0x68, func() uint8 { return cpu.L }},
-		"HLmem": {0x70, func() uint8 { return cpu.mmu.Read(cpu.ReadHL()) }},
-		"A":     {0x78, func() uint8 { return cpu.A }},
+		"B":     {0x40, cpu.readB},
+		"C":     {0x48, cpu.readC},
+		"D":     {0x50, cpu.readD},
+		"E":     {0x58, cpu.readE},
+		"H":     {0x60, cpu.readH},
+		"L":     {0x68, cpu.readL},
+		"HLmem": {0x70, cpu.readHLmem},
+		"A":     {0x78, cpu.readA},
 	}
 	secondReg := map[string]struct {
 		offset uint8
@@ -1072,6 +1073,8 @@ func Test_LD_R8_R8(t *testing.T) {
 			if opcode == HALT_OPCODE {
 				continue
 			}
+
+			cpu.H = 0xA0
 			t.Run(name1+"<-"+name2, func(t *testing.T) {
 				value := uint8(rand.Intn(0x100))
 				value = loaded.set(value)
