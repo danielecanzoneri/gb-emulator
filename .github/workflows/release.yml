@@ -18,9 +18,6 @@ jobs:
           - goos: windows
             goarch: amd64
             ext: '.exe'
-          - goos: linux
-            goarch: arm64
-            ext: ''
 
     steps:
       - uses: actions/checkout@v4
