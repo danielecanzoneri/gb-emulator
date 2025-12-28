@@ -16,6 +16,7 @@ var (
 	romPath           = flag.String("rom", "", "ROM filename")
 	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
+	shader            = flag.Bool("shader", true, "Use GBC color correction shader (default true)")
 	systemModel       = flag.String("model", "auto", "GameBoy model (auto, dmg, cgb)")
 )
 
@@ -23,7 +24,7 @@ func main() {
 	flag.Parse()
 
 	// Init emulator
-	gui, err := ui.New()
+	gui, err := ui.New(*shader)
 	if err != nil {
 		log.Fatal(err)
 	}

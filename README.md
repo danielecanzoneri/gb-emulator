@@ -92,6 +92,7 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 - [Blargg](https://github.com/retrio/gb-test-roms), [Gekkio](https://github.com/Gekkio/mooneye-test-suite), [DMG acid](https://github.com/mattcurrie/dmg-acid2), [MBC3 RTC test](https://github.com/aaaaaa123456789/rtc3test) (test ROMs)
 - [This reddit post](https://www.reddit.com/r/EmuDev/comments/59pawp/gb_mode3_sprite_timing/) for fixing PPU timing with sprites
 - [AntonioND's Cycle-Accurate Gameboy Docs](https://github.com/AntonioND/giibiiadvance/blob/master/docs/TCAGBD.pdf) (very useful for some PPU timing issues)
+- [Pokefan531 shader](https://pokefan531.tumblr.com/post/766008194709454848/handheld-lcd-shader-projects) for GBC color correction
 - Multiple emulators were of inspiration, particularly [SameBoy](https://github.com/LIJI32/SameBoy) and [binjgb](https://github.com/binji/binjgb)
 
 ## TODO
