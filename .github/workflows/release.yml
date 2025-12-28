@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-
-permissions:
-  contents: write
   
 jobs:
   build:
@@ -57,3 +54,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: luckyboy-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.LUCKYBOY_RELEASE_ACTION }}
+
+          
