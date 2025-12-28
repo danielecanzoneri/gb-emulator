@@ -6,6 +6,7 @@ import (
 
 func TestTimer_UpdateDIV(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 	timer.systemCounter = 0x00FC
 
 	timer.Tick(4)
@@ -17,6 +18,7 @@ func TestTimer_UpdateDIV(t *testing.T) {
 
 func TestTimer_UpdateTIMA_NoOverflow(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 
 	interruptSet := false
 	interruptRequestFunc := func() {
@@ -45,6 +47,7 @@ func TestTimer_UpdateTIMA_NoOverflow(t *testing.T) {
 
 func TestTimer_UpdateTIMA_Overflow(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 
 	interruptSet := false
 	interruptRequestFunc := func() {
@@ -79,6 +82,7 @@ func TestTimer_UpdateTIMA_Overflow(t *testing.T) {
 
 func TestTimer_WriteTIMAWhenOverflow(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 
 	interruptSet := false
 	interruptRequestFunc := func() {
@@ -108,6 +112,7 @@ func TestTimer_WriteTIMAWhenOverflow(t *testing.T) {
 
 func TestTimer_WriteTIMAAfterOverflow(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 
 	interruptSet := false
 	interruptRequestFunc := func() {
@@ -137,6 +142,7 @@ func TestTimer_WriteTIMAAfterOverflow(t *testing.T) {
 
 func TestTimer_WriteTMAAfterOverflow(t *testing.T) {
 	timer := new(Timer)
+	timer.DIVGlitched = func() bool { return false }
 
 	interruptSet := false
 	interruptRequestFunc := func() {

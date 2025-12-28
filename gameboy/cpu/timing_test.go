@@ -3,10 +3,10 @@ package cpu
 import "testing"
 
 type CycleCounter struct {
-	ticks uint
+	ticks int
 }
 
-func (c *CycleCounter) Tick(ticks uint) {
+func (c *CycleCounter) Tick(ticks int) {
 	c.ticks += ticks
 }
 

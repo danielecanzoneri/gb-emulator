@@ -334,7 +334,7 @@ const (
 	SET_7_R8_OPCODE = 0xF8
 )
 
-var OPCODES_CYCLES = [256]uint{
+var OPCODES_CYCLES = [256]int{
 	1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1,
 	1, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1, 2, 1,
 	2, 3, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1,
@@ -353,14 +353,14 @@ var OPCODES_CYCLES = [256]uint{
 	3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
 }
 
-var OPCODES_CYCLES_BRANCH = map[uint8]uint{
+var OPCODES_CYCLES_BRANCH = map[uint8]int{
 	0x20: 3, 0x28: 3, 0x30: 3, 0x38: 3,
 	0xC0: 5, 0xC8: 5, 0xD0: 5, 0xD8: 5,
 	0xC2: 4, 0xCA: 4, 0xD2: 4, 0xDA: 4,
 	0xC4: 6, 0xCC: 6, 0xD4: 6, 0xDC: 6,
 }
 
-var PREFIX_OPCODES_CYCLES = [256]uint{
+var PREFIX_OPCODES_CYCLES = [256]int{
 	1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1,
 	1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1,
 	1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1,
