@@ -3,7 +3,7 @@ package audio
 import (
 	"strconv"
 
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 const (

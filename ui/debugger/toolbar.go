@@ -4,7 +4,7 @@ import (
 	"fmt"
 	goimage "image"
 
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/event"

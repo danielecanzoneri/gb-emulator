@@ -1,6 +1,6 @@
 package audio
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 // Sweep manages the NRx0 register
 type Sweep struct {

@@ -1,6 +1,6 @@
 package joypad
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 type Joypad struct {
 	selectButtons uint8

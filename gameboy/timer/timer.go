@@ -1,8 +1,8 @@
 package timer
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/audio"
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 type Timer struct {

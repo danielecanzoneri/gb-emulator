@@ -1,6 +1,6 @@
 package mmu
 
-import "github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
+import "github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
 
 func (mmu *MMU) DisableBootROM() {
 	mmu.BootRomDisabled = true

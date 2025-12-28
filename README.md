@@ -1,4 +1,4 @@
-# Game Boy Emulator
+# Lucky Boy 🍀
 
 A feature-rich, cross-platform Game Boy emulator written in Go, with a modern graphical interface and an integrated graphical debugger.
 
@@ -85,7 +85,6 @@ go run .
   - **Select**: Z
   - **Ctrl+L**: Load a new game
   - **1-4**: Toggle audio channels
-  - **Esc**: Launch the debugger
 - The debugger can be launched from the emulator (press `Esc`)
 
 ## Resources

@@ -2,7 +2,7 @@ package cpu
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/util"
 	"math/rand"
 	"strconv"
 	"testing"

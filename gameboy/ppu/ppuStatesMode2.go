@@ -1,6 +1,6 @@
 package ppu
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 // When PPU is enabled:
 //   - line 0 starts with mode 0 and goes straight to mode 3

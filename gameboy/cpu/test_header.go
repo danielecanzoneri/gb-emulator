@@ -1,13 +1,13 @@
 package cpu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/audio"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/joypad"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/mmu"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/audio"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/joypad"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/mmu"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/serial"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/timer"
 )
 
 func mockCPU() *CPU {

@@ -3,7 +3,7 @@ package debugger
 import (
 	"image"
 
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
 	"github.com/ebitenui/ebitenui/input"
 	"github.com/ebitenui/ebitenui/widget"
 )

@@ -1,6 +1,6 @@
 package audio
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 type LengthTimer struct {
 	// Pointer to the channel active flag

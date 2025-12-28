@@ -1,6 +1,6 @@
 package ppu
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 // Set flags for OAM bug if this is a glitched access
 func (ppu *PPU) GlitchedOAMAccess(address uint16, isRead bool) {

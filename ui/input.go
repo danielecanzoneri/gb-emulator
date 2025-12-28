@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/ui/debugger"
+	"github.com/danielecanzoneri/lucky-boy/ui/debugger"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"log"

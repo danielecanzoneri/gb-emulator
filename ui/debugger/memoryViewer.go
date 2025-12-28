@@ -2,10 +2,10 @@ package debugger
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"image/color"
 
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
 	"golang.org/x/image/colornames"

@@ -2,8 +2,8 @@ package ui
 
 import (
 	_ "embed"
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"log"

@@ -1,13 +1,13 @@
 package ui
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"log"
 	"os"
 
-	"github.com/danielecanzoneri/gb-emulator/ui/debugger"
+	"github.com/danielecanzoneri/lucky-boy/ui/debugger"
 
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
 	"github.com/ebitengine/oto/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 )

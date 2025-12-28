@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"

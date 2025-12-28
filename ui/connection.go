@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/serial"
 	"log"
 	"net"
 )

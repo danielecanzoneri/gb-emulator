@@ -1,7 +1,7 @@
 package audio
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 var squareWaveforms = [4][8]bool{

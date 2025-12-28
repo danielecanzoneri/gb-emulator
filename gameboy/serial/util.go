@@ -1,6 +1,6 @@
 package serial
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 // isTransferring checks whether a serial data exchange is happening
 func (port *Port) isTransferring() bool {

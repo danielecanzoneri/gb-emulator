@@ -1,8 +1,8 @@
 package cpu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/mmu"
-	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/mmu"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
 )
 
 // Ticker describes hardware components that needs clock synchronization

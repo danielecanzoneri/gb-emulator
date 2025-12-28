@@ -1,7 +1,7 @@
 package ppu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/util"
 	"strconv"
 )
 

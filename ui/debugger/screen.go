@@ -1,8 +1,8 @@
 package debugger
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"

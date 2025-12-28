@@ -2,7 +2,7 @@ package cartridge
 
 import (
 	"encoding/binary"
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/util"
 	"log"
 	"time"
 )

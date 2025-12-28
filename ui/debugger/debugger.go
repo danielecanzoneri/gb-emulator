@@ -1,8 +1,8 @@
 package debugger
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"

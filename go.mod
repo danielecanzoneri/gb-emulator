@@ -1,4 +1,4 @@
-module github.com/danielecanzoneri/gb-emulator
+module github.com/danielecanzoneri/lucky-boy
 
 go 1.24.2
 

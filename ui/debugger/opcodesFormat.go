@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
 )
 
 type opcodeFormatter func(string, ...uint8) string

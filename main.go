@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/danielecanzoneri/gb-emulator/ui"
+	"github.com/danielecanzoneri/lucky-boy/ui"
 	"log"
 )
 

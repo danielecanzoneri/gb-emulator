@@ -1,6 +1,6 @@
 package ppu
 
-import "github.com/danielecanzoneri/gb-emulator/util"
+import "github.com/danielecanzoneri/lucky-boy/util"
 
 // First 4 ticks
 type vBlankStart struct{}

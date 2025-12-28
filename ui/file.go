@@ -3,14 +3,14 @@ package ui
 import (
 	"errors"
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
+	"github.com/danielecanzoneri/lucky-boy/gameboy"
+	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
 	"github.com/sqweek/dialog"
 )
 

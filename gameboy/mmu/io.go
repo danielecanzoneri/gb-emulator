@@ -1,8 +1,8 @@
 package mmu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/serial"
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 const (

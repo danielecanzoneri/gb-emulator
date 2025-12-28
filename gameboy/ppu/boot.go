@@ -1,8 +1,8 @@
 package ppu
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/gameboy/cartridge"
-	"github.com/danielecanzoneri/gb-emulator/util"
+	"github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
+	"github.com/danielecanzoneri/lucky-boy/util"
 )
 
 func (ppu *PPU) SkipDMGBoot() {
