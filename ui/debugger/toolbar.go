@@ -94,7 +94,7 @@ func (t *toolbar) newMenu(title string) *toolbarMenu {
 	// Create a button for the toolbar.
 	tMenu.Button = widget.NewButton(
 		widget.ButtonOpts.Image(toolbarMenuImage),
-		widget.ButtonOpts.Text(title, font, toolbarButtonTextColor),
+		widget.ButtonOpts.Text(title, &font, toolbarButtonTextColor),
 		widget.ButtonOpts.TextPosition(widget.TextPositionStart, widget.TextPositionCenter), // Align text on the left
 		widget.ButtonOpts.TextPadding(widget.NewInsetsSimple(theme.Debugger.Padding)),
 		widget.ButtonOpts.WidgetOpts(
@@ -117,9 +117,9 @@ func (t *toolbarMenu) createEntry(label string, shortcut string, onClick func())
 	// Create a button for a menu entry.
 	entry.Button = widget.NewButton(
 		widget.ButtonOpts.Image(toolbarEntryImage),
-		widget.ButtonOpts.Text("", font, toolbarButtonTextColor),
+		widget.ButtonOpts.Text("", &font, toolbarButtonTextColor),
 		widget.ButtonOpts.TextPosition(widget.TextPositionStart, widget.TextPositionCenter), // Align text on the left
-		widget.ButtonOpts.TextPadding(widget.Insets{Left: 16, Right: 64}),
+		widget.ButtonOpts.TextPadding(&widget.Insets{Left: 16, Right: 64}),
 		widget.ButtonOpts.WidgetOpts(
 			widget.WidgetOpts.LayoutData(widget.RowLayoutData{Stretch: true}),
 		),
@@ -174,7 +174,7 @@ func (t *toolbarMenu) relayout() {
 	// Reformat title length to align shortcuts
 	for _, entry := range t.entries {
 		titleFormatted := fmt.Sprintf("%-*s  %s", maxLabelLength, entry.title, entry.shortcut)
-		entry.Button.Text().Label = titleFormatted
+		entry.Button.SetText(titleFormatted)
 	}
 }
 

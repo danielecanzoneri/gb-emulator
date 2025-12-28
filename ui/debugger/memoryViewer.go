@@ -94,10 +94,13 @@ func newMemoryViewer() *memoryViewer {
 		}
 	})
 
-	mv.Container = newContainer(widget.DirectionHorizontal,
-		scrollContainer, mv.slider,
+	mv.Container = widget.NewContainer(
+		widget.ContainerOpts.Layout(
+			widget.NewRowLayout(widget.RowLayoutOpts.Direction(widget.DirectionHorizontal)),
+		),
+		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(theme.Debugger.Main.Color)),
 	)
-	mv.Container.BackgroundImage = image.NewNineSliceColor(theme.Debugger.Main.Color)
+	mv.Container.AddChild(scrollContainer, mv.slider)
 
 	return mv
 }
@@ -116,7 +119,7 @@ func (mv *memoryViewer) Sync(gb *gameboy.GameBoy) {
 func (mv *memoryViewer) createRow() widget.PreferredSizeLocateableWidget {
 	dummyText := "0000  00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00 | ................"
 	label := widget.NewText(
-		widget.TextOpts.Text(dummyText, font, colornames.White), // Font and text
+		widget.TextOpts.Text(dummyText, &font, colornames.White), // Font and text
 	)
 	return label
 }

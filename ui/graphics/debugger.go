@@ -56,7 +56,7 @@ type DebuggerTheme struct {
 	}
 
 	Padding int
-	Insets  widget.Insets
+	Insets  *widget.Insets
 }
 
 var Debugger = DebuggerTheme{

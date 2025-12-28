@@ -40,7 +40,7 @@ func newContainer(direction widget.Direction, children ...widget.PreferredSizeLo
 
 func newLabel(text string, color color.Color) *widget.Text {
 	return widget.NewText(
-		widget.TextOpts.Text(text, font, color),
+		widget.TextOpts.Text(text, &font, color),
 	)
 }
 
@@ -66,7 +66,7 @@ func newWindow(title string, content *widget.Container, closeWindow *widget.Remo
 	)
 
 	titleBar.AddChild(widget.NewText(
-		widget.TextOpts.Text(title, font, theme.Debugger.TitleColor),
+		widget.TextOpts.Text(title, &font, theme.Debugger.TitleColor),
 		widget.TextOpts.Padding(theme.Debugger.Insets),
 		widget.TextOpts.Position(widget.TextPositionCenter, widget.TextPositionStart),
 	))
@@ -74,7 +74,7 @@ func newWindow(title string, content *widget.Container, closeWindow *widget.Remo
 	titleBar.AddChild(widget.NewButton(
 		widget.ButtonOpts.Image(theme.Debugger.Button.Image),
 		widget.ButtonOpts.TextPadding(theme.Debugger.Insets),
-		widget.ButtonOpts.Text("X", font, theme.Debugger.Button.TextColor),
+		widget.ButtonOpts.Text("X", &font, theme.Debugger.Button.TextColor),
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
 			(*closeWindow)()
 		}),

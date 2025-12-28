@@ -142,7 +142,7 @@ func newDisassembler() *disassembler {
 			Idle: image.NewNineSliceColor(theme.Debugger.Slider.TrackColor),
 		}, theme.Debugger.Button.Image),
 		widget.SliderOpts.MinHandleSize(15), // Width of handle
-		widget.SliderOpts.Direction(widget.DirectionVertical),
+		widget.SliderOpts.Orientation(widget.DirectionVertical),
 		widget.SliderOpts.MinMax(0, dis.totalEntries-dis.length),
 		widget.SliderOpts.PageSizeFunc(func() int {
 			return dis.length / 2
@@ -195,8 +195,8 @@ func (d *disassembler) IsBreakpoint(addr uint16) bool {
 
 func (d *disassembler) createControlButton(name string, f func()) *widget.Button {
 	return widget.NewButton(
-		widget.ButtonOpts.Image(theme.Debugger.Button.Image),                // Background
-		widget.ButtonOpts.Text(name, font, theme.Debugger.Button.TextColor), // Font and text
+		widget.ButtonOpts.Image(theme.Debugger.Button.Image),                 // Background
+		widget.ButtonOpts.Text(name, &font, theme.Debugger.Button.TextColor), // Font and text
 
 		// Click handler
 		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
@@ -207,8 +207,8 @@ func (d *disassembler) createControlButton(name string, f func()) *widget.Button
 
 func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget {
 	button := widget.NewButton(
-		widget.ButtonOpts.Image(entryImage),                               // Background
-		widget.ButtonOpts.Text("", font, theme.Debugger.Button.TextColor), // Font and text
+		widget.ButtonOpts.Image(entryImage),                                // Background
+		widget.ButtonOpts.Text("", &font, theme.Debugger.Button.TextColor), // Font and text
 		widget.ButtonOpts.TextPosition(0, 0),
 
 		// Click handler
@@ -240,7 +240,7 @@ func (d *disassembler) refreshEntry(entryId int) {
 	for len(bytesStr) < 9 { // 3 chars per byte, up to 3 bytes
 		bytesStr += "   "
 	}
-	button.Text().Label = fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name)
+	button.SetText(fmt.Sprintf("%04X: %s  %s", entry.address, bytesStr, entry.name))
 
 	// Update color
 	isCurr := int(entry.address) == d.currentInstruction
@@ -248,15 +248,15 @@ func (d *disassembler) refreshEntry(entryId int) {
 
 	if isCurr {
 		if isBreakpoint {
-			button.Image = entryBreakpointAndCurrentImage
+			button.SetImage(entryBreakpointAndCurrentImage)
 		} else {
-			button.Image = entryCurrentImage
+			button.SetImage(entryCurrentImage)
 		}
 	} else {
 		if isBreakpoint {
-			button.Image = entryBreakpointImage
+			button.SetImage(entryBreakpointImage)
 		} else {
-			button.Image = entryImage
+			button.SetImage(entryImage)
 		}
 	}
 }
