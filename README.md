@@ -2,18 +2,49 @@
 
 A feature-rich, cross-platform Game Boy emulator written in Go, with a modern graphical interface and an integrated graphical debugger.
 
-It currently supports only the original DMG and passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites.
-Some tests require the original boot rom.
+It currently supports the original DMG Game Boy and the Game Boy Color.
+
+![Tetris Home DMG](images/tetris-home-dmg.png)
+![Tetris Home CGB](images/tetris-home-cgb.png)
+![Pokemon Crystal](images/crystal-home.png)
+
+![Tetris DMG](images/tetris-dmg.png)
+![Tetris CGB](images/tetris-cgb.png)
+![Pokemon Crystal](images/crystal.png)
 
 ## Features
 
-- **Accurate CPU Emulation**: Implements the full Game Boy Z80-like CPU, with extensive opcode tests.
+- **Accurate Emulation**: Implements the full Game Boy Z80-like CPU, with extensive opcode tests.
+  It passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites (some tests require the original boot rom).
 - **PPU (Graphics) Emulation**: Renders original Game Boy graphics with accurate timing and palette.
 - **Serial data transfer**: Emulates with high accuracy Game Link Cable (must start one instance with `-serial master` flag and the other with `-serial slave`).
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
 - **Boot ROM**: Possibility to specify a boot rom with the `-boot-rom` flag, `None` skips it and sets the state of the emulator like after executing the original ROM.
 - **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
 - **Turbo Mode**: By pressing `Space` the game will speed up at 2x
+- **Color Correction**: Applies accurate color correction for Game Boy Color games, replicating the look of the original LCD screen.
+
+![Tetris Home - No color correction](images/tetris-home-cgb-no-correction.png)
+![Tetris Home - Color correction](images/tetris-home-cgb.png)
+
+### Debugger
+
+The integrated debugger provides a comprehensive set of tools for analyzing and debugging Game Boy games:
+
+![Debugger Overview](images/debugger.png)
+
+**Key Features:**
+- **Disassembly View**: Real-time disassembly of the current instruction with breakpoint support
+- **Memory Viewer**: Inspect memory contents at any address
+- **Registers Viewer**: Monitor CPU and I/O registers
+- **Step Controls**: Step through code execution with `F3` (Step), `F8` (Next), `F9` (Continue), `F10` (Next VBlank)
+- **PPU Viewer**: Visualize Sprites/Background tiles and data
+
+![Debugger Background View](images/debugger-bg.png)
+
+![Debugger OAM View](images/debugger-oam.png)
+
+![Debugger Tiles View](images/debugger-tiles.png)
 
 ## Project Structure
 
@@ -22,7 +53,8 @@ Some tests require the original boot rom.
 ├── boot/             # Boot ROMs
 ├── gameboy/          # Main emulator code (CPU, PPU, APU, memory)
 ├── ui/               # Ebiten-based GUI and input handling
-│   └── debugger/     # Integrated debugger components
+│   ├── debugger/     # Integrated debugger components
+│   └── theme/        # Graphic related code (theme, palettes, shaders)
 ├── util/             # Some simple util functions
 ├── main.go           # Entry point
 └── README.md         # This file
@@ -35,28 +67,12 @@ Some tests require the original boot rom.
 
 - **Go 1.24+** (see `go.mod` for version)
 
-### Building
-
-Clone the repository and build the emulator and debugger:
-
-```sh
-git clone https://github.com/danielecanzoneri/gb-emulator.git
-cd gb-emulator
-go build -o gbemu .
-```
-
 ### Running
-
-#### Emulator
 
 From the root directory:
 
 ```sh
 go run .
-```
-or, if built:
-```sh
-./gbemu
 ```
 
 - On launch, you will be prompted to select a Game Boy ROM file (`.gb` or `.gbc`).
@@ -69,19 +85,8 @@ or, if built:
   - **Ctrl+L**: Load a new game
   - **1-4**: Toggle audio channels
   - **Esc**: Launch the debugger
-
-#### Debugger
-
-The debugger can be launched from the emulator (press `Esc`), or at startup with the `-debug` flag:
-```sh
-./gbemu -debug
-```
-- Disassembly view with breakpoints (click to toggle)
-- Memory viewer
-- I/O registers viewer
-- Step (`F3`), Next (`F8`), Continue (`F9`), and Reset controls
-- OAM viewer
-
+- The debugger can be launched from the emulator (press `Esc`)
+- 
 ## Resources
 
 - [Pandocs](https://gbdev.io/pandocs/OAM.html)
@@ -97,6 +102,5 @@ The debugger can be launched from the emulator (press `Esc`), or at startup with
 
 ## TODO
 
-- Support Game Boy Color (CGB).
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
