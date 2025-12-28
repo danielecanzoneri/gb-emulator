@@ -5,11 +5,12 @@ A feature-rich, cross-platform Game Boy emulator written in Go, with a modern gr
 It currently supports the original DMG Game Boy and the Game Boy Color.
 
 ![Tetris Home DMG](images/tetris-home-dmg.png)
-![Tetris Home CGB](images/tetris-home-cgb.png)
-![Pokemon Crystal](images/crystal-home.png)
-
 ![Tetris DMG](images/tetris-dmg.png)
+
+![Tetris Home CGB](images/tetris-home-cgb.png)
 ![Tetris CGB](images/tetris-cgb.png)
+
+![Pokemon Crystal](images/crystal-home.png)
 ![Pokemon Crystal](images/crystal.png)
 
 ## Features
@@ -86,7 +87,7 @@ go run .
   - **1-4**: Toggle audio channels
   - **Esc**: Launch the debugger
 - The debugger can be launched from the emulator (press `Esc`)
-- 
+
 ## Resources
 
 - [Pandocs](https://gbdev.io/pandocs/OAM.html)
