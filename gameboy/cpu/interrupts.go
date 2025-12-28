@@ -96,3 +96,11 @@ func (cpu *CPU) handleIME() {
 		cpu.IME = true
 	}
 }
+
+func (cpu *CPU) Halted() bool {
+	return cpu.halted
+}
+
+func (cpu *CPU) SpeedSwitchHalted() bool {
+	return cpu.speedSwitchHaltedTicks > 0
+}

@@ -2,7 +2,7 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"github.com/ebitenui/ebitenui/widget"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"

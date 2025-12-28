@@ -1,0 +1,43 @@
+// Kage shader for Game Boy Color LCD simulation
+// (credit Pokefan531 - https://pokefan531.tumblr.com)
+
+package theme
+
+// ===== Uniforms =====
+var LightenScreen float
+
+// ===== Constants =====
+
+const targetGamma = 2.2
+const displayGamma = 2.2
+
+// ===== Fragment Shader =====
+
+func Fragment(position vec4, texCoord vec2, color vec4) vec4 {
+	// Read source pixel
+	screen := imageSrc0At(texCoord)
+
+	// Gamma to linear space
+	g := targetGamma + (LightenScreen * -1.0)
+	screen = pow(screen, vec4(g, g, g, 1.0))
+
+	// DCI color profile
+	var profile = mat4(
+        0.61,  0.155, 0.16,   0.0,  //red channel
+        0.345, 0.615, 0.1875, 0.0,  //green channel
+        0.045, 0.23,  0.6525, 0.0,  //blue channel
+        0.0,   0.0,   0.0,    1.0,  //alpha channel
+    )
+
+	// Apply luminance
+	lum := profile[3][3]
+	screen = clamp(screen * lum, 0.0, 1.0)
+
+	// Apply color matrix
+	screen = profile * screen
+
+	// Back to display gamma
+	screen = pow(screen, vec4(1.0/displayGamma, 1.0/displayGamma, 1.0/displayGamma, 1.0))
+
+	return screen
+}

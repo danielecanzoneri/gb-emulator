@@ -23,7 +23,7 @@ type SquareChannel struct {
 	// Wave duty and length timer (NRx1)
 	addrNRx1    uint16
 	waveDuty    uint8 // Bits 7-6
-	lengthTimer *LengthTimer
+	LengthTimer *LengthTimer
 
 	// Volume and Envelope (NRx2)
 	addrNRx2 uint16
@@ -50,7 +50,7 @@ func NewSquareChannel(addrNRx0, addrNRx1, addrNRx2, addrNRx3, addrNRx4 uint16, f
 	}
 
 	ch.sweep.channel = ch
-	ch.lengthTimer = NewLengthTimer(&ch.active, fs, 64)
+	ch.LengthTimer = NewLengthTimer(&ch.active, fs, 64)
 
 	return ch
 }
@@ -99,7 +99,7 @@ func (ch *SquareChannel) WriteRegister(addr uint16, v uint8) {
 
 	case ch.addrNRx1:
 		ch.waveDuty = (v >> 6) & 0b11
-		ch.lengthTimer.Set(uint(64 - v&0x3F))
+		ch.LengthTimer.Set(uint(64 - v&0x3F))
 
 	case ch.addrNRx2:
 		ch.dacEnabled = v&0xF8 > 0
@@ -144,7 +144,7 @@ func (ch *SquareChannel) ReadRegister(addr uint16) uint8 {
 	case ch.addrNRx4:
 		// Only length timer can be read
 		var out uint8 = 0b10111111
-		if ch.lengthTimer.enabled {
+		if ch.LengthTimer.enabled {
 			util.SetBit(&out, 6, 1)
 		}
 		return out
@@ -167,7 +167,7 @@ func (ch *SquareChannel) disable() {
 }
 
 func (ch *SquareChannel) Trigger(value uint8) {
-	ch.lengthTimer.Trigger(value)
+	ch.LengthTimer.Trigger(value)
 
 	trigger := util.ReadBit(value, 7) > 0
 	if trigger && ch.dacEnabled {

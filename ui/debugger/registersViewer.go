@@ -22,6 +22,7 @@ type registersViewer struct {
 
 	lcd         *panel
 	lcdInternal *panel
+	hdma        *panel
 	timer       *panel
 	serial      *panel
 }
@@ -38,6 +39,7 @@ func newRegisterViewer() *registersViewer {
 		interrupts:  newInterruptsPanel(),
 		lcd:         newLcdPanel(),
 		lcdInternal: newLcdInternalPanel(),
+		hdma:        newHdmaPanel(),
 		timer:       newTimerPanel(),
 		serial:      newSerialPanel(),
 	}
@@ -63,6 +65,7 @@ func newRegisterViewer() *registersViewer {
 		newContainer(widget.DirectionVertical,
 			rv.lcd,
 			rv.lcdInternal,
+			rv.hdma,
 		),
 		centralPanels,
 	)
@@ -84,6 +87,7 @@ func (rv *registersViewer) Sync(gb *gameboy.GameBoy) {
 	rv.interrupts.Sync(gb)
 	rv.lcd.Sync(gb)
 	rv.lcdInternal.Sync(gb)
+	rv.hdma.Sync(gb)
 	rv.timer.Sync(gb)
 	rv.serial.Sync(gb)
 }
@@ -104,6 +108,7 @@ func newInterruptsPanel() *panel {
 	imeString := map[bool]string{true: "enabled", false: "disabled"}
 	entries := []panelEntry{
 		{name: "FF0F IF", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF0F)) }},
+		{name: "FF4D KEY1", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF4D)) }},
 		{name: "FFFF IE", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFFFF)) }},
 		{name: "IME", valueSync: func(gb *gameboy.GameBoy) string { return imeString[gb.CPU.IME] }},
 	}
@@ -129,17 +134,27 @@ func newLcdPanel() *panel {
 
 func newLcdInternalPanel() *panel {
 	entries := []panelEntry{
-		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.Dots) }},
-		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.STAT&3) }},
+		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetDots()) }},
+		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetMode()) }},
 		{name: "State", valueSync: func(gb *gameboy.GameBoy) string {
-			if gb.PPU.InternalState == nil {
+			state := gb.PPU.DebugGetInternalState()
+			if state == nil {
 				return " "
 			}
-			return reflect.TypeOf(gb.PPU.InternalState).String()[5:]
+			return reflect.TypeOf(state).String()[5:]
 		}},
-		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.InternalStateLength) }},
+		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetInternalStateLength()) }},
 	}
 	return newPanel("LCD (internal)", entries...)
+}
+
+func newHdmaPanel() *panel {
+	entries := []panelEntry{
+		{name: "FF51-52 Src", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%04X", gb.Memory.DebugGetVDMASrcAddress()) }},
+		{name: "FF53-54 Dest", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%04X", gb.Memory.DebugGetVDMADestAddress()) }},
+		{name: "FF55    Length", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugGetVDMALength()) }},
+	}
+	return newPanel("vRAM DMA", entries...)
 }
 
 func newSoundCh1Panel() *panel {

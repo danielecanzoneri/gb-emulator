@@ -5,24 +5,24 @@ import (
 )
 
 type PPU struct {
-	Dots int // Dots elapsed rendering this line
+	dots int // Dots elapsed rendering this line
 
 	// Internal (machine state and length)
-	InternalState       ppuInternalState
-	InternalStateLength int   // When it reaches 0, switch to next state
+	internalState       ppuInternalState
+	internalStateLength int   // When it reaches 0, switch to next state
 	interruptMode       uint8 // Mode used for the STAT interrupt line
 
-	// vRAM and OAM data
+	// vRAM and OAM data (internal memory structures, accessed via Read()/Write())
 	vRAM vRAM
-	OAM  OAM
+	oam  OAM
 
 	// objects on current line
 	objsLY  [objsLimit]*Object
 	numObjs int
 
 	// Double buffering to avoid screen tearing
-	frontBuffer *[FrameHeight][FrameWidth]uint8
-	backBuffer  *[FrameHeight][FrameWidth]uint8
+	frontBuffer *[FrameHeight][FrameWidth]uint16
+	backBuffer  *[FrameHeight][FrameWidth]uint16
 
 	LCDC uint8 // LCD control
 	STAT uint8 // STAT interrupt
@@ -30,12 +30,22 @@ type PPU struct {
 	SCX  uint8 // x - background scrolling
 	LY   uint8 // line counter
 	LYC  uint8 // line counter check
-	BGP  Palette
-	OBP  [2]Palette
+	BGP  DMGPalette
+	OBP  [2]DMGPalette
 	WY   uint8
 	WX   uint8
 
-	// Window Y counter
+	// Handle emulation of CGB colors
+	Cgb              bool
+	DmgCompatibility bool
+
+	// CGB only registers
+	BGPI       uint8 // Background palette index
+	OBPI       uint8 // Object palette index
+	BGPalette  [64]uint8
+	OBJPalette [64]uint8
+
+	// Window Y count
 	wyCounter uint8
 
 	// LCD control
@@ -55,18 +65,22 @@ type PPU struct {
 	RequestVBlankInterrupt func()
 	RequestSTATInterrupt   func()
 
+	// Callback to be called on VBlank and HBlank
+	VBlankCallback func()
+	HBlankCallback func()
+
 	modeTicksElapsed uint
 }
 
-func New() *PPU {
+func New(cgb bool) *PPU {
 	ppu := new(PPU)
+	ppu.Cgb = cgb
 	ppu.STAT = 0x84 // Set unused bit (and LY=LYC)
-	ppu.OBP[0] = 0xFF
-	ppu.OBP[1] = 0xFF
 
 	// Init buffers
-	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint8)
-	ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+	ppu.frontBuffer = new([FrameHeight][FrameWidth]uint16)
+	ppu.backBuffer = new([FrameHeight][FrameWidth]uint16)
+	ppu.emptyFrame()
 
 	return ppu
 }
@@ -77,15 +91,15 @@ func (ppu *PPU) Tick(ticks int) {
 	}
 
 	// OAM bug
-	if ppu.OAM.buggedRead && ppu.OAM.buggedWrite {
+	if ppu.oam.buggedRead && ppu.oam.buggedWrite {
 		ppu.triggerOAMBugWriteAndRead()
-	} else if ppu.OAM.buggedRead {
+	} else if ppu.oam.buggedRead {
 		ppu.triggerOAMBugRead()
-	} else if ppu.OAM.buggedWrite {
+	} else if ppu.oam.buggedWrite {
 		ppu.triggerOAMBugWrite()
 	}
-	ppu.OAM.buggedRead = false
-	ppu.OAM.buggedWrite = false
+	ppu.oam.buggedRead = false
+	ppu.oam.buggedWrite = false
 
 	// From what I gathered from mooneye tests, OAM and vRAM read behave as follows:
 	// normally it is blocked 4 ticks before STAT mode changes
@@ -99,13 +113,13 @@ func (ppu *PPU) Tick(ticks int) {
 	//
 	// When incrementing LY, LY==LYC flag on STAT is set to 0 and then it is updated 4 ticks later
 
-	ppu.InternalStateLength -= ticks
-	ppu.Dots += ticks
+	ppu.internalStateLength -= ticks
+	ppu.dots += ticks
 
 	// Switch PPU internal state
-	for ppu.InternalStateLength <= 0 {
+	for ppu.internalStateLength <= 0 {
 		// Given the PPU state, we compute the next state
-		nextState := ppu.InternalState.Next(ppu)
+		nextState := ppu.internalState.Next(ppu)
 		ppu.setState(nextState)
 	}
 }

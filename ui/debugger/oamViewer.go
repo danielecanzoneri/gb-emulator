@@ -2,28 +2,21 @@ package debugger
 
 import (
 	"fmt"
+
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
-)
-
-const (
-	objectsScale = 10
 )
 
 type oamViewerObject struct {
-	*widget.Container
+	*tileView
 
 	// Index (from 0 to 39) in OAM data
 	index int
 
-	// Image displaying the object
-	sprite      *ebiten.Image
-	drawOptions *ebiten.DrawImageOptions
-	graphic     *widget.Graphic
-
+	// Labels for object data
 	yLabel         *widget.Text
 	xLabel         *widget.Text
 	tileLabel      *widget.Text
@@ -33,19 +26,10 @@ type oamViewerObject struct {
 func newOamViewerObject(index int) *oamViewerObject {
 	obj := &oamViewerObject{index: index}
 
-	// Object image
-	obj.sprite = ebiten.NewImage(8, 8)
-	obj.sprite.Fill(theme.GameBoyPalette[0])
-	obj.drawOptions = &ebiten.DrawImageOptions{}
-	obj.drawOptions.GeoM.Scale(objectsScale, objectsScale)
+	// Create tile view with larger scale for OAM objects
+	obj.tileView = newTileView(objectsScale, nil)
 
-	scaledSprite := ebiten.NewImage(8*objectsScale, 8*objectsScale)
-	scaledSprite.DrawImage(obj.sprite, obj.drawOptions)
-	obj.graphic = widget.NewGraphic(
-		widget.GraphicOpts.Image(scaledSprite),
-	)
-
-	// Object data
+	// Object data labels
 	obj.yLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.xLabel = newLabel("00", theme.Debugger.LabelColor)
 	obj.tileLabel = newLabel("00", theme.Debugger.LabelColor)
@@ -55,43 +39,57 @@ func newOamViewerObject(index int) *oamViewerObject {
 		obj.yLabel, obj.xLabel, obj.tileLabel, obj.attributeLabel,
 	)
 
-	obj.Container = widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(
-			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
-			widget.RowLayoutOpts.Spacing(2),
-		),
-	))
-	obj.Container.AddChild(obj.graphic, dataContainer)
+	// Add labels to container (tileView already has graphic)
+	obj.Container.AddChild(dataContainer)
 
 	return obj
 }
 
 func (obj *oamViewerObject) Sync(gb *gameboy.GameBoy) {
-	oamObj := &gb.PPU.OAM.Data[obj.index]
+	oamObj := gb.PPU.DebugGetOAMObject(obj.index)
+	if oamObj == nil {
+		return
+	}
 
-	// Update data
+	// Update data labels
 	obj.yLabel.Label = fmt.Sprintf("%02X", oamObj.Read(0))
 	obj.xLabel.Label = fmt.Sprintf("%02X", oamObj.Read(1))
 	obj.tileLabel.Label = fmt.Sprintf("%02X", oamObj.Read(2))
 	obj.attributeLabel.Label = fmt.Sprintf("%02X", oamObj.Read(3))
 
-	// Update image
-	for row := range 8 {
-		pixels := gb.PPU.GetObjectRow(oamObj, uint8(row))
-		for col := range 8 {
-			obj.sprite.Set(col, row, theme.GameBoyPalette[pixels[col]])
+	var systemPalette theme.Palette = theme.DMGPalette{}
+	paletteId := ppu.TileAttribute(oamObj.Read(3)).DMGPalette()
+	var colorPalette ppu.Palette = gb.PPU.OBP[paletteId]
+	if gb.EmulationModel == gameboy.CGB {
+		systemPalette = theme.CGBPalette{}
+
+		objPalette := gb.PPU.DebugGetOBJPalette()
+		if gb.PPU.DmgCompatibility {
+			colorPalette = gb.PPU.OBP[paletteId].ConvertToCGB(objPalette[8*paletteId : 8*paletteId+8])
+		} else {
+			paletteId = ppu.TileAttribute(oamObj.Read(3)).CGBPalette()
+			colorPalette = ppu.CGBPalette(objPalette[8*paletteId : 8*paletteId+8])
 		}
 	}
-	obj.graphic.Image.DrawImage(obj.sprite, obj.drawOptions)
+
+	// Render tile row by row using shared buffer
+	var pixels [8][8]uint8
+	for row := range 8 {
+		pixels[row] = gb.PPU.GetObjectRow(oamObj, uint8(row))
+	}
+
+	// Use common rendering method
+	obj.renderPixels(pixels, systemPalette, colorPalette)
 }
 
 type oamViewer struct {
-	*widget.Window
-
 	// Pointer to the UI for showing the window
 	ui *ebitenui.UI
 
 	objects [40]*oamViewerObject
+
+	// Window info
+	windowInfo *windowInfo
 
 	// Handler to close the window
 	closeWindow widget.RemoveWindowFunc
@@ -115,12 +113,30 @@ func (d *Debugger) newOamViewer() *oamViewer {
 		root.AddChild(o.objects[i])
 	}
 
-	o.Window = newWindow("OAM Viewer", root, &o.closeWindow)
+	o.windowInfo = newWindow("OAM Viewer", root, &o.closeWindow)
 	return o
 }
 
+func (o *oamViewer) Window() *widget.Window {
+	return o.windowInfo.Window
+}
+
+func (o *oamViewer) Contents() *widget.Container {
+	return o.windowInfo.Contents
+}
+
+func (o *oamViewer) TitleBar() *widget.Container {
+	return o.windowInfo.TitleBar
+}
+
+func (o *oamViewer) SetCloseHandler(closeFunc widget.RemoveWindowFunc) widget.RemoveWindowFunc {
+	old := o.closeWindow
+	o.closeWindow = closeFunc
+	return old
+}
+
 func (o *oamViewer) Sync(gb *gameboy.GameBoy) {
-	if !o.ui.IsWindowOpen(o.Window) {
+	if !o.ui.IsWindowOpen(o.Window()) {
 		return
 	}
 

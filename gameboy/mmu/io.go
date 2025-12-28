@@ -2,6 +2,7 @@ package mmu
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
+	"github.com/danielecanzoneri/gb-emulator/util"
 )
 
 const (
@@ -48,8 +49,24 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
+	VBKAddr  = 0xFF4F
+
+	KEY1Addr = 0xFF4D
 
 	BANKAddr = 0xFF50
+
+	HDMA1Addr = 0xFF51
+	HDMA2Addr = 0xFF52
+	HDMA3Addr = 0xFF53
+	HDMA4Addr = 0xFF54
+	HDMA5Addr = 0xFF55
+
+	BGPIAddr = 0xFF68
+	BGPDAddr = 0xFF69
+	OBPIAddr = 0xFF6A
+	OBPDAddr = 0xFF6B
+
+	WBKAddr = 0xFF70
 
 	IFAddr       = 0xFF0F
 	IEAddr       = 0xFFFF
@@ -79,16 +96,37 @@ func (mmu *MMU) writeIO(addr uint16, v uint8) {
 		mmu.timer.Write(addr, v)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBKAddr,
+		BGPIAddr, BGPDAddr, OBPIAddr, OBPDAddr:
 		mmu.ppu.Write(addr, v)
 
 	// DMA transfer
 	case DMAAddr:
 		mmu.DMA(v)
 
+	// Prepare speed switch
+	case KEY1Addr:
+		mmu.PrepareSpeedSwitch = util.ReadBit(v, 0) > 0
+
 	// Disable BOOT ROM
 	case BANKAddr:
-		mmu.BootRomDisabled = true
+		mmu.DisableBootROM()
+
+	// VDMA transfer
+	case HDMA1Addr:
+		mmu.vDMASrcAddress = (mmu.vDMASrcAddress & 0xFF) | (uint16(v) << 8)
+	case HDMA2Addr:
+		mmu.vDMASrcAddress = (mmu.vDMASrcAddress & 0xFF00) | uint16(v&0xF0)
+	case HDMA3Addr:
+		mmu.vDMADestAddress = (mmu.vDMADestAddress & 0xFF) | (uint16(v&0x1F) << 8)
+	case HDMA4Addr:
+		mmu.vDMADestAddress = (mmu.vDMADestAddress & 0xFF00) | uint16(v&0xF0)
+	case HDMA5Addr:
+		mmu.VDMA(v)
+
+	// wRAM bank register
+	case WBKAddr:
+		mmu.vbk = v & 0b111
 
 	// Interrupt flags
 	case IFAddr:
@@ -127,12 +165,36 @@ func (mmu *MMU) readIO(addr uint16) uint8 {
 		return mmu.timer.Read(addr)
 
 	// PPU I/O
-	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr:
+	case LCDCAddr, STATAddr, SCYAddr, SCXAddr, LYAddr, LYCAddr, BGPAddr, OBP0Addr, OBP1Addr, WYAddr, WXAddr, VBKAddr,
+		BGPIAddr, BGPDAddr, OBPIAddr, OBPDAddr:
 		return mmu.ppu.Read(addr)
 
 	// DMA transfer
 	case DMAAddr:
 		return mmu.dmaReg
+
+	// Speed switch
+	case KEY1Addr:
+		var out uint8 = 0x7E
+		if mmu.PrepareSpeedSwitch {
+			util.SetBit(&out, 0, 1)
+		}
+		if mmu.DoubleSpeed {
+			util.SetBit(&out, 7, 1)
+		}
+		return out
+
+	// VDMA transfer
+	case HDMA5Addr:
+		if mmu.vDMAActive || mmu.vDMAHBlank {
+			return mmu.vDMALength
+		} else {
+			return 0x80 | mmu.vDMALength
+		}
+
+	// wRAM bank register
+	case WBKAddr:
+		return 0xF8 | mmu.vbk
 
 	// Interrupt flags
 	case IFAddr:

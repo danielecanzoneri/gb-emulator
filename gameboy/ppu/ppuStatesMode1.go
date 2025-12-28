@@ -31,13 +31,16 @@ func (st *vBlank) Init(ppu *PPU) {
 		ppu.RequestVBlankInterrupt()
 
 		// Frame complete, switch buffers
-		ppu.frontBuffer = ppu.backBuffer
-		ppu.backBuffer = new([FrameHeight][FrameWidth]uint8)
+		ppu.swapBuffers()
+
+		if ppu.VBlankCallback != nil {
+			ppu.VBlankCallback()
+		}
 	}
 }
 func (st *vBlank) Next(ppu *PPU) ppuInternalState {
 	ppu.LY++
-	ppu.Dots -= lineLength
+	ppu.dots -= lineLength
 
 	if ppu.LY == 154 {
 		ppu.LY = 0

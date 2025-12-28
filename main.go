@@ -12,17 +12,19 @@ const (
 
 var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
-	bootRom           = flag.String("boot-rom", "boot/bootix_dmg.bin", "Boot ROM filename (\"None\" to skip boot ROM)")
+	bootRom           = flag.String("boot-rom", "", "Boot ROM filename")
 	romPath           = flag.String("rom", "", "ROM filename")
 	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
+	shader            = flag.Bool("shader", true, "Use GBC color correction shader (default true)")
+	systemModel       = flag.String("model", "auto", "GameBoy model (auto, dmg, cgb)")
 )
 
 func main() {
 	flag.Parse()
 
 	// Init emulator
-	gui, err := ui.New()
+	gui, err := ui.New(*shader)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,15 +36,16 @@ func main() {
 		}
 	}
 
+	if err = gui.SetModel(*systemModel); err != nil {
+		log.Fatal(err)
+	}
+
 	err = gui.LoadROM(*romPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Load Boot ROM
-	if *bootRom == "None" {
-		*bootRom = ""
-	}
 	if err = gui.LoadBootROM(*bootRom); err != nil {
 		log.Fatal(err)
 	}

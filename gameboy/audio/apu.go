@@ -19,6 +19,9 @@ type APU struct {
 	sampleCounter float64 // Counter used to produce samples at correct rate
 	sampleBuffer  chan float32
 
+	// CGB flag
+	isCGB bool
+
 	// Control manually channels
 	Ch1Enabled bool
 	Ch2Enabled bool
@@ -26,15 +29,16 @@ type APU struct {
 	Ch4Enabled bool
 }
 
-func NewAPU(sampleRate float64, sampleBuffer chan float32) *APU {
+func New(sampleRate float64, sampleBuffer chan float32, isCGB bool) *APU {
 	apu := &APU{
 		sampleRate:   sampleRate,
 		sampleBuffer: sampleBuffer,
 		Ch1Enabled:   true, Ch2Enabled: true, Ch3Enabled: true, Ch4Enabled: true,
+		isCGB: isCGB,
 	}
 	apu.channel1 = NewSquareChannel(nr10Addr, nr11Addr, nr12Addr, nr13Addr, nr14Addr, &apu.frameSequencer)
 	apu.channel2 = NewSquareChannel(0, nr21Addr, nr22Addr, nr23Addr, nr24Addr, &apu.frameSequencer)
-	apu.channel3 = NewWaveChannel(&apu.frameSequencer)
+	apu.channel3 = NewWaveChannel(&apu.frameSequencer, isCGB)
 	apu.channel4 = NewNoiseChannel(&apu.frameSequencer)
 
 	return apu
@@ -108,6 +112,14 @@ func (apu *APU) enable() {
 
 	// When powered on, the frame sequencer is reset so that the next step will be 0
 	apu.frameSequencer.position = 7
+
+	// On CGB, length counters are reset when powered up
+	if apu.isCGB {
+		apu.channel1.LengthTimer.Reset()
+		apu.channel2.LengthTimer.Reset()
+		apu.channel3.LengthTimer.Reset()
+		apu.channel4.LengthTimer.Reset()
+	}
 
 	// Set bit 7 of NR52
 	apu.active = true

@@ -20,6 +20,12 @@ const (
 	OBP1Addr = 0xFF49
 	WYAddr   = 0xFF4A
 	WXAddr   = 0xFF4B
+	VBKAddr  = 0xFF4F
+
+	BGPIAddr = 0xFF68
+	BGPDAddr = 0xFF69
+	OBPIAddr = 0xFF6A
+	OBPDAddr = 0xFF6B
 
 	// STATMask bits 0-2 read only, bits 3-6 read/write
 	STATMask = 0b01111000
@@ -31,7 +37,7 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		return
 	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
 		ppu.GlitchedOAMAccess(addr, false)
-		ppu.OAM.Write(addr, v)
+		ppu.oam.Write(addr, v)
 		return
 	}
 
@@ -79,12 +85,16 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		}
 		ppu.STAT = (STATMask & v) | (ppu.STAT &^ STATMask)
 		ppu.checkSTATInterrupt()
+	// If in CGB compatibility mode, writes to this address must update the
+	// corresponding CGB palettes
 	case BGPAddr:
-		ppu.BGP = Palette(v)
+		ppu.BGP = DMGPalette(v)
+
 	case OBP0Addr:
-		ppu.OBP[0] = Palette(v)
+		ppu.OBP[0] = DMGPalette(v)
 	case OBP1Addr:
-		ppu.OBP[1] = Palette(v)
+		ppu.OBP[1] = DMGPalette(v)
+
 	case SCYAddr:
 		ppu.SCY = v
 	case SCXAddr:
@@ -93,6 +103,40 @@ func (ppu *PPU) Write(addr uint16, v uint8) {
 		ppu.WY = v
 	case WXAddr:
 		ppu.WX = v
+	case VBKAddr:
+		if ppu.Cgb {
+			ppu.vRAM.bankNumber = v & 1
+		}
+	case BGPIAddr:
+		if ppu.Cgb {
+			ppu.BGPI = v
+		}
+	case BGPDAddr:
+		if ppu.Cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.BGPI & 0x3F
+			ppu.BGPalette[paletteAddr] = v
+
+			// Auto increment of address if bit 7 of BGPI is set
+			if util.ReadBit(ppu.BGPI, 7) > 0 {
+				ppu.BGPI = (ppu.BGPI & 0x80) | ((paletteAddr + 1) & 0x3F)
+			}
+		}
+	case OBPIAddr:
+		if ppu.Cgb {
+			ppu.OBPI = v
+		}
+	case OBPDAddr:
+		if ppu.Cgb {
+			// address bits are 0-5
+			paletteAddr := ppu.OBPI & 0x3F
+			ppu.OBJPalette[paletteAddr] = v
+
+			// Auto increment of address if bit 7 of OBPI is set
+			if util.ReadBit(ppu.OBPI, 7) > 0 {
+				ppu.OBPI = (ppu.OBPI & 0x80) | ((paletteAddr + 1) & 0x3F)
+			}
+		}
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
@@ -103,7 +147,7 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		return ppu.vRAM.Read(addr)
 	} else if 0xFE00 <= addr && addr < 0xFF00 { // OAM
 		ppu.GlitchedOAMAccess(addr, true)
-		return ppu.OAM.Read(addr)
+		return ppu.oam.Read(addr)
 	}
 
 	switch addr {
@@ -129,6 +173,20 @@ func (ppu *PPU) Read(addr uint16) uint8 {
 		return ppu.WY
 	case WXAddr:
 		return ppu.WX
+	case VBKAddr:
+		return ppu.vRAM.bankNumber | 0xFE
+	case BGPIAddr:
+		return ppu.BGPI
+	case BGPDAddr:
+		// address bits are 0-5
+		paletteAddr := ppu.BGPI & 0x3F
+		return ppu.BGPalette[paletteAddr]
+	case OBPIAddr:
+		return ppu.OBPI
+	case OBPDAddr:
+		// address bits are 0-5
+		paletteAddr := ppu.OBPI & 0x3F
+		return ppu.OBJPalette[paletteAddr]
 	default:
 		panic("PPU: unknown addr " + strconv.FormatUint(uint64(addr), 16))
 	}
@@ -139,8 +197,8 @@ func (ppu *PPU) enable() {
 		return
 	}
 	ppu.active = true
-	ppu.Dots = 0
-	ppu.InternalStateLength = 0
+	ppu.dots = 0
+	ppu.internalStateLength = 0
 
 	ppu.setState(new(glitchedOamScan))
 	ppu.checkSTATInterrupt()
@@ -159,9 +217,9 @@ func (ppu *PPU) disable() {
 
 	// Reset to HBlank
 	ppu.LY = 0
-	ppu.Dots = 0
-	ppu.InternalStateLength = 0
-	ppu.InternalState = nil
+	ppu.dots = 0
+	ppu.internalStateLength = 0
+	ppu.internalState = nil
 
 	// Blank screen
 	ppu.emptyFrame()

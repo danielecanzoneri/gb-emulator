@@ -2,7 +2,7 @@ package debugger
 
 import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/image"
 	"github.com/ebitenui/ebitenui/widget"
@@ -19,7 +19,9 @@ type Debugger struct {
 	memoryViewer    *memoryViewer
 	registersViewer *registersViewer
 
-	oamViewer *oamViewer
+	oamViewer   *oamViewer
+	bgViewer    *bgViewer
+	tilesViewer *tilesViewer
 
 	// State
 	gameBoy *gameboy.GameBoy
@@ -48,9 +50,6 @@ func New(gb *gameboy.GameBoy) *Debugger {
 		gameBoy: gb,
 	}
 
-	// Set CPU hooks
-	d.initHooks()
-
 	// Create widgets
 	d.toolbar = d.newToolbar()
 	d.disassembler = newDisassembler()
@@ -59,6 +58,8 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.registersViewer = newRegisterViewer()
 
 	d.oamViewer = d.newOamViewer()
+	d.bgViewer = d.newBGViewer()
+	d.tilesViewer = d.newTilesViewer()
 
 	// Add widgets to the root container
 	main := newContainer(widget.DirectionHorizontal,
@@ -79,8 +80,6 @@ func (d *Debugger) Sync() {
 	d.disassembler.Sync(d.gameBoy)
 	d.memoryViewer.Sync(d.gameBoy)
 	d.registersViewer.Sync(d.gameBoy)
-
-	d.oamViewer.Sync(d.gameBoy)
 }
 
 func (d *Debugger) Update() error {

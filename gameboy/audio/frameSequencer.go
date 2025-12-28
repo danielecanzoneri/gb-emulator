@@ -41,10 +41,10 @@ func (apu *APU) StepFrameSequencer() {
 	clockLength, clockSweep, clockEnvelope := apu.frameSequencer.Step()
 
 	if clockLength {
-		apu.channel1.lengthTimer.Step()
-		apu.channel2.lengthTimer.Step()
-		apu.channel3.lengthTimer.Step()
-		apu.channel4.lengthTimer.Step()
+		apu.channel1.LengthTimer.Step()
+		apu.channel2.LengthTimer.Step()
+		apu.channel3.LengthTimer.Step()
+		apu.channel4.LengthTimer.Step()
 	}
 	if clockSweep {
 		apu.channel1.sweep.Step()

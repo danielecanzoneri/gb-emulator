@@ -4,7 +4,7 @@ package ppu
 type oamScanToDrawing struct{}
 
 func (st *oamScanToDrawing) Init(ppu *PPU) {
-	ppu.OAM.writeDisabled = false
+	ppu.oam.writeDisabled = false
 	ppu.vRAM.readDisabled = true
 }
 func (st *oamScanToDrawing) Next(_ *PPU) ppuInternalState {
@@ -17,8 +17,8 @@ type drawing struct {
 }
 
 func (st *drawing) Init(ppu *PPU) {
-	ppu.OAM.readDisabled = true
-	ppu.OAM.writeDisabled = true
+	ppu.oam.readDisabled = true
+	ppu.oam.writeDisabled = true
 	ppu.vRAM.readDisabled = true
 	ppu.vRAM.writeDisabled = true
 

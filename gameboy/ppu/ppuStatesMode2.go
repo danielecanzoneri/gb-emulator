@@ -9,7 +9,7 @@ type glitchedOamScan struct{}
 
 func (st *glitchedOamScan) Init(ppu *PPU) {
 	// This line is 8 ticks shorter (4 ticks already passed when enabling PPU)
-	ppu.Dots += 4
+	ppu.dots += 4
 
 	ppu.interruptMode = 0xFF
 	ppu.STAT = (ppu.STAT & 0xFC) | 0
@@ -31,11 +31,11 @@ type oamScan struct {
 func (st *oamScan) Init(ppu *PPU) {
 	if st.rowAccessed == 0 { // Still hBlank
 		util.SetBit(&ppu.STAT, 2, 0)
-		ppu.OAM.readDisabled = true
+		ppu.oam.readDisabled = true
 
 	} else if st.rowAccessed == 1 {
-		ppu.OAM.readDisabled = true
-		ppu.OAM.writeDisabled = true
+		ppu.oam.readDisabled = true
+		ppu.oam.writeDisabled = true
 
 		ppu.interruptMode = 2
 		ppu.STAT = (ppu.STAT & 0xFC) | 2

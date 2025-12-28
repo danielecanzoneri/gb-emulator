@@ -357,6 +357,19 @@ func (cpu *CPU) JR_E8() {
 func (cpu *CPU) STOP() {
 	// Increment PC (may cause OAM bug)
 	cpu.incR16WithoutTicks(cpu.ReadPC, cpu.writePC)
+
+	if cpu.isCGB && cpu.mmu.PrepareSpeedSwitch {
+		currentSpeed := cpu.mmu.DoubleSpeed
+
+		// Switch speed for all components
+		cpu.SwitchSpeed(!currentSpeed)
+
+		for _, c := range cpu.tickers {
+			if switcher, ok := c.(SpeedSwitcher); ok {
+				switcher.SwitchSpeed(!currentSpeed)
+			}
+		}
+	}
 }
 
 // LD R8 R8

@@ -9,6 +9,15 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/serial"
 	"github.com/danielecanzoneri/gb-emulator/gameboy/timer"
+	"log"
+)
+
+type SystemModel int
+
+const (
+	Auto SystemModel = iota
+	DMG
+	CGB
 )
 
 type GameBoy struct {
@@ -20,6 +29,10 @@ type GameBoy struct {
 	Joypad     *joypad.Joypad
 	APU        *audio.APU
 
+	// DMG or CGB (Auto to automatically detect it based on cartridge)
+	Model          SystemModel
+	EmulationModel SystemModel // Actual model used to emulate
+
 	sampleRate float64
 	sampleBuff chan float32
 }
@@ -30,21 +43,26 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 		sampleBuff: audioSampleBuffer,
 	}
 
-	gb.initComponents()
-
 	return gb
 }
 
-func (gb *GameBoy) initComponents() {
-	gb.PPU = ppu.New()
+func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
+	isCGB := gb.EmulationModel == CGB
+
+	gb.PPU = ppu.New(isCGB)
 	gb.Joypad = joypad.New()
-	gb.APU = audio.NewAPU(gb.sampleRate, gb.sampleBuff)
+	gb.APU = audio.New(gb.sampleRate, gb.sampleBuff, isCGB)
 	gb.SerialPort = serial.NewPort()
 	gb.Timer = timer.New(gb.APU)
 
-	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort)
-	gb.CPU = cpu.New(gb.Memory, gb.PPU)
-	gb.CPU.AddCycler(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
+	gb.Memory = mmu.New(gb.PPU, gb.APU, gb.Timer, gb.Joypad, gb.SerialPort, isCGB)
+	gb.CPU = cpu.New(gb.Memory, gb.PPU, isCGB)
+	gb.Memory.IsCPUHalted = gb.CPU.Halted
+	gb.Timer.DIVGlitched = gb.CPU.SpeedSwitchHalted
+	gb.CPU.AddTicker(gb.SerialPort, gb.Timer, gb.PPU, gb.Memory, gb.APU)
+
+	// Load ROM into memory
+	gb.Memory.Cartridge = rom
 
 	// Set interrupts request handler
 	gb.PPU.RequestVBlankInterrupt = func() { gb.CPU.RequestInterrupt(cpu.VBlankInterruptMask) }
@@ -58,21 +76,34 @@ func (gb *GameBoy) Reset() {
 	rom := gb.Memory.Cartridge
 	bootRom := gb.Memory.BootRom
 
-	// Reset all components
-	gb.initComponents()
-
 	// Load ROM and boot ROM
 	gb.Load(rom)
 	gb.LoadBootROM(bootRom)
 }
 
 func (gb *GameBoy) Load(rom cartridge.Cartridge) {
-	// Load ROM into memory
-	gb.Memory.Cartridge = rom
+	// Detect system model
+	if gb.Model == Auto {
+		if rom.Header().CgbMode == cartridge.DmgOnly {
+			gb.EmulationModel = DMG
+		} else {
+			gb.EmulationModel = CGB
+		}
+	} else if gb.Model == DMG {
+		gb.EmulationModel = DMG
+
+		if rom.Header().CgbMode == cartridge.CgbOnly {
+			log.Println("WARNING: DMG doesn't support CGB only games, running as CGB")
+		}
+	} else {
+		gb.EmulationModel = CGB
+	}
+
+	gb.initComponents(rom)
 
 	// MBC3 RTC clocking
 	if c, ok := rom.(cpu.Ticker); ok {
-		gb.CPU.AddCycler(c)
+		gb.CPU.AddTicker(c)
 	}
 }
 
@@ -87,11 +118,20 @@ func (gb *GameBoy) LoadBootROM(bootRom []uint8) {
 }
 
 func (gb *GameBoy) skipBootROM() {
-	gb.Memory.BootRomDisabled = true
+	gb.Memory.DisableBootROM()
 
-	gb.CPU.SkipBoot()
-	gb.Timer.SkipBoot()
-	gb.Memory.SkipBoot()
-	gb.PPU.SkipBoot()
-	gb.APU.SkipBoot()
+	if gb.EmulationModel == DMG {
+		gb.CPU.SkipDMGBoot()
+		gb.Timer.SkipDMGBoot()
+		gb.Memory.SkipBoot()
+		gb.PPU.SkipDMGBoot()
+		gb.APU.SkipBoot()
+	} else {
+		// Find compatibility mode palette
+		gb.Timer.SkipCGBBoot()
+		gb.Memory.SkipBoot()
+		titleChecksum := gb.PPU.SkipCGBBoot(gb.Memory.Cartridge)
+		gb.CPU.SkipCGBBoot(titleChecksum)
+		gb.APU.SkipBoot()
+	}
 }

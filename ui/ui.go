@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"log"
 	"os"
 
@@ -30,11 +31,18 @@ type UI struct {
 	debugString      string
 	debugStringTimer uint
 
+	// Color Palette
+	palette theme.Palette
+
+	// CGB color correction shader
+	Shader     *ebiten.Shader
+	shaderOpts *ebiten.DrawRectShaderOptions
+
 	// Debugger
 	debugger *debugger.Debugger
 }
 
-func New() (*UI, error) {
+func New(useShader bool) (*UI, error) {
 	ui := new(UI)
 
 	// Create audio buffer
@@ -54,7 +62,7 @@ func New() (*UI, error) {
 	ui.audioPlayer = player
 
 	// Initialize the renderer
-	ui.initRenderer()
+	ui.initRenderer(useShader)
 
 	return ui, nil
 }
