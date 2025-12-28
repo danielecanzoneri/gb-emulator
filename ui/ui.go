@@ -1,9 +1,10 @@
 package ui
 
 import (
-	"github.com/danielecanzoneri/lucky-boy/ui/graphics"
 	"log"
 	"os"
+
+	theme "github.com/danielecanzoneri/lucky-boy/ui/graphics"
 
 	"github.com/danielecanzoneri/lucky-boy/ui/debugger"
 
@@ -60,6 +61,10 @@ func New(useShader bool) (*UI, error) {
 	}
 
 	ui.audioPlayer = player
+
+	// Set up input provider for joypad
+	inputProvider := &ebitenInputProvider{}
+	gb.SetInputProvider(inputProvider)
 
 	// Initialize the renderer
 	ui.initRenderer(useShader)

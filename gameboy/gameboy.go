@@ -1,6 +1,8 @@
 package gameboy
 
 import (
+	"log"
+
 	"github.com/danielecanzoneri/lucky-boy/gameboy/audio"
 	"github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
 	"github.com/danielecanzoneri/lucky-boy/gameboy/cpu"
@@ -9,7 +11,6 @@ import (
 	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
 	"github.com/danielecanzoneri/lucky-boy/gameboy/serial"
 	"github.com/danielecanzoneri/lucky-boy/gameboy/timer"
-	"log"
 )
 
 type SystemModel int
@@ -33,6 +34,9 @@ type GameBoy struct {
 	Model          SystemModel
 	EmulationModel SystemModel // Actual model used to emulate
 
+	// Input provider for detecting key presses
+	inputProvider joypad.InputProvider
+
 	sampleRate float64
 	sampleBuff chan float32
 }
@@ -44,6 +48,11 @@ func New(audioSampleBuffer chan float32, sampleRate float64) *GameBoy {
 	}
 
 	return gb
+}
+
+// SetInputProvider sets the input provider for detecting key presses
+func (gb *GameBoy) SetInputProvider(provider joypad.InputProvider) {
+	gb.inputProvider = provider
 }
 
 func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
@@ -63,6 +72,9 @@ func (gb *GameBoy) initComponents(rom cartridge.Cartridge) {
 
 	// Load ROM into memory
 	gb.Memory.Cartridge = rom
+
+	// Set input provider
+	gb.Joypad.SetInputProvider(gb.inputProvider)
 
 	// Set interrupts request handler
 	gb.PPU.RequestVBlankInterrupt = func() { gb.CPU.RequestInterrupt(cpu.VBlankInterruptMask) }

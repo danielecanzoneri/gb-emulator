@@ -1,11 +1,42 @@
 package ui
 
 import (
+	"log"
+
+	"github.com/danielecanzoneri/lucky-boy/gameboy/joypad"
 	"github.com/danielecanzoneri/lucky-boy/ui/debugger"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"log"
 )
+
+// ebitenInputProvider implements joypad.InputProvider using ebiten
+type ebitenInputProvider struct{}
+
+var buttonsKeyMapping = map[joypad.Key]ebiten.Key{
+	joypad.KeyStart:  ebiten.KeyX,
+	joypad.KeySelect: ebiten.KeyZ,
+	joypad.KeyB:      ebiten.KeyA,
+	joypad.KeyA:      ebiten.KeyS,
+}
+
+var dPadKeyMapping = map[joypad.Key]ebiten.Key{
+	joypad.KeyDown:  ebiten.KeyDown,
+	joypad.KeyUp:    ebiten.KeyUp,
+	joypad.KeyLeft:  ebiten.KeyLeft,
+	joypad.KeyRight: ebiten.KeyRight,
+}
+
+func (p *ebitenInputProvider) IsKeyPressed(key joypad.Key) bool {
+	// Check buttons mapping
+	if ebitenKey, ok := buttonsKeyMapping[key]; ok {
+		return ebiten.IsKeyPressed(ebitenKey)
+	}
+	// Check d-pad mapping
+	if ebitenKey, ok := dPadKeyMapping[key]; ok {
+		return ebiten.IsKeyPressed(ebitenKey)
+	}
+	return false
+}
 
 func (ui *UI) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
