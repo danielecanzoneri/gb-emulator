@@ -2,7 +2,7 @@ package debugger
 
 import (
 	"fmt"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"image/color"
 
 	"github.com/danielecanzoneri/gb-emulator/gameboy"

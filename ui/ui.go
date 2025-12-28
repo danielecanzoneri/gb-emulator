@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"log"
 	"os"
 

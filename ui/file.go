@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"log"
 	"os"
 	"path/filepath"

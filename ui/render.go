@@ -20,7 +20,7 @@ var (
 	shaderImage *ebiten.Image
 )
 
-//go:embed theme/gbc-shader.kage
+//go:embed graphics/gbc-shader.kage
 var shaderData []byte
 
 func (ui *UI) initRenderer(useShader bool) {

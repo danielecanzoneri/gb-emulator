@@ -5,7 +5,7 @@ import (
 	"github.com/danielecanzoneri/gb-emulator/gameboy/ppu"
 
 	"github.com/danielecanzoneri/gb-emulator/gameboy"
-	"github.com/danielecanzoneri/gb-emulator/ui/theme"
+	"github.com/danielecanzoneri/gb-emulator/ui/graphics"
 	"github.com/ebitenui/ebitenui"
 	"github.com/ebitenui/ebitenui/widget"
 )
