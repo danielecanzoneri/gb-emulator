@@ -1,10 +1,8 @@
 package ui
 
 import (
-	"log"
-	"os"
-
 	theme "github.com/danielecanzoneri/lucky-boy/ui/graphics"
+	"log"
 
 	"github.com/danielecanzoneri/lucky-boy/ui/debugger"
 
@@ -24,7 +22,6 @@ type UI struct {
 	// Audio player
 	audioBuffer chan float32
 	audioPlayer *oto.Player
-	audioFile   *os.File // Record game audio
 
 	// Turbo mode
 	turbo bool

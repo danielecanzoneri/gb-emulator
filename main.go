@@ -14,7 +14,6 @@ var (
 	startWithDebugger = flag.Bool("debug", false, "Start emulator with debugger enabled")
 	bootRom           = flag.String("boot-rom", "", "Boot ROM filename")
 	romPath           = flag.String("rom", "", "ROM filename")
-	recordAudio       = flag.Bool("record", false, "Record game audio (2 channels uncompressed 32-bit float little endian")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
 	shader            = flag.Bool("shader", true, "Use GBC color correction shader (default true)")
 	systemModel       = flag.String("model", "auto", "GameBoy model (auto, dmg, cgb)")
@@ -61,13 +60,6 @@ func main() {
 		log.Printf("Invalid serial role %q", *serial)
 	}
 
-	if *recordAudio {
-		if filename, err := gui.RecordAudio(); err != nil {
-			log.Println("Could not record game audio:", err)
-		} else {
-			log.Println("Recording game audio to ", filename)
-		}
-	}
 	if *startWithDebugger {
 		gui.ToggleDebugger()
 	}

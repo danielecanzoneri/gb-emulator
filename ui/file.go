@@ -109,19 +109,3 @@ func getSavFileName(romPath string) string {
 	savFile := romPath[:len(romPath)-len(filepath.Ext(romPath))]
 	return savFile + ".sav"
 }
-
-// Create an audio file containing the game audio.
-// The file will have the same name of the game, followed by a timestamp and .dat extension.
-func createAudioFile(romName string) (*os.File, error) {
-	baseName := romName[:len(romName)-len(filepath.Ext(romName))]
-	timestamp := time.Now().Format("20060102_150405")
-	audioFileName := fmt.Sprintf("%s_%s.dat", baseName, timestamp)
-
-	// Create the file
-	file, err := os.Create(audioFileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
-}

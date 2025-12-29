@@ -5,7 +5,6 @@ import (
 	"github.com/ebitengine/oto/v3"
 	"io"
 	"math"
-	"path/filepath"
 )
 
 const (
@@ -17,11 +16,6 @@ const (
 
 	// Turbo is 2x
 	turboModifier = 2
-)
-
-var (
-	audioFileBuffer         []byte
-	audioFileBufferPosition int
 )
 
 func newAudioPlayer(r io.Reader) (*oto.Player, error) {
@@ -58,12 +52,6 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 				return 0, io.EOF
 			}
 
-			// Write to file buffer
-			if ui.audioFile != nil {
-				binary.LittleEndian.PutUint32(audioFileBuffer[audioFileBufferPosition:], math.Float32bits(sample))
-				audioFileBufferPosition += 4
-			}
-
 			// If turbo, skip some samples
 			turboCounter++
 			if turbo && (turboCounter%turboModifier != 0) {
@@ -98,26 +86,6 @@ func (ui *UI) Read(buf []byte) (n int, err error) {
 			}
 		}
 	}
-	if ui.audioFile != nil {
-		_, _ = ui.audioFile.Write(audioFileBuffer[:audioFileBufferPosition])
-		audioFileBufferPosition = 0
-	}
 
 	return bufferPosition, nil
-}
-
-func (ui *UI) RecordAudio() (string, error) {
-	// Extract the relative path
-	fileName := filepath.Base(ui.fileName)
-	f, err := createAudioFile(fileName)
-	if err != nil {
-		ui.audioPlayer = nil
-		return "", err
-	}
-
-	// Create buffer
-	audioFileBuffer = make([]byte, bufferSize)
-
-	ui.audioFile = f
-	return f.Name(), nil
 }
