@@ -84,8 +84,10 @@ func (cpu *CPU) Tick(ticks int) {
 	}
 
 	cpu.writeIEHasCancelledInterrupt = false
-	if cpu.interruptMaskRequested > 0 && !(cpu.mmu.Read(ieAddr)&cpu.interruptMaskRequested > 0) {
-		cpu.writeIEHasCancelledInterrupt = true
+	if cpu.interruptMaskRequested > 0 {
+		if cpu.mmu.Read(ieAddr)&cpu.interruptMaskRequested == 0 {
+			cpu.writeIEHasCancelledInterrupt = true
+		}
 	}
 
 	for _, cycler := range cpu.tickers {

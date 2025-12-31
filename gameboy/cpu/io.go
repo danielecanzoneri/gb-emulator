@@ -154,8 +154,8 @@ func (cpu *CPU) ReadByte(addr uint16) uint8 {
 	return cpu.mmu.Read(addr)
 }
 func (cpu *CPU) WriteByte(addr uint16, v uint8) {
-	defer cpu.Tick(4)
 	cpu.mmu.Write(addr, v)
+	cpu.Tick(4)
 }
 
 func (cpu *CPU) ReadNextByte() uint8 {
