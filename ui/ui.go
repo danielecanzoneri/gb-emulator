@@ -36,6 +36,9 @@ type UI struct {
 	Shader     *ebiten.Shader
 	shaderOpts *ebiten.DrawRectShaderOptions
 
+	// Reusable pixel buffer for rendering (avoids allocations)
+	pixelBuffer []byte
+
 	// Debugger
 	debugger *debugger.Debugger
 }

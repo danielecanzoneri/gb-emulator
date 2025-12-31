@@ -2,11 +2,12 @@ package ui
 
 import (
 	_ "embed"
+	"log"
+
 	"github.com/danielecanzoneri/lucky-boy/gameboy"
 	"github.com/danielecanzoneri/lucky-boy/gameboy/ppu"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"log"
 )
 
 const (
@@ -100,12 +101,34 @@ func (ui *UI) applyShader(frame *ebiten.Image) *ebiten.Image {
 func (ui *UI) Draw(screen *ebiten.Image) {
 	// Update the frame image with the current frame in the PPU
 	frameBuffer := ui.GameBoy.PPU.GetFrame()
+
+	// Reuse pixel buffer to avoid allocations (RGBA = 4 bytes per pixel)
+	pixelBufferSize := ppu.FrameWidth * ppu.FrameHeight * 4
+	if cap(ui.pixelBuffer) < pixelBufferSize {
+		ui.pixelBuffer = make([]byte, pixelBufferSize)
+	}
+	pixels := ui.pixelBuffer[:pixelBufferSize]
+
+	// Convert frame buffer to RGBA pixels in one pass
+	// Direct color conversion avoids RGBAModel.Convert overhead
 	for y := range ppu.FrameHeight {
 		for x := range ppu.FrameWidth {
 			colorId := frameBuffer[y][x]
-			frameImage.Set(x, y, ui.palette.Get(colorId))
+			c := ui.palette.Get(colorId)
+
+			// Direct conversion to RGBA (16 bit)
+			r, g, b, a := c.RGBA()
+
+			idx := (y*ppu.FrameWidth + x) * 4
+			pixels[idx] = uint8(r >> 8)
+			pixels[idx+1] = uint8(g >> 8)
+			pixels[idx+2] = uint8(b >> 8)
+			pixels[idx+3] = uint8(a >> 8)
 		}
 	}
+
+	// Write all pixels at once
+	frameImage.WritePixels(pixels)
 
 	// Apply shader
 	imageToDraw := ui.applyShader(frameImage)
