@@ -87,114 +87,137 @@ func (ppu *PPU) renderLine() int {
 	// SCX % 8 pixels are discarded from the leftmost background tile
 	penaltyDotsBG := int(ppu.SCX % 8)
 
-	// Flag that is set to true when x+7 >= wx and used to increment window Y counter
-	windowsRendered := false
+	// Tile coordinates in BG map
+	tileX := ppu.SCX >> 3
+	tileY := (ppu.SCY + ppu.LY) >> 3
 
-	for x := uint8(0); x < uint8(FrameWidth); x++ {
-		// CGB flag that signals if this pixel BG has higher priority than objs
-		var bgPriority = false
-		var bgPixel uint8 = 0
+	// Row selector in the tile
+	y := (ppu.SCY + ppu.LY) & 0x7
 
-		// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
-		if ppu.bgWindowEnabled || (ppu.Cgb && !ppu.DmgCompatibility) {
-			// TODO - obviously optimize
-			var tileX, tileY uint8
-			var tileBaseAddr uint16
+	// Number of pixels ignored from this tile (only for first rendered tile)
+	tileShift := ppu.SCX & 0x7
 
-			if ppu.windowEnabled && ppu.LY >= ppu.WY && x+7 >= ppu.WX {
-				windowsRendered = true
+	// Tiles base address (different for background or window tiles)
+	tileBaseAddr := ppu.bgTileMapAddr
 
-				// We're drawing the window
-				tileX = x + 7 - ppu.WX
-				tileY = ppu.wyCounter
-				tileBaseAddr = ppu.windowTileMapAddr
-			} else {
-				// We're drawing the background
-				tileX = ppu.SCX + x // Auto wrap around
-				tileY = ppu.SCY + ppu.LY
-				tileBaseAddr = ppu.bgTileMapAddr
-			}
-
-			tileAddr := tileBaseAddr + getTileMapOffset(tileX, tileY)
-			bgPixels, tileAttributes := ppu.GetBGWindowPixelRow(tileAddr, tileY)
-
-			// Pixel color (0-3)
-			bgPixel = bgPixels[tileX&0b111]
-			var bgPalette Palette = ppu.BGP // DMG palette
-
-			if ppu.Cgb {
-				// If we are in compatibility mode, use the boot computed palette
-				if ppu.DmgCompatibility {
-					bgPalette = ppu.BGP.ConvertToCGB(ppu.BGPalette[0:8])
-				} else {
-					bgPriority = tileAttributes.BGPriority()
-
-					paletteId := tileAttributes.CGBPalette()
-					bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
-				}
-			}
-
-			ppu.backBuffer[ppu.LY][x] = bgPalette.GetColor(bgPixel)
-		}
-
-		// Render objects
-		if !ppu.objEnabled {
-			continue
-		}
-
-		// Draw objects with priority
-		for i := range ppu.numObjs {
-			obj := ppu.objsLY[i]
-			if !(obj.x <= x+8 && x+8 < obj.x+8) {
-				// The current pixel does not overlap the object
-				continue
-			}
-
-			// Object row to draw is: LY + 16 - y
-			rowPixels := ppu.GetObjectRow(obj, ppu.LY+yObjOffset-obj.y)
-
-			// Draw pixel if no other pixel with higher priority was drawn
-			px := rowPixels[(x+8)-obj.x]
-
-			// If object pixel is transparent (px == 0), draw background pixel
-			if px > 0 {
-				if ppu.Cgb && !ppu.DmgCompatibility {
-					// - If the BG color index is 0, the OBJ will always have priority;
-					// - If LCDC bit 0 is clear, the OBJ will always have priority;
-					// - If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority;
-					// Otherwise, BG will have priority.
-					// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
-					if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgPriority && !TileAttribute(obj.flags).BGPriority()) {
-						paletteId := TileAttribute(obj.flags).CGBPalette()
-						palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
-						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
-					}
-				} else { // DMG
-					// If background pixel is 0, draw object pixel
-					// If both object and background pixel are not 0, draw pixel based on
-					//    object attributes BG/Window priority (bit 7)
-					if bgPixel == 0 || !TileAttribute(obj.flags).BGPriority() {
-						var palette Palette
-						// If we are in compatibility mode, use the boot computed palette
-						if ppu.DmgCompatibility {
-							paletteId := TileAttribute(obj.flags).DMGPalette()
-							palette = ppu.OBP[paletteId].ConvertToCGB(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
-						} else {
-							palette = ppu.OBP[TileAttribute(obj.flags).DMGPalette()]
-						}
-						ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
-					}
-				}
-
-				// The first object that impacts this pixel will be the one displayed
-				break
-			}
-		}
+	// Determine first pixel that will belong to window
+	xWindow := FrameWidth // i.e. off screen
+	if ppu.windowEnabled && ppu.LY >= ppu.WY {
+		xWindow = int(ppu.WX) - 7
 	}
 
-	if windowsRendered {
-		ppu.wyCounter++
-		penaltyDotsBG += 6 // 6-dot penalty is incurred while the BG fetcher is being set up for the window.
+	// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
+	doRenderBGWindow := ppu.bgWindowEnabled || (ppu.Cgb && !ppu.DmgCompatibility)
+
+	/* Draw one tile at a time */
+mainRender:
+	for x := uint8(0); x < FrameWidth; {
+		tileAddr := tileBaseAddr + uint16(tileX&0x1F) | (uint16(tileY) << 5) // 32 tiles per map row
+		tileX++                                                              // Set fetching of next tile
+		bgPixels, bgTileAttrs := ppu.GetBGWindowPixelRow(tileAddr, y)
+
+		// Render all tile pixels
+		i := uint8(0)
+		for ; i < 0x8-tileShift; i++ {
+			// Check if we reached end of line
+			if x >= FrameWidth {
+				break mainRender
+			}
+
+			// Pixel color (0-3)
+			bgPixel := bgPixels[tileShift+i]
+
+			if doRenderBGWindow {
+				// Switch to rendering window
+				if int(x) >= xWindow {
+					// Adjust rendering parameters
+					tileX = 0
+					tileY = ppu.wyCounter >> 3
+					y = ppu.wyCounter & 0x7
+					tileBaseAddr = ppu.windowTileMapAddr
+
+					// 6-dot penalty is incurred while the BG fetcher is being set up for the window.
+					penaltyDotsBG += 6
+					// Increment window y counter
+					ppu.wyCounter++
+
+					// Avoid condition retrigger
+					xWindow = FrameWidth
+					continue mainRender // Refetch pixels
+				}
+
+				// Render background
+				var bgPalette Palette = ppu.BGP // DMG palette
+				if ppu.Cgb {
+					// If we are in compatibility mode, use the boot computed palette
+					if ppu.DmgCompatibility {
+						bgPalette = ppu.BGP.ConvertToCGB(ppu.BGPalette[0:8])
+					} else {
+						paletteId := bgTileAttrs.CGBPalette()
+						bgPalette = CGBPalette(ppu.BGPalette[8*paletteId : 8*paletteId+8])
+					}
+				}
+
+				ppu.backBuffer[ppu.LY][x] = bgPalette.GetColor(bgPixel)
+			}
+
+			// Render objects
+			if ppu.objEnabled {
+				// Draw objects with priority
+				for objId := range ppu.numObjs {
+					obj := ppu.objsLY[objId]
+					if !(obj.x <= x+8 && x+8 < obj.x+8) {
+						// The current pixel does not overlap the object
+						continue
+					}
+
+					// Object row to draw is: LY + 16 - y (TODO - don't fetch every time)
+					rowPixels := ppu.GetObjectRow(obj, ppu.LY+yObjOffset-obj.y)
+
+					// Draw pixel if no other pixel with higher priority was drawn
+					px := rowPixels[(x+8)-obj.x]
+
+					// If object pixel is transparent (px == 0), draw background pixel
+					if px > 0 {
+						if ppu.Cgb && !ppu.DmgCompatibility {
+							// - If the BG color index is 0, the OBJ will always have priority;
+							// - If LCDC bit 0 is clear, the OBJ will always have priority;
+							// - If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority;
+							// Otherwise, BG will have priority.
+							// In CGB mode the LCDC.0 has a different meaning, it is the BG/Window master priority
+							if bgPixel == 0 || !ppu.bgWindowEnabled || (!bgTileAttrs.BGPriority() && !TileAttribute(obj.flags).BGPriority()) {
+								paletteId := TileAttribute(obj.flags).CGBPalette()
+								palette := CGBPalette(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
+								ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
+							}
+						} else { // DMG
+							// If background pixel is 0, draw object pixel
+							// If both object and background pixel are not 0, draw pixel based on
+							//    object attributes BG/Window priority (bit 7)
+							if bgPixel == 0 || !TileAttribute(obj.flags).BGPriority() {
+								var palette Palette
+								// If we are in compatibility mode, use the boot computed palette
+								if ppu.DmgCompatibility {
+									paletteId := TileAttribute(obj.flags).DMGPalette()
+									palette = ppu.OBP[paletteId].ConvertToCGB(ppu.OBJPalette[8*paletteId : 8*paletteId+8])
+								} else {
+									palette = ppu.OBP[TileAttribute(obj.flags).DMGPalette()]
+								}
+								ppu.backBuffer[ppu.LY][x] = palette.GetColor(px)
+
+							}
+						}
+						// The first object that impacts this pixel will be the one displayed
+						break
+					}
+				}
+			}
+
+			// Advance pixel
+			x++
+		}
+
+		tileShift = 0 // No pixels discarded for new tile
 	}
 
 	penaltyDotsObj := 0
