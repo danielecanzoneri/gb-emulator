@@ -15,14 +15,13 @@ It currently supports the original DMG Game Boy and the Game Boy Color.
 
 ## Features
 
-- **Accurate Emulation**: Implements the full Game Boy Z80-like CPU, with extensive opcode tests.
+- **Accurate Emulation**: Implements the full Game Boy Z80-like CPU, with cycle accurate timing.
   It passes Both [Blargg's](https://github.com/retrio/gb-test-roms) and [Gekkio's](https://github.com/Gekkio/mooneye-test-suite) test suites (some tests require the original boot rom).
 - **PPU (Graphics) Emulation**: Renders original Game Boy graphics with accurate timing and palette.
 - **Serial data transfer**: Emulates with high accuracy Game Link Cable (must start one instance with `-serial master` flag and the other with `-serial slave`).
 - **Debugger**: Integrated graphical debugger with disassembly, memory viewer, register viewer, breakpoints, and step/continue/reset controls.
 - **Boot ROM**: Possibility to specify a boot rom with the `-boot-rom` flag, `None` skips it and sets the state of the emulator like after executing the original ROM.
 - **Cross-platform GUI**: Built with [Ebiten](https://ebiten.org/)  and [EbitenUI](https://ebitenui.github.io/)
-- **Turbo Mode**: By pressing `Space` the game will speed up at 2x
 - **Color Correction**: Applies accurate color correction for Game Boy Color games, replicating the look of the original LCD screen.
 
 ![Tetris Home - No color correction](images/tetris-home-cgb-no-correction.png)
@@ -85,6 +84,7 @@ go run .
   - **Select**: Z
   - **Ctrl+L**: Load a new game
   - **1-4**: Toggle audio channels
+- By pressing `Space` the game will speed up at 2x
 - The debugger can be launched from the emulator (press `Esc`)
 
 ## Resources

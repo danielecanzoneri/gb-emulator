@@ -15,7 +15,7 @@ var (
 	bootRom           = flag.String("boot-rom", "", "Boot ROM filename")
 	romPath           = flag.String("rom", "", "ROM filename")
 	serial            = flag.String("serial", "", "Serial role (master or slave)")
-	shader            = flag.Bool("shader", true, "Use GBC color correction shader (default true)")
+	shader            = flag.Bool("shader", true, "Use GBC color correction shader")
 	systemModel       = flag.String("model", "auto", "GameBoy model (auto, dmg, cgb)")
 )
 
