@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/danielecanzoneri/lucky-boy/gameboy/cartridge"
 	"github.com/sqweek/dialog"
