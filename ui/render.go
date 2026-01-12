@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"bytes"
 	_ "embed"
+	"image"
+	"image/png"
 	"log"
 
 	"github.com/danielecanzoneri/lucky-boy/gameboy"
@@ -24,7 +27,39 @@ var (
 //go:embed graphics/gbc-shader.kage
 var shaderData []byte
 
+var (
+	//go:embed graphics/assets/icon16.png
+	icon16 []byte
+	//go:embed graphics/assets/icon32.png
+	icon32 []byte
+	//go:embed graphics/assets/icon48.png
+	icon48 []byte
+	//go:embed graphics/assets/icon64.png
+	icon64 []byte
+	//go:embed graphics/assets/icon128.png
+	icon128 []byte
+	//go:embed graphics/assets/icon256.png
+	icon256 []byte
+)
+
 func (ui *UI) initRenderer(useShader bool) {
+	// Set window icon
+	decodePNG := func(b []byte) image.Image {
+		img, err := png.Decode(bytes.NewReader(b))
+		if err != nil {
+			panic(err)
+		}
+		return img
+	}
+	ebiten.SetWindowIcon([]image.Image{
+		decodePNG(icon16),
+		decodePNG(icon32),
+		decodePNG(icon48),
+		decodePNG(icon64),
+		decodePNG(icon128),
+		decodePNG(icon256),
+	})
+
 	// Since game boy is 59.7 FPS but ebiten updates at 60 FPS there are
 	// some frames where nothing is drawn. This avoids screen flickering
 	ebiten.SetScreenClearedEveryFrame(false)
