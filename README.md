@@ -50,7 +50,6 @@ The integrated debugger provides a comprehensive set of tools for analyzing and 
 
 ```
 .
-├── boot/             # Boot ROMs
 ├── gameboy/          # Main emulator code (CPU, PPU, APU, memory)
 ├── ui/               # Ebiten-based GUI and input handling
 │   ├── debugger/     # Integrated debugger components
