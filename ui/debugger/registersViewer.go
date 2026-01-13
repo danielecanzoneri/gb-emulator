@@ -2,8 +2,6 @@ package debugger
 
 import (
 	"fmt"
-	"reflect"
-
 	"github.com/danielecanzoneri/lucky-boy/gameboy"
 	"github.com/ebitenui/ebitenui/widget"
 )
@@ -43,35 +41,26 @@ func newRegisterViewer() *registersViewer {
 		timer:       newTimerPanel(),
 		serial:      newSerialPanel(),
 	}
-
-	soundRow := newContainer(widget.DirectionHorizontal,
-		rv.ch1, rv.ch2, rv.ch3, rv.ch4,
-	)
-	cpuColumn := newContainer(widget.DirectionVertical,
-		rv.cpu, rv.interrupts,
-	)
-	timerSoundControlColumn := newContainer(widget.DirectionVertical,
-		rv.control, rv.timer,
+	leftPanels := newContainer(widget.DirectionVertical,
+		rv.lcd,
+		rv.lcdInternal,
+		rv.hdma,
 	)
 	centralPanels := newContainer(widget.DirectionVertical,
-		newContainer(widget.DirectionHorizontal,
-			cpuColumn,               // left
-			timerSoundControlColumn, // right
-		),
-		rv.waveRam,
-		rv.serial,
+		rv.cpu, rv.interrupts,
+		rv.serial, rv.timer,
 	)
-	secondRow := newContainer(widget.DirectionHorizontal,
+	soundContainer := newContainer(widget.DirectionHorizontal,
 		newContainer(widget.DirectionVertical,
-			rv.lcd,
-			rv.lcdInternal,
-			rv.hdma,
+			rv.ch1, rv.ch2, rv.waveRam,
 		),
-		centralPanels,
+		newContainer(widget.DirectionVertical,
+			rv.ch3, rv.ch4, rv.control,
+		),
 	)
 
-	rv.Container = newContainer(widget.DirectionVertical,
-		soundRow, secondRow,
+	rv.Container = newContainer(widget.DirectionHorizontal,
+		leftPanels, centralPanels, soundContainer,
 	)
 	return rv
 }
@@ -105,12 +94,12 @@ func newCpuPanel() *panel {
 }
 
 func newInterruptsPanel() *panel {
-	imeString := map[bool]string{true: "enabled", false: "disabled"}
+	imeString := map[bool]string{true: "on", false: "off"}
 	entries := []panelEntry{
 		{name: "FF0F IF", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF0F)) }},
 		{name: "FF4D KEY1", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFF4D)) }},
 		{name: "FFFF IE", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%02X", gb.Memory.DebugRead(0xFFFF)) }},
-		{name: "IME", valueSync: func(gb *gameboy.GameBoy) string { return imeString[gb.CPU.IME] }},
+		{name: "IME", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%- 3s", imeString[gb.CPU.IME]) }},
 	}
 	return newPanel("Interrupts", entries...)
 }
@@ -211,11 +200,15 @@ func newSoundControlPanel() *panel {
 func newWaveRamPanel() *panel {
 	entries := []panelEntry{
 		{name: "", valueSync: func(gb *gameboy.GameBoy) string {
-			return fmt.Sprintf("%02X %02X %02X %02X  %02X %02X %02X %02X",
+			return fmt.Sprintf("%02X %02X %02X %02X",
 				gb.Memory.DebugRead(0xFF30),
 				gb.Memory.DebugRead(0xFF31),
 				gb.Memory.DebugRead(0xFF32),
 				gb.Memory.DebugRead(0xFF33),
+			)
+		}},
+		{name: "", valueSync: func(gb *gameboy.GameBoy) string {
+			return fmt.Sprintf("%02X %02X %02X %02X",
 				gb.Memory.DebugRead(0xFF34),
 				gb.Memory.DebugRead(0xFF35),
 				gb.Memory.DebugRead(0xFF36),
@@ -223,11 +216,15 @@ func newWaveRamPanel() *panel {
 			)
 		}},
 		{name: "", valueSync: func(gb *gameboy.GameBoy) string {
-			return fmt.Sprintf("%02X %02X %02X %02X  %02X %02X %02X %02X",
+			return fmt.Sprintf("%02X %02X %02X %02X",
 				gb.Memory.DebugRead(0xFF38),
 				gb.Memory.DebugRead(0xFF39),
 				gb.Memory.DebugRead(0xFF3A),
 				gb.Memory.DebugRead(0xFF3B),
+			)
+		}},
+		{name: "", valueSync: func(gb *gameboy.GameBoy) string {
+			return fmt.Sprintf("%02X %02X %02X %02X",
 				gb.Memory.DebugRead(0xFF3C),
 				gb.Memory.DebugRead(0xFF3D),
 				gb.Memory.DebugRead(0xFF3E),
@@ -236,7 +233,7 @@ func newWaveRamPanel() *panel {
 		}},
 	}
 
-	return newPanel("Wave RAM (FF30-FF3F)", entries...)
+	return newPanel("Wave RAM\n(FF30-F)", entries...)
 }
 
 func newTimerPanel() *panel {

@@ -10,6 +10,12 @@ import (
 	"github.com/ebitenui/ebitenui/widget"
 )
 
+const (
+	sliderWidth = 15
+	pixelWidth  = 320 - sliderWidth
+	numRows     = 24
+)
+
 var (
 	entryImage = &widget.ButtonImage{
 		Idle:    image.NewNineSliceColor(theme.Debugger.Main.Color),
@@ -109,7 +115,7 @@ func newDisassembler() *disassembler {
 	dis := &disassembler{
 		entries:      make([]*disassemblerEntry, 0x10000),
 		totalEntries: 0x10000,
-		length:       32,
+		length:       numRows,
 		breakpoints:  make(map[uint16]struct{}),
 	}
 	dis.rowsWidget = make([]widget.PreferredSizeLocateableWidget, dis.length)
@@ -141,7 +147,7 @@ func newDisassembler() *disassembler {
 		widget.SliderOpts.Images(&widget.SliderTrackImage{
 			Idle: image.NewNineSliceColor(theme.Debugger.Slider.TrackColor),
 		}, theme.Debugger.Button.Image),
-		widget.SliderOpts.MinHandleSize(15), // Width of handle
+		widget.SliderOpts.MinHandleSize(sliderWidth), // Width of handle
 		widget.SliderOpts.Orientation(widget.DirectionVertical),
 		widget.SliderOpts.MinMax(0, dis.totalEntries-dis.length),
 		widget.SliderOpts.PageSizeFunc(func() int {
@@ -174,9 +180,20 @@ func newDisassembler() *disassembler {
 		}
 	})
 
-	dis.Container = newContainer(widget.DirectionHorizontal,
-		scrollContainer, dis.slider,
+	dis.Container = widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			widget.RowLayoutOpts.Direction(widget.DirectionHorizontal),
+			widget.RowLayoutOpts.Padding(
+				&widget.Insets{
+					Top:    theme.Debugger.Padding,
+					Left:   theme.Debugger.Padding,
+					Right:  0,
+					Bottom: theme.Debugger.Padding,
+				},
+			),
+		)),
 	)
+	dis.AddChild(scrollContainer, dis.slider)
 	return dis
 }
 
@@ -219,8 +236,8 @@ func (d *disassembler) createRow(rowId int) widget.PreferredSizeLocateableWidget
 		}),
 	)
 
-	// Fix widget min width so that even if buttons are smaller it doesn't resize
-	button.GetWidget().MinWidth = 300
+	// Fix widget min width to match screen size
+	button.GetWidget().MinWidth = pixelWidth
 
 	return button
 }

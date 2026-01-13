@@ -32,7 +32,12 @@ func newPanelWithHeader(title string, headerUpdate func(gb *gameboy.GameBoy) str
 	p.Container = widget.NewContainer(
 		widget.ContainerOpts.Layout(widget.NewRowLayout(
 			widget.RowLayoutOpts.Direction(widget.DirectionVertical),
-			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(theme.Debugger.Padding)),
+			widget.RowLayoutOpts.Padding(&widget.Insets{
+				Top:    theme.Debugger.Padding,
+				Left:   2 * theme.Debugger.Padding,
+				Right:  2 * theme.Debugger.Padding,
+				Bottom: theme.Debugger.Padding,
+			}),
 		)),
 		widget.ContainerOpts.BackgroundImage(backgroundImage),
 		widget.ContainerOpts.WidgetOpts(

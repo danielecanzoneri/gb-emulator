@@ -62,13 +62,25 @@ func New(gb *gameboy.GameBoy) *Debugger {
 	d.tilesViewer = d.newTilesViewer()
 
 	// Add widgets to the root container
+	registersContainer := widget.NewContainer(
+		widget.ContainerOpts.Layout(widget.NewRowLayout(
+			// TODO - hardcoded, remove
+			widget.RowLayoutOpts.Padding(&widget.Insets{
+				Top:    6,
+				Left:   3,
+				Right:  0,
+				Bottom: 8,
+			}),
+		)),
+	)
+	registersContainer.AddChild(d.registersViewer)
+
 	main := newContainer(widget.DirectionHorizontal,
-		d.disassembler,
 		newContainer(widget.DirectionVertical,
-			newContainer(widget.DirectionHorizontal,
-				d.screen, d.registersViewer,
-			),
-			d.memoryViewer,
+			d.screen, d.disassembler,
+		),
+		newContainer(widget.DirectionVertical,
+			registersContainer, d.memoryViewer,
 		),
 	)
 	root.AddChild(d.toolbar, main)
