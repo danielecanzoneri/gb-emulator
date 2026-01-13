@@ -101,5 +101,6 @@ go run .
 
 ## TODO
 
+- Improve PPU scanline rendering timing (achieve tick accuracy).
 - Add real-time save states, allowing users to save and load game state instantly during gameplay.
 - Expand support for additional cartridge types and MBC variants.
