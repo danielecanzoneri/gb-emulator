@@ -136,16 +136,16 @@ func newLcdInternalPanel() *panel {
 	entries := []panelEntry{
 		{name: "Dots", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetDots()) }},
 		{name: "Mode", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetMode()) }},
-		{name: "State", valueSync: func(gb *gameboy.GameBoy) string {
-			state := gb.PPU.DebugGetInternalState()
-			if state == nil {
-				return " "
-			}
-			return reflect.TypeOf(state).String()[5:]
-		}},
 		{name: "Next State", valueSync: func(gb *gameboy.GameBoy) string { return fmt.Sprintf("%d", gb.PPU.DebugGetInternalStateLength()) }},
 	}
-	return newPanel("LCD (internal)", entries...)
+	stateUpdate := func(gb *gameboy.GameBoy) string {
+		state := gb.PPU.DebugGetInternalState()
+		if state == nil {
+			return " "
+		}
+		return state.Name()
+	}
+	return newPanelWithHeader("LCD (internal)", stateUpdate, entries...)
 }
 
 func newHdmaPanel() *panel {

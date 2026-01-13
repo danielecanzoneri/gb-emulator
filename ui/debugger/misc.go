@@ -29,11 +29,13 @@ func loadFont(size float64) text.Face {
 }
 
 func newContainer(direction widget.Direction, children ...widget.PreferredSizeLocateableWidget) *widget.Container {
-	c := widget.NewContainer(widget.ContainerOpts.Layout(
-		widget.NewRowLayout(widget.RowLayoutOpts.Direction(
-			direction,
-		)),
-	))
+	c := widget.NewContainer(
+		widget.ContainerOpts.Layout(
+			widget.NewRowLayout(widget.RowLayoutOpts.Direction(
+				direction,
+			)),
+		),
+	)
 	c.AddChild(children...)
 	return c
 }

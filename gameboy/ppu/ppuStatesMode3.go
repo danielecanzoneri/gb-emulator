@@ -11,6 +11,7 @@ func (st *oamScanToDrawing) Next(_ *PPU) ppuInternalState {
 	return new(drawing)
 }
 func (st *oamScanToDrawing) Duration() int { return 4 }
+func (st *oamScanToDrawing) Name() string  { return "Drawing Start" }
 
 type drawing struct {
 	penaltyDots int
@@ -33,3 +34,4 @@ func (st *drawing) Next(_ *PPU) ppuInternalState {
 func (st *drawing) Duration() int {
 	return 172 + st.penaltyDots
 }
+func (st *drawing) Name() string { return "Drawing" }

@@ -35,3 +35,4 @@ func (st *hBlank) Next(ppu *PPU) ppuInternalState {
 func (st *hBlank) Duration() int {
 	return st.length
 }
+func (st *hBlank) Name() string { return "HBlank" }

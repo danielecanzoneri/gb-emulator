@@ -19,6 +19,7 @@ func (st *glitchedOamScan) Next(_ *PPU) ppuInternalState {
 	return new(drawing)
 }
 func (st *glitchedOamScan) Duration() int { return mode2Length }
+func (st *glitchedOamScan) Name() string  { return "Glitch OamScan" }
 
 // ------- Normal mode 2 -------
 
@@ -53,3 +54,4 @@ func (st *oamScan) Next(_ *PPU) ppuInternalState {
 	return st
 }
 func (st *oamScan) Duration() int { return 4 }
+func (st *oamScan) Name() string  { return "OamScan" }

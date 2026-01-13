@@ -4,13 +4,13 @@ const (
 	lineLength = 456
 
 	mode2Length = 80
-	mode3Length = 172
 )
 
 type ppuInternalState interface {
 	Init(*PPU)
 	Next(*PPU) ppuInternalState
 	Duration() int
+	Name() string
 }
 
 func (ppu *PPU) setState(state ppuInternalState) {

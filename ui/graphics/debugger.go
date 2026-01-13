@@ -10,6 +10,7 @@ import (
 type DebuggerTheme struct {
 	BackgroundColor color.NRGBA
 	LabelColor      color.NRGBA
+	HeaderColor     color.NRGBA
 	TitleColor      color.NRGBA
 
 	Button struct {
@@ -62,6 +63,7 @@ type DebuggerTheme struct {
 var Debugger = DebuggerTheme{
 	BackgroundColor: color.NRGBA{R: 20, G: 22, B: 30, A: 255},
 	LabelColor:      color.NRGBA{R: 220, G: 220, B: 230, A: 255},
+	HeaderColor:     color.NRGBA{R: 255, G: 230, B: 180, A: 255},
 	TitleColor:      color.NRGBA{R: 255, G: 200, B: 80, A: 255},
 	Button: struct {
 		Image     *widget.ButtonImage

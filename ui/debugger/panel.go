@@ -21,6 +21,10 @@ type panel struct {
 }
 
 func newPanel(title string, entries ...panelEntry) *panel {
+	return newPanelWithHeader(title, nil, entries...)
+}
+
+func newPanelWithHeader(title string, headerUpdate func(gb *gameboy.GameBoy) string, entries ...panelEntry) *panel {
 	p := new(panel)
 
 	// Create container (background image should account for padding)
@@ -31,11 +35,38 @@ func newPanel(title string, entries ...panelEntry) *panel {
 			widget.RowLayoutOpts.Padding(widget.NewInsetsSimple(theme.Debugger.Padding)),
 		)),
 		widget.ContainerOpts.BackgroundImage(backgroundImage),
+		widget.ContainerOpts.WidgetOpts(
+			widget.WidgetOpts.LayoutData(widget.RowLayoutData{
+				Stretch: true,
+			}),
+		),
 	)
 
+	// Create a handler that syncs all entries
+	p.Sync = func(gb *gameboy.GameBoy) {}
+
 	// Panel title
-	titleLabel := newLabel(title, theme.Debugger.TitleColor)
+	titleLabel := widget.NewText(
+		widget.TextOpts.Text(title, &font, theme.Debugger.TitleColor),
+		widget.TextOpts.WidgetOpts(
+			widget.WidgetOpts.LayoutData(widget.RowLayoutData{
+				Position: widget.RowLayoutPositionCenter, // Center title
+			}),
+		),
+	)
 	p.AddChild(titleLabel)
+
+	// Add header if present
+	if headerUpdate != nil {
+		l := newLabel("", theme.Debugger.HeaderColor)
+		p.AddChild(l)
+
+		oldSync := p.Sync
+		p.Sync = func(gb *gameboy.GameBoy) {
+			oldSync(gb)
+			l.Label = headerUpdate(gb)
+		}
+	}
 
 	// Two vertical containers: one with labels and one with values
 	labels := newContainer(widget.DirectionVertical)
@@ -48,8 +79,6 @@ func newPanel(title string, entries ...panelEntry) *panel {
 		labels.AddChild(l)
 	}
 
-	// Create a handler that syncs all entries
-	p.Sync = func(gb *gameboy.GameBoy) {}
 	values := newContainer(widget.DirectionVertical)
 	for _, entry := range entries {
 		l := newLabel("", theme.Debugger.LabelColor)
